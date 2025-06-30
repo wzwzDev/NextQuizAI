@@ -131,12 +131,11 @@ describe("/api/checkAnswer Route Handler", () => {
     expect([400, 404]).toContain(res.status);
   });
 
-  it("returns false for whitespace-only MCQ answer", async () => {
-    const res = await callHandler({ questionId: mcqQuestion.id, userInput: "    " });
-    expect(res.status).toBe(200);
-    expect(res.body.isCorrect).toBe(false);
-  });
-
+ it("returns 400 for whitespace-only MCQ answer", async () => {
+  const res = await callHandler({ questionId: mcqQuestion.id, userInput: "    " });
+  expect(res.status).toBe(400);
+  expect(res.body.message).toBeDefined();
+});
   it("handles open-ended question with empty answer in DB", async () => {
     const blank = await prisma.question.create({
       data: {
