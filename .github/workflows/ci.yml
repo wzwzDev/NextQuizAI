@@ -21,8 +21,13 @@ jobs:
         run: npm ci
       - name: Create .env.test
         run: |
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env.test
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.test
+         echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env.test
+         echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.test
+         echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.test
+         echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> .env.test
+         echo "API_URL=${{ secrets.API_URL }}" >> .env.test
+         echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.test
+         echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env.test
       - name: Build project
         run: npm run build
         env:
