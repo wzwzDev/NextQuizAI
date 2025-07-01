@@ -20,6 +20,6 @@ module.exports = {
     }]
   ],
   transform: {
-  "^.+\\.(ts|tsx)$": ["babel-jest", { configFile: "./babel.jest.config.js" }]
-}
+    "^.+\\.(ts|tsx)$": ["babel-jest", { configFile: "./babel.jest.config.js" }]
+  }
 };

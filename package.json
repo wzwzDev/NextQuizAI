@@ -7,7 +7,9 @@
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test:frontend": "jest --config jest.frontend.config.js",
+    "test:backend": "jest --config jest.backend.config.js",
+    "test": "npm run test:frontend && npm run test:backend"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
