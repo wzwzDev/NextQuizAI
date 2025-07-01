@@ -49,6 +49,6 @@ jobs:
             -Dsonar.projectKey=wzzzzwwzw_TFM
             -Dsonar.organization=wzzzzwwzw
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=src/lib/nextauth.ts
+            -Dsonar.coverage.exclusions=**/lib/nextauth.*
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
