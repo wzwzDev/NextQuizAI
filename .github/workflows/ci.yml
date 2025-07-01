@@ -19,6 +19,8 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm ci
+      - name: Rebuild LightningCSS for Linux
+        run: npm rebuild lightningcss
       - name: Create .env.test
         run: |
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env.test
