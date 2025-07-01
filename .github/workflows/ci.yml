@@ -41,7 +41,7 @@ jobs:
       - name: Merge coverage reports
         run: |
           npx mkdirp coverage
-          npx istanbul-merge --out coverage/lcov.info coverage-frontend/lcov.info coverage-backend/lcov.info
+          npx lcov-result-merger 'coverage-frontend/lcov.info' 'coverage-backend/lcov.info' > coverage/lcov.info
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
