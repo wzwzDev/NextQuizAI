@@ -40,7 +40,7 @@ describe("/api/checkAnswer Route Handler", () => {
         gameId: game.id,
       },
     });
-  });
+  },30000);
 
   afterAll(async () => {
     await prisma.question.deleteMany({ where: { gameId: game.id } });

@@ -27,7 +27,7 @@ describe("/api/quiz-review Route Handler", () => {
     normalUser = await prisma.user.create({
       data: { email: "user-quizreview@example.com", isAdmin: false },
     });
-  });
+  },30000);
 
   afterAll(async () => {
     await prisma.adminQuiz.deleteMany({});

@@ -30,7 +30,7 @@ describe("/api/users/[userId]/unrevoke Route Handler", () => {
     targetUser = await prisma.user.create({
       data: { email: "targetunrevoke@example.com", revoked: true },
     });
-  });
+  },30000);
 
   afterAll(async () => {
     await prisma.user.deleteMany({

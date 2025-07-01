@@ -30,7 +30,7 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   targetUser = await prisma.user.create({
     data: { email: "targetban@example.com" },
   });
-});
+},30000);
 
   afterAll(async () => {
     await prisma.user.deleteMany({

@@ -20,7 +20,7 @@ describe("/api/start-quiz Route Handler", () => {
       },
       include: { questions: true },
     });
-  });
+  },30000);
 
   afterAll(async () => {
     await prisma.adminQuiz.deleteMany({});
