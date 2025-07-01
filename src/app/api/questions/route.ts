@@ -9,7 +9,6 @@ export const maxDuration = 300;
 
 export async function POST(req: Request, res: Response) {
   try {
-    const session = await getAuthSession();
     const body = await req.json();
     const { amount, topic, type } = getQuestionsSchema.parse(body);
     let questions: any;
