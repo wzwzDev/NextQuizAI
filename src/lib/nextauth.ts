@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       const db_user = await prisma.user.findUnique({
-        where: { email: user.email! },
+        where: { email: user.email ?? undefined },
         select: { banned: true },
       });
       if (db_user?.banned) {
@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
     jwt: async ({ token }) => {
       const db_user = await prisma.user.findFirst({
         where: {
-          email: token?.email,
+          email: token?.email ?? undefined,
         },
       });
       if (db_user) {
