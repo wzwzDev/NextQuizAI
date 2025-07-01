@@ -9,7 +9,14 @@ module.exports = {
   },
   rootDir: ".",
   setupFilesAfterEnv: ["<rootDir>/src/__tests__/jest.setup.ts"],
-  collectCoverage: true, // <--- add this line
-  coverageReporters: ["lcov", "text"], // <--- add this line
-  coverageDirectory: "coverage", // <--- optional, default is "coverage"
+  collectCoverage: true,
+  coverageReporters: ["lcov", "text"],
+  coverageDirectory: "coverage",
+  reporters: [
+    "default",
+    ["jest-html-reporter", {
+      "pageTitle": "Test Report",
+      "outputPath": "test-report.html"
+    }]
+  ]
 };
