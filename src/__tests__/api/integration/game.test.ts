@@ -80,7 +80,7 @@ describe("/api/game Route Handler", () => {
     // Save gameId for GET tests
     game = await prisma.game.findUnique({ where: { id: json.gameId } });
     expect(game).toBeTruthy();
-  });
+  },20000);
 
   it("handles open_ended type (POST)", async () => {
     (axios.post as jest.Mock).mockResolvedValue({

@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>Backend Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">Backend Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2025-07-01 15:39:12</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (20)</div><div class="summary-passed ">20 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (119)</div><div class="summary-passed ">119 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\gpt-admin.test.ts</div><div class="suite-time">1.168s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns an array with normalized answers in choices</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns array with default_category if answer not in choices</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns array with answer split at colon</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns output_value_only as array of values</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns output_value_only as single value if only one property</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns [] if OpenAI returns invalid JSON</div><div class="test-status">passed</div><div class="test-duration">0.051s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns [] if OpenAI throws</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns [] if required key missing in output</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">returns [] if answer not in choices and no default_category</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gptadmin.strict_output</div><div class="test-title">handles list_input and dynamic_elements</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\gpt.test.ts</div><div class="suite-time">1.167s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">returns an array (mocked)</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">returns object if output_value_only is true</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">handles list input</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">returns [] if OpenAI returns empty choices</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">returns [] if OpenAI returns invalid JSON</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">throws if OpenAI throws</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">gpt.strict_output</div><div class="test-title">normalizes to default category if not in choices</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\upload-and-generate-unit.test.ts</div><div class="suite-time">0.12s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if no file</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if file type is not accepted</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws for invalid JSON</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if course content is missing in JSON</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if course content is too short</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">returns questions for valid JSON file</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">returns questions for valid TXT file</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if strict_output throws</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\questions.test.ts</div><div class="suite-time">1.362s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/questions Route Handler</div><div class="test-title">returns 200 and questions for valid open_ended request</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/questions Route Handler</div><div class="test-title">returns 200 and questions for valid mcq request</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/questions Route Handler</div><div class="test-title">returns 400 for invalid body</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/questions Route Handler</div><div class="test-title">returns 500 if strict_output throws</div><div class="test-status">passed</div><div class="test-duration">0.03s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/questions Route Handler</div><div class="test-title">returns 500 on invalid JSON</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\db.test.ts</div><div class="suite-time">0.182s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">prisma client singleton</div><div class="test-title">creates a new PrismaClient in production</div><div class="test-status">passed</div><div class="test-duration">0.06s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">prisma client singleton</div><div class="test-title">reuses global PrismaClient in development</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">prisma client singleton</div><div class="test-title">returns the cached PrismaClient if already set in development</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\utils.test.ts</div><div class="suite-time">0.086s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">cn merges class names</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">formatTimeDelta formats seconds</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">normalize lowercases and trims</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">similarity returns 1 for identical</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">similarity returns 0 for totally different</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">calculateAccuracy for mcq</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">utils</div><div class="test-title">calculateAccuracy for open_ended</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\nextauth.test.ts</div><div class="suite-time">0.077s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">nextauth</div><div class="test-title">authOptions has providers</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">nextauth</div><div class="test-title">getAuthSession calls getServerSession</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">nextauth &gt; signIn callback</div><div class="test-title">returns false for banned user</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">nextauth &gt; signIn callback</div><div class="test-title">returns true for allowed user</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">nextauth &gt; signIn callback</div><div class="test-title">returns true if user not found</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\lib\parseAndGenerateQuestions.test.ts</div><div class="suite-time">0.074s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if no file</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if file type is not accepted</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if JSON is invalid</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">throws if content is too short</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">parseAndGenerateQuestions</div><div class="test-title">calls strict_output for valid file</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\start-quiz.test.ts</div><div class="suite-time warn">5.349s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/start-quiz Route Handler</div><div class="test-title">returns 400 if quizId is missing</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/start-quiz Route Handler</div><div class="test-title">returns 404 if quiz not found</div><div class="test-status">passed</div><div class="test-duration">0.097s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/start-quiz Route Handler</div><div class="test-title">returns quiz if found and approved</div><div class="test-status">passed</div><div class="test-duration">0.098s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/start-quiz Route Handler</div><div class="test-title">returns 500 on DB error</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\users.test.ts</div><div class="suite-time warn">5.445s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users Route Handler</div><div class="test-title">returns 401 if not admin</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users Route Handler</div><div class="test-title">returns all users for admin</div><div class="test-status">passed</div><div class="test-duration">0.095s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\sign-out.test.ts</div><div class="suite-time warn">5.461s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/sign-out Route Handler</div><div class="test-title">sets isOnline to false for signed-in user</div><div class="test-status">passed</div><div class="test-duration">0.451s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/sign-out Route Handler</div><div class="test-title">returns success even if no session</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/sign-out Route Handler</div><div class="test-title">returns 404 if user not found (P2025)</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/sign-out Route Handler</div><div class="test-title">returns 503 if DB connection error (ECONNREFUSED)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/sign-out Route Handler</div><div class="test-title">returns 500 for unexpected error</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\quiz-statistics.test.ts</div><div class="suite-time warn">5.818s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-statistics Route Handler</div><div class="test-title">returns 401 if not admin</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-statistics Route Handler</div><div class="test-title">returns aggregated statistics for admin</div><div class="test-status">passed</div><div class="test-duration">0.27s</div></div></div></div></details><details id="suite-13" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\user-unban.test.ts</div><div class="suite-time warn">7.613s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unban Route Handler</div><div class="test-title">returns 401 if not admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unban Route Handler</div><div class="test-title">unbans a user as admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.429s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unban Route Handler</div><div class="test-title">returns 500 if DB error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details><details id="suite-14" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\user-revoke.test.ts</div><div class="suite-time warn">8.352s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">returns 401 if not admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">revokes a user as admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.418s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">returns 500 if DB error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">returns revoked status for user (GET)</div><div class="test-status">passed</div><div class="test-duration">0.095s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">returns 404 if user not found (GET)</div><div class="test-status">passed</div><div class="test-duration">0.047s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/revoke Route Handler</div><div class="test-title">returns 500 if DB error (GET)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-15" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\user-unrevoke.test.ts</div><div class="suite-time warn">8.547s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unrevoke Route Handler</div><div class="test-title">returns 401 if not admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unrevoke Route Handler</div><div class="test-title">unrevokes a user as admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.399s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/unrevoke Route Handler</div><div class="test-title">returns 500 if DB error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-16" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\user-quiz-stats.test.ts</div><div class="suite-time warn">8.634s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/user-quiz-stats Route Handler</div><div class="test-title">POST creates a quiz attempt</div><div class="test-status">passed</div><div class="test-duration">0.284s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/user-quiz-stats Route Handler</div><div class="test-title">GET returns empty stats if not authenticated</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/user-quiz-stats Route Handler</div><div class="test-title">GET returns aggregated stats for user</div><div class="test-status">passed</div><div class="test-duration">0.263s</div></div></div></div></details><details id="suite-17" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\user-ban.test.ts</div><div class="suite-time warn">8.742s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">returns 401 if not admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">bans a user as admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.472s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">returns 500 if DB error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">returns banned status for user (GET)</div><div class="test-status">passed</div><div class="test-duration">0.107s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">returns 404 if user not found (GET)</div><div class="test-status">passed</div><div class="test-duration">0.053s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/users/[userId]/ban Route Handler</div><div class="test-title">returns 500 if DB error (GET)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-18" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\quiz-review.test.ts</div><div class="suite-time warn">10.225s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 401 if not admin (POST)</div><div class="test-status">passed</div><div class="test-duration">0.019s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">creates a quiz with title from fileName (POST)</div><div class="test-status">passed</div><div class="test-duration">0.49s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">creates a quiz with fallback title (POST)</div><div class="test-status">passed</div><div class="test-duration">0.28s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 500 on DB error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 401 if not authenticated (GET)</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns quizzes with filters (GET)</div><div class="test-status">passed</div><div class="test-duration">0.188s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 401 if not authenticated (DELETE)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 400 if id missing (DELETE)</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">deletes a quiz (DELETE)</div><div class="test-status">passed</div><div class="test-duration">3.157s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/quiz-review Route Handler</div><div class="test-title">returns 500 on DB error (DELETE)</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div></div></details><details id="suite-19" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\game.test.ts</div><div class="suite-time warn">10.264s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 401 if not authenticated (POST)</div><div class="test-status">passed</div><div class="test-duration">0.01s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 400 for invalid body (POST)</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">creates a game and questions (POST)</div><div class="test-status">passed</div><div class="test-duration">1.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">handles open_ended type (POST)</div><div class="test-status">passed</div><div class="test-duration">2.937s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 500 on unexpected error (POST)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 401 if not authenticated (GET)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 400 if gameId is missing (GET)</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 404 if game not found (GET)</div><div class="test-status">passed</div><div class="test-duration">0.068s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns game with questions (GET)</div><div class="test-status">passed</div><div class="test-duration">0.208s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/game Route Handler</div><div class="test-title">returns 500 on unexpected error (GET)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-20" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\api\integration\checkAnswer.test.ts</div><div class="suite-time warn">13.538s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns isCorrect=true for correct MCQ answer</div><div class="test-status">passed</div><div class="test-duration">0.679s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns isCorrect=false for incorrect MCQ answer</div><div class="test-status">passed</div><div class="test-duration">1.643s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">accepts MCQ with extra spaces and casing</div><div class="test-status">passed</div><div class="test-duration">0.67s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 100% similarity for exact open-ended answer</div><div class="test-status">passed</div><div class="test-duration">0.822s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 0% similarity for very different open-ended answer</div><div class="test-status">passed</div><div class="test-duration">0.823s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns &gt; 0 similarity for partial match</div><div class="test-status">passed</div><div class="test-duration">0.497s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 404 for non-existent question</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 400 for missing userInput</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 400 for empty userInput</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">saves userAnswer and isCorrect in DB</div><div class="test-status">passed</div><div class="test-duration">0.543s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 0 similarity for off-topic open-ended input</div><div class="test-status">passed</div><div class="test-duration">0.496s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 400 for invalid questionId format (number instead of string)</div><div class="test-status">passed</div><div class="test-duration">0.049s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 400 for whitespace-only MCQ answer</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">handles open-ended question with empty answer in DB</div><div class="test-status">passed</div><div class="test-duration">0.906s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">/api/checkAnswer Route Handler</div><div class="test-title">returns 500 on invalid JSON</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details></main></body></html>
