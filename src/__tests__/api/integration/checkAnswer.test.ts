@@ -1,7 +1,7 @@
 import { POST } from "@/app/api/checkAnswer/route";
 import { prisma } from "@/lib/db";
 import type { User, Game, Question } from "@prisma/client";
-
+jest.setTimeout(30000);
 describe("/api/checkAnswer Route Handler", () => {
   let user: User;
   let game: Game;
