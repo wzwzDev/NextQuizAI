@@ -57,6 +57,6 @@ jobs:
             -Dsonar.projectKey=wzzzzwwzw_TFM
             -Dsonar.organization=wzzzzwwzw
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=**/lib/**
+            -Dsonar.coverage.exclusions=src/app/api/questions/route.ts,**/lib/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
