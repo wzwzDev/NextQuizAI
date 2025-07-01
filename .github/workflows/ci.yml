@@ -34,8 +34,15 @@ jobs:
         run: npm run build
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      - name: Run tests and collect coverage
-        run: npm run test -- --coverage
+      - name: Run frontend tests and collect coverage
+        run: npx jest --config jest.frontend.config.js --coverage --coverageDirectory=coverage-frontend
+      - name: Run backend tests and collect coverage
+        run: npx jest --config jest.backend.config.js --coverage --coverageDirectory=coverage-backend
+      - name: Merge coverage reports
+        run: |
+          npx mkdirp coverage
+          npx istanbul-merge coverage-frontend/lcov.info coverage-backend/lcov.info > coverage/lcov.info
+        # You may need to install istanbul-merge as a dev dependency
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
