@@ -11,7 +11,7 @@ module.exports = {
   setupFilesAfterEnv: ["<rootDir>/src/__tests__/jest.setup.ts"],
   collectCoverage: true,
   coverageReporters: ["lcov", "text"],
-  coverageDirectory: "coverage",
+  coverageDirectory: "coverage-frontend",
   reporters: [
     "default",
     ["jest-html-reporter", {
