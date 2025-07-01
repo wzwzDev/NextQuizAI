@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2025-07-01 15:11:43</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (34)</div><div class="summary-passed ">34 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (96)</div><div class="summary-passed ">96 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\userQuizStats.test.tsx</div><div class="suite-time">3.043s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">UserQuizStats</div><div class="test-title">renders loading state</div><div class="test-status">passed</div><div class="test-duration">0.157s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\input.test.tsx</div><div class="suite-time">3.11s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Input</div><div class="test-title">renders with default props</div><div class="test-status">passed</div><div class="test-duration">0.228s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Input</div><div class="test-title">applies custom className</div><div class="test-status">passed</div><div class="test-duration">0.019s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Input</div><div class="test-title">forwards ref</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Input</div><div class="test-title">passes props to input</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\adminDashboard.test.tsx</div><div class="suite-time">3.107s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">AdminDashboardClient</div><div class="test-title">renders dashboard sections</div><div class="test-status">passed</div><div class="test-duration">0.139s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\quizReview.test.tsx</div><div class="suite-time">3.198s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizReview</div><div class="test-title">renders quiz info and questions</div><div class="test-status">passed</div><div class="test-duration">0.181s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizReview</div><div class="test-title">edits a question and saves</div><div class="test-status">passed</div><div class="test-duration">0.085s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizReview</div><div class="test-title">deletes a question</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizReview</div><div class="test-title">calls onApprove with updated quiz</div><div class="test-status">passed</div><div class="test-duration">0.033s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizReview</div><div class="test-title">shows 'No questions available.' if no questions</div><div class="test-status">passed</div><div class="test-duration">0.022s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\dropdown-menu.test.tsx</div><div class="suite-time">3.204s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">DropdownMenu UI components</div><div class="test-title">renders DropdownMenu with trigger and content</div><div class="test-status">passed</div><div class="test-duration">0.242s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">DropdownMenu UI components</div><div class="test-title">renders CheckboxItem, RadioItem, Label, Separator, and Shortcut</div><div class="test-status">passed</div><div class="test-duration">0.041s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">DropdownMenu UI components</div><div class="test-title">renders Group, Portal, Sub, SubContent, SubTrigger, and RadioGroup</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\button.test.tsx</div><div class="suite-time">3.233s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Button</div><div class="test-title">renders with default props</div><div class="test-status">passed</div><div class="test-duration">0.231s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Button</div><div class="test-title">applies variant and size classes</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Button</div><div class="test-title">renders as a child component when asChild is true</div><div class="test-status">passed</div><div class="test-duration">0.027s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\quizList.test.tsx</div><div class="suite-time">3.308s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizList</div><div class="test-title">shows 'No quizzes found.' if API returns empty</div><div class="test-status">passed</div><div class="test-duration">0.171s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizList</div><div class="test-title">shows error if fetch fails</div><div class="test-status">passed</div><div class="test-duration">0.055s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizList</div><div class="test-title">filters quizzes by category and difficulty</div><div class="test-status">passed</div><div class="test-duration">0.19s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizList</div><div class="test-title">calls handleDelete and removes quiz from table</div><div class="test-status">passed</div><div class="test-duration">0.056s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\homeClient.test.tsx</div><div class="suite-time">3.336s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">HomeClient</div><div class="test-title">renders loading state and then quizzes</div><div class="test-status">passed</div><div class="test-duration">0.193s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">HomeClient</div><div class="test-title">filters quizzes by category</div><div class="test-status">passed</div><div class="test-duration">0.124s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">HomeClient</div><div class="test-title">filters quizzes by difficulty</div><div class="test-status">passed</div><div class="test-duration">0.05s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">HomeClient</div><div class="test-title">shows error message on fetch failure</div><div class="test-status">passed</div><div class="test-duration">0.043s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">HomeClient</div><div class="test-title">shows 'No quizzes found.' if filter returns nothing</div><div class="test-status">passed</div><div class="test-duration">0.072s</div></div></div></div></details><details id="suite-9" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\openAIGenerator.test.tsx</div><div class="suite-time">3.345s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenAIGenerator</div><div class="test-title">renders textarea and button</div><div class="test-status">passed</div><div class="test-duration">0.225s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenAIGenerator</div><div class="test-title">disables button when prompt is empty</div><div class="test-status">passed</div><div class="test-duration">0.029s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenAIGenerator</div><div class="test-title">shows loading state and calls API, then displays questions</div><div class="test-status">passed</div><div class="test-duration">0.106s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenAIGenerator</div><div class="test-title">shows error if API returns no questions</div><div class="test-status">passed</div><div class="test-duration">0.056s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenAIGenerator</div><div class="test-title">shows error if fetch throws</div><div class="test-status">passed</div><div class="test-duration">0.048s</div></div></div></div></details><details id="suite-10" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\quizUpload.test.tsx</div><div class="suite-time">3.343s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">renders upload area and button</div><div class="test-status">passed</div><div class="test-duration">0.247s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">shows error for invalid file type</div><div class="test-status">passed</div><div class="test-duration">0.032s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">accepts valid file and enables upload</div><div class="test-status">passed</div><div class="test-duration">0.039s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">calls onQuizReady on successful upload</div><div class="test-status">passed</div><div class="test-duration">0.065s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">shows error if API returns no questions</div><div class="test-status">passed</div><div class="test-duration">0.046s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizUpload</div><div class="test-title">shows error if fetch throws</div><div class="test-status">passed</div><div class="test-duration">0.062s</div></div></div></div></details><details id="suite-11" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\navigation-menu.test.tsx</div><div class="suite-time">3.426s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">NavigationMenu</div><div class="test-title">renders menu with trigger and content</div><div class="test-status">passed</div><div class="test-duration">0.173s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">NavigationMenu</div><div class="test-title">shows content when trigger is clicked</div><div class="test-status">passed</div><div class="test-duration">0.189s</div></div></div></div></details><details id="suite-12" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\userManagement.test.tsx</div><div class="suite-time">3.609s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">UserManagement</div><div class="test-title">renders loading and then user table</div><div class="test-status">passed</div><div class="test-duration">0.219s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">UserManagement</div><div class="test-title">shows error if fetch fails</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">UserManagement</div><div class="test-title">shows correct status and actions for users</div><div class="test-status">passed</div><div class="test-duration">0.125s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">UserManagement</div><div class="test-title">refreshes users when Refresh button is clicked</div><div class="test-status">passed</div><div class="test-duration">0.31s</div></div></div></div></details><details id="suite-13" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\quizCreation.test.tsx</div><div class="suite-time">3.735s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizCreation</div><div class="test-title">switches quiz type when buttons are clicked</div><div class="test-status">passed</div><div class="test-duration">0.469s</div></div></div></div></details><details id="suite-14" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\LoadingQuizzes.test.tsx</div><div class="suite-time">0.428s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuizzes</div><div class="test-title">renders loading image, progress bar, and initial text</div><div class="test-status">passed</div><div class="test-duration">0.025s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuizzes</div><div class="test-title">updates loading text periodically</div><div class="test-status">passed</div><div class="test-duration">0.023s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuizzes</div><div class="test-title">progress bar loops back to 0 after reaching 100</div><div class="test-status">passed</div><div class="test-duration">0.015s</div></div></div></div></details><details id="suite-15" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\card.test.tsx</div><div class="suite-time">0.568s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Card UI components</div><div class="test-title">renders Card with children</div><div class="test-status">passed</div><div class="test-duration">0.055s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Card UI components</div><div class="test-title">renders CardHeader, CardTitle, CardDescription, CardContent, CardFooter</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div></div></details><details id="suite-16" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\openEnded.test.tsx</div><div class="suite-time">3.831s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenEnded</div><div class="test-title">renders question and topic</div><div class="test-status">passed</div><div class="test-duration">0.153s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenEnded</div><div class="test-title">calls checkAnswer and goes to next question on Next click</div><div class="test-status">passed</div><div class="test-duration">0.25s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenEnded</div><div class="test-title">shows completion message after last question</div><div class="test-status">passed</div><div class="test-duration">0.124s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">OpenEnded</div><div class="test-title">disables Next button when hasEnded</div><div class="test-status">passed</div><div class="test-duration">0.124s</div></div></div></div></details><details id="suite-17" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\loadingStats.test.tsx</div><div class="suite-time">0.425s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingStats</div><div class="test-title">renders loading image, progress bar, and initial text</div><div class="test-status">passed</div><div class="test-duration">0.03s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingStats</div><div class="test-title">updates loading text periodically</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingStats</div><div class="test-title">progress bar loops back to 0 after reaching 100</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div></div></details><details id="suite-18" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\form.test.tsx</div><div class="suite-time">0.601s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Form UI components</div><div class="test-title">renders form field, label, control, description, and message</div><div class="test-status">passed</div><div class="test-duration">0.117s</div></div></div></div></details><details id="suite-19" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\table.test.tsx</div><div class="suite-time">0.476s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Table UI components</div><div class="test-title">renders a table with header, body, footer, and caption</div><div class="test-status">passed</div><div class="test-duration">0.066s</div></div></div></div></details><details id="suite-20" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\quizStats.test.tsx</div><div class="suite-time">0.692s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizStatistics</div><div class="test-title">renders table headers and fetched statistics</div><div class="test-status">passed</div><div class="test-duration">0.171s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">QuizStatistics</div><div class="test-title">handles fetch error gracefully</div><div class="test-status">passed</div><div class="test-duration">0.094s</div></div></div></div></details><details id="suite-21" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\use-toast.test.tsx</div><div class="suite-time">0.469s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">adds a toast and exposes it in state</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">dismisses a toast</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">removes a toast</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">updates a toast</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">limits toasts to TOAST_LIMIT</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">use-toast</div><div class="test-title">dismisses all toasts if no id is provided</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div></div></details><details id="suite-22" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\dialog.test.tsx</div><div class="suite-time">0.538s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dialog UI components</div><div class="test-title">renders Dialog with content and header/footer</div><div class="test-status">passed</div><div class="test-duration">0.061s</div></div></div></div></details><details id="suite-23" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\accuracy.test.tsx</div><div class="suite-time">0.741s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">AccuracyCard</div><div class="test-title">renders the accuracy value</div><div class="test-status">passed</div><div class="test-duration">0.076s</div></div></div></div></details><details id="suite-24" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\toast.test.tsx</div><div class="suite-time">0.644s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Toast UI components</div><div class="test-title">renders ToastProvider and ToastViewport</div><div class="test-status">passed</div><div class="test-duration">0.024s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Toast UI components</div><div class="test-title">renders Toast with title and description</div><div class="test-status">passed</div><div class="test-duration">0.009s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Toast UI components</div><div class="test-title">renders ToastClose button</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Toast UI components</div><div class="test-title">renders ToastAction button</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details><details id="suite-25" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\blankAnswerInput.test.tsx</div><div class="suite-time">0.547s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">BlankAnswerInput</div><div class="test-title">renders blanks and input fields for keywords</div><div class="test-status">passed</div><div class="test-duration">0.087s</div></div></div></div></details><details id="suite-26" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\historyCard.test.tsx</div><div class="suite-time">0.448s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">HistoryCard</div><div class="test-title">renders card with title and description</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">HistoryCard</div><div class="test-title">calls router.push on card click</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div></div></details><details id="suite-27" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\mcq.test.tsx</div><div class="suite-time">4.131s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">renders question and options</div><div class="test-status">passed</div><div class="test-duration">0.173s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">selects an option and goes to next question</div><div class="test-status">passed</div><div class="test-duration">0.259s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">shows completion message after last question</div><div class="test-status">passed</div><div class="test-duration">0.156s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">disables Next button when hasEnded</div><div class="test-status">passed</div><div class="test-duration">0.161s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">does not allow selecting an option after completion</div><div class="test-status">passed</div><div class="test-duration">0.123s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">renders MCQCounter component</div><div class="test-status">passed</div><div class="test-duration">0.014s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">renders View Statistics link after completion</div><div class="test-status">passed</div><div class="test-duration">0.123s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">MCQ</div><div class="test-title">shows the correct question number in MCQCounter</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div></div></details><details id="suite-28" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\avatar.test.tsx</div><div class="suite-time">0.433s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Avatar UI components</div><div class="test-title">renders Avatar root</div><div class="test-status">passed</div><div class="test-duration">0.026s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Avatar UI components</div><div class="test-title">renders AvatarImage with src</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Avatar UI components</div><div class="test-title">renders AvatarFallback</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div></div></details><details id="suite-29" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\loadingQuestions.test.tsx</div><div class="suite-time">0.383s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuestions</div><div class="test-title">renders loading image, progress bar, and initial text</div><div class="test-status">passed</div><div class="test-duration">0.013s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuestions</div><div class="test-title">updates loading text periodically</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">LoadingQuestions</div><div class="test-title">sets progress to 100 when finished</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details><details id="suite-30" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\dialogDetails.test.tsx</div><div class="suite-time">0.41s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">DetailsDialog</div><div class="test-title">renders About trigger and dialog content</div><div class="test-status">passed</div><div class="test-duration">0.034s</div></div></div></div></details><details id="suite-31" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\table-stats.test.tsx</div><div class="suite-time">0.332s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Table-stats UI components</div><div class="test-title">renders a table with header, body, footer, and caption</div><div class="test-status">passed</div><div class="test-duration">0.028s</div></div></div></div></details><details id="suite-32" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\chart.test.tsx</div><div class="suite-time">0.392s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">ChartContainer</div><div class="test-title">renders ChartContainer with children</div><div class="test-status">passed</div><div class="test-duration">0.029s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ChartLegendContent</div><div class="test-title">renders legend items</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">ChartTooltipContent</div><div class="test-title">renders nothing if not active</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div></div></details><details id="suite-33" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\hotTopics.test.tsx</div><div class="suite-time">0.4s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename"> </div><div class="test-title">placeholder</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-34" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\RetailAdmin\tfmproject\src\__tests__\pages\historyComponent.test.tsx</div><div class="suite-time">0.393s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename"> </div><div class="test-title">placeholder</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details></main></body></html>

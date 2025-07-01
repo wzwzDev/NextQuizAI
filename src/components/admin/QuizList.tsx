@@ -27,13 +27,6 @@ export default function QuizList() {
       .finally(() => setLoading(false));
   }, [category, difficulty]);
 
-  // Placeholder handlers for actions
-  const handleView = (quiz: any) => {
-    alert(`View quiz: ${quiz.title}`);
-  };
-  const handleEdit = (quiz: any) => {
-    alert(`Edit quiz: ${quiz.title}`);
-  };
   const handleDelete = async (quiz: any) => {
     if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
       try {

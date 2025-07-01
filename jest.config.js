@@ -2,7 +2,7 @@ require('dotenv').config({ path: '.env.test' });
 
 module.exports = {
   preset: "ts-jest",
-  testEnvironment: "node", // or "jsdom" if you use React Testing Library
+  testEnvironment: "jsdom",
   testMatch: ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
@@ -18,5 +18,8 @@ module.exports = {
       "pageTitle": "Test Report",
       "outputPath": "test-report.html"
     }]
-  ]
+  ],
+  transform: {
+    "^.+\\.(ts|tsx)$": "babel-jest"
+  }
 };
