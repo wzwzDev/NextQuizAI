@@ -1,11 +1,8 @@
 import { POST } from "@/app/api/questions/route";
-import { getAuthSession } from "@/lib/nextauth";
 import { strict_output } from "@/lib/gpt";
 jest.setTimeout(30000);
-// Mock getAuthSession and strict_output
-jest.mock("@/lib/nextauth", () => ({
-  getAuthSession: jest.fn(),
-}));
+
+// Mock strict_output
 jest.mock("@/lib/gpt", () => ({
   strict_output: jest.fn(),
 }));
@@ -51,13 +48,16 @@ describe("/api/questions Route Handler", () => {
     const json = await res.json();
     expect(Array.isArray(json.questions)).toBe(true);
     expect(json.questions[0].option1).toBeDefined();
+    expect(json.questions[0].option2).toBeDefined();
+    expect(json.questions[0].option3).toBeDefined();
   });
 
-  it("returns 400 for invalid body", async () => {
+  it("returns 400 for invalid body (fails zod validation)", async () => {
     const res = await callHandler({ topic: "", type: "mcq", amount: 0 });
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.error).toBeDefined();
+    expect(Array.isArray(json.error)).toBe(true);
   });
 
   it("returns 500 if strict_output throws", async () => {
@@ -68,13 +68,6 @@ describe("/api/questions Route Handler", () => {
     expect(json.error).toBe("An unexpected error occurred.");
   });
 
-  // Uncomment if you enable authentication in the handler
-  // it("returns 401 if not authenticated", async () => {
-  //   (getAuthSession as jest.Mock).mockResolvedValue(null);
-  //   const res = await callHandler({ amount: 1, topic: "AI", type: "open_ended" });
-  //   expect(res.status).toBe(401);
-  // });
-
   it("returns 500 on invalid JSON", async () => {
     const badRequest = new Request("http://localhost/api/questions", {
       method: "POST",
@@ -83,5 +76,7 @@ describe("/api/questions Route Handler", () => {
     });
     const res = await POST(badRequest, {} as Response);
     expect(res?.status).toBe(500);
+    const json = await res.json();
+    expect(json.error).toBe("An unexpected error occurred.");
   });
 });
