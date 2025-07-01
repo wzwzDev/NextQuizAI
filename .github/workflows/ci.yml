@@ -46,6 +46,10 @@ jobs:
         run: |
           npx mkdirp coverage
           npx lcov-result-merger 'coverage-frontend/lcov.info' 'coverage-backend/lcov.info' > coverage/lcov.info
+      - name: Debug merged coverage
+        run: |
+          ls -lh coverage
+          head -20 coverage/lcov.info
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
