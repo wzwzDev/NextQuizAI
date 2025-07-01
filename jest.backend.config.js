@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env.test' });
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
-  testMatch: ["**/__tests__/api/**/*.test.ts"], // adjust this pattern for your backend tests
+  testMatch: ["**/__tests__/api/**/*.test.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
@@ -11,6 +11,12 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-backend",
+  collectCoverageFrom: [
+    "src/**/*.{js,ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/__tests__/**",
+    "!src/**/test-utils/**"
+  ],
   reporters: [
     "default",
     ["jest-html-reporter", {

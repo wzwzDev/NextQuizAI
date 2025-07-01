@@ -12,6 +12,12 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-frontend",
+  collectCoverageFrom: [
+    "src/**/*.{js,ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/__tests__/**",
+    "!src/**/test-utils/**"
+  ],
   reporters: [
     "default",
     ["jest-html-reporter", {
