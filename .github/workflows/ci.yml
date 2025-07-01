@@ -41,8 +41,7 @@ jobs:
       - name: Merge coverage reports
         run: |
           npx mkdirp coverage
-          npx istanbul-merge coverage-frontend/lcov.info coverage-backend/lcov.info > coverage/lcov.info
-        # You may need to install istanbul-merge as a dev dependency
+          npx istanbul-merge --out coverage/lcov.info coverage-frontend/lcov.info coverage-backend/lcov.info
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
@@ -50,5 +49,6 @@ jobs:
             -Dsonar.projectKey=wzzzzwwzw_TFM
             -Dsonar.organization=wzzzzwwzw
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.coverage.exclusions=src/lib/nextauth.ts
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

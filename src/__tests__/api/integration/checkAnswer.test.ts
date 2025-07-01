@@ -8,10 +8,11 @@ describe("/api/checkAnswer Route Handler", () => {
   let mcqQuestion: Question;
   let openQuestion: Question;
 
-  beforeAll(async () => {
-    user = await prisma.user.create({
-      data: { email: "testuser@example.com" },
-    });
+ beforeAll(async () => {
+  await prisma.user.deleteMany({ where: { email: "testuser@example.com" } }); // <-- Add this line
+  user = await prisma.user.create({
+    data: { email: "testuser@example.com" },
+  });
 
     game = await prisma.game.create({
       data: {
