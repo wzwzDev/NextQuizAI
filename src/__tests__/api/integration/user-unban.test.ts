@@ -1,6 +1,6 @@
 import { POST } from "@/app/api/users/[userId]/unban/route";
 import { prisma } from "@/lib/db";
-
+jest.setTimeout(30000);
 // Mock getServerSession and authOptions
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),

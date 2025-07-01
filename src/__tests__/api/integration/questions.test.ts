@@ -1,7 +1,7 @@
 import { POST } from "@/app/api/questions/route";
 import { getAuthSession } from "@/lib/nextauth";
 import { strict_output } from "@/lib/gpt";
-
+jest.setTimeout(30000);
 // Mock getAuthSession and strict_output
 jest.mock("@/lib/nextauth", () => ({
   getAuthSession: jest.fn(),

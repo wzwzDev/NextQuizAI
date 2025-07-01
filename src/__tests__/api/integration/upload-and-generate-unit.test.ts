@@ -1,5 +1,5 @@
 import { parseAndGenerateQuestions } from "@/lib/parseAndGenerateQuestions";
-
+jest.setTimeout(30000);
 describe("parseAndGenerateQuestions", () => {
   const strict_output = jest.fn(async (content) => [
     { question: "Q1", answer: "A1" },

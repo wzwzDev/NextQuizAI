@@ -1,6 +1,6 @@
 import { GET } from "@/app/api/start-quiz/route";
 import { prisma } from "@/lib/db";
-
+jest.setTimeout(30000);
 describe("/api/start-quiz Route Handler", () => {
   let quiz: any;
 

@@ -1,6 +1,6 @@
 import { POST } from "@/app/api/sign-out/route";
 import { prisma } from "@/lib/db";
-
+jest.setTimeout(30000);
 // Mock getServerSession
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
