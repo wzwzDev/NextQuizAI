@@ -38,6 +38,10 @@ jobs:
         run: npx jest --config jest.frontend.config.js --coverage --coverageDirectory=coverage-frontend
       - name: Run backend tests and collect coverage
         run: npx jest --config jest.backend.config.js --coverage --coverageDirectory=coverage-backend
+      - name: Debug coverage files
+        run: |
+         ls -lh coverage-frontend
+         ls -lh coverage-backend
       - name: Merge coverage reports
         run: |
           npx mkdirp coverage
