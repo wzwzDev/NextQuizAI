@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 # 🧠 QuizUPM - AI-Powered Quiz Platform
 
 QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and deliver personalized quiz experiences. Built with Next.js, the platform offers both multiple-choice and open-ended questions, comprehensive analytics, and powerful administrative tools.
 
 ![Homepage](https://github.com/user-attachments/assets/homepage.png)
+=======
+# 🧠 Quizzzz - AI-Powered Quiz Platform
+
+QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and deliver personalized quiz experiences. Built with Next.js, the platform offers both multiple-choice and open-ended questions, comprehensive analytics, and powerful administrative tools.
+
+![QuizUPM Homepage](screenshots/homepage.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Homepage - Welcome screen with Google authentication*
 
 ## ✨ Features
@@ -14,7 +22,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - **Smart Answer Validation**: Advanced similarity checking for open-ended answers
 - **Topic-based Organization**: Categorized quizzes across various subjects
 
+<<<<<<< HEAD
 ![Quiz Creation](https://github.com/user-attachments/assets/quiz-creation-interface.png)
+=======
+![Quiz Creation](screenshots/quiz-creation.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Admin Quiz Creation Interface*
 
 ### 📊 Analytics & Statistics
@@ -23,7 +35,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - **Word Clouds**: Visual representation of quiz topics and trends
 - **Historical Tracking**: Complete quiz attempt history
 
+<<<<<<< HEAD
 ![Dashboard Analytics](https://github.com/user-attachments/assets/dashboard-analytics.png)
+=======
+![Dashboard Analytics](screenshots/dashboard-analytics.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *User Dashboard with Performance Analytics*
 
 ### 👥 User Management
@@ -32,7 +48,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - **Online Status Tracking**: Real-time user activity monitoring
 - **Session Management**: Secure authentication with NextAuth.js
 
+<<<<<<< HEAD
 ![Admin Dashboard](https://github.com/user-attachments/assets/admin-dashboard.png)
+=======
+![Admin Dashboard](screenshots/admin-dashboard.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Admin Dashboard with User Management*
 
 ### 🎮 Interactive Quiz Experience
@@ -41,7 +61,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - **Immediate Feedback**: Instant answer validation and explanations
 - **Responsive Design**: Optimized for desktop and mobile devices
 
+<<<<<<< HEAD
 ![Quiz Playing Interface](https://github.com/user-attachments/assets/quiz-playing.png)
+=======
+![Quiz Playing Interface](screenshots/quiz-playing.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Interactive Quiz Playing Interface*
 
 ## 🛠️ Tech Stack
@@ -118,7 +142,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 6. **Open the application**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+<<<<<<< HEAD
 ![Installation Success](https://github.com/user-attachments/assets/local-setup.png)
+=======
+![Installation Success](screenshots/local-setup.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Successful local development setup*
 
 ## 📱 Application Structure
@@ -136,7 +164,11 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - System analytics
 - Content approval workflow
 
+<<<<<<< HEAD
 ![User Flow](https://github.com/user-attachments/assets/user-flow.png)
+=======
+![User Flow](screenshots/user-flow.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Complete user experience flow*
 
 ## 🧪 Testing
@@ -157,7 +189,11 @@ npm run test
 npx playwright test
 ```
 
+<<<<<<< HEAD
 ![Test Coverage](https://github.com/user-attachments/assets/test-coverage.png)
+=======
+![Test Coverage](screenshots/test-coverage.png)
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 *Test coverage report showing 90%+ coverage*
 
 ## 📊 Project Statistics
@@ -206,6 +242,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📸 Screenshots Gallery
 
+<<<<<<< HEAD
 ### 🏠 Homepage & Authentication
 ![Homepage](https://github.com/user-attachments/assets/homepage-welcome-screen.png)
 *Welcome screen with Google OAuth authentication*
@@ -253,6 +290,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 👥 User Management
 ![User Management](https://github.com/user-attachments/assets/admin-user-management.png)
 *Administrative user management with ban/unban capabilities*
+=======
+### Authentication Flow
+![Sign In](screenshots/SignIn.png)
+*Google OAuth authentication*
+
+### User Dashboard
+![User Dashboard](screenshots/user-dashboard.png)
+*Personal dashboard with quiz history and statistics*
+
+### Quiz Categories
+![Quiz Categories](screenshots/quiz-categories.png)
+*Available quiz categories with visual icons*
+
+### Live Quiz Session
+![Quiz Session](screenshots/quiz-session.png)
+*Active quiz with progress tracking*
+
+### Results & Analytics
+![Quiz Results](screenshots/quiz-results.png)
+*Detailed results with performance breakdown*
+
+### Admin Panel
+![Admin Panel](screenshots/admin-panel.png)
+*Administrative interface for quiz and user management*
+
+### Mobile Responsive
+![Mobile View](screenshots/mobile-view.png)
+*Responsive design on mobile devices*
+>>>>>>> a4cdc80b08738f3dd7d3a644d18414d1d88cddc7
 
 ---
 
