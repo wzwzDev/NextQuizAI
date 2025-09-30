@@ -207,7 +207,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📸 Screenshots Gallery
 
 ### Authentication Flow
-![Sign In](screenshots/signin.png)
+![Sign In](screenshots/SignIn.png)
 *Google OAuth authentication*
 
 ### User Dashboard
