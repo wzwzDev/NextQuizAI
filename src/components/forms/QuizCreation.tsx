@@ -139,8 +139,17 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
                         placeholder="How many questions?"
                         type="number"
                         {...field}
+                        value={Number.isNaN(field.value) ? "" : field.value}
                         onChange={(e) => {
-                          form.setValue("amount", parseInt(e.target.value));
+                          const parsedAmount = e.target.valueAsNumber;
+                          const normalizedAmount = Number.isNaN(parsedAmount)
+                            ? 1
+                            : Math.min(10, Math.max(1, parsedAmount));
+
+                          form.setValue("amount", normalizedAmount, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
                         }}
                         min={1}
                         max={10}
