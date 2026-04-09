@@ -11,13 +11,13 @@ import TimeTakenCard from "@/components/statistics/TimeTakenCard";
 import QuestionsList from "@/components/statistics/QuestionsList";
 
 type Props = {
-  params: {
+  params: Promise<{
     gameId: string;
-  };
+  }>;
 };
 
 const Statistics = async (props: Props) => {
-  const { gameId } = props.params;
+  const { gameId } = await props.params;
   const session = await getAuthSession();
   const isAdmin = session?.user?.isAdmin === true;
   if (!session?.user && !isAdmin) {

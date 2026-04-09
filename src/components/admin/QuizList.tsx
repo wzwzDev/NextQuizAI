@@ -1,11 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { AdminQuizDraft } from "@/components/admin/types";
 
 const categories = ["Math", "Science", "History", "Programming"];
 const difficulties = ["easy", "medium", "hard"];
 
 export default function QuizList() {
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<AdminQuizDraft[]>([]);
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ export default function QuizList() {
       .finally(() => setLoading(false));
   }, [category, difficulty]);
 
-  const handleDelete = async (quiz: any) => {
+  const handleDelete = async (quiz: AdminQuizDraft) => {
     if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
       try {
         const res = await fetch(`/api/quiz-review?id=${quiz.id}`, {
@@ -86,7 +87,7 @@ export default function QuizList() {
               </tr>
             </thead>
             <tbody>
-              {quizzes.map((quiz: any, idx: number) => (
+              {quizzes.map((quiz: AdminQuizDraft, idx: number) => (
                 <tr key={quiz.id} className="hover:bg-blue-50">
                   <td className="p-2 border text-center">{idx + 1}</td>
                   <td className="p-2 border">{quiz.title}</td>

@@ -1,13 +1,18 @@
 "use client";
 import React, { useState } from "react";
+import { AdminQuestion, AdminQuizDraft } from "@/components/admin/types";
 
 type OpenAIGeneratorProps = {
-  onQuizReady: (quiz: any) => void;
+  onQuizReady: (quiz: AdminQuizDraft) => void;
+};
+
+type UploadAndGenerateResponse = {
+  questions?: AdminQuestion[];
 };
 
 const OpenAIGenerator = ({ onQuizReady }: OpenAIGeneratorProps) => {
   const [prompt, setPrompt] = useState("");
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +26,7 @@ const OpenAIGenerator = ({ onQuizReady }: OpenAIGeneratorProps) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_prompt: prompt }),
       });
-      const data = await res.json();
+      const data: UploadAndGenerateResponse = await res.json();
       if (
         data.questions &&
         Array.isArray(data.questions) &&
@@ -32,8 +37,12 @@ const OpenAIGenerator = ({ onQuizReady }: OpenAIGeneratorProps) => {
       } else {
         setError("Failed to generate quiz questions.");
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred.");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError("An error occurred.");
+      }
     } finally {
       setLoading(false);
     }

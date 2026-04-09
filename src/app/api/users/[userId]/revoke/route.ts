@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
+import { getUserRevokeStatus, setUserRevoked } from "@/lib/services/userService";
 
 export async function POST(
   req: NextRequest,
-  context: { params: { userId: string } },
+  context: { params: Promise<{ userId: string }> },
 ) {
-  const { params } = context;
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const updated = await prisma.user.update({
-      where: { id: params.userId },
-      data: { revoked: true },
-    });
+    const updated = await setUserRevoked(params.userId, true);
     if (!updated) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -30,14 +27,11 @@ export async function POST(
 }
 export async function GET(
   req: NextRequest,
-  context: { params: { userId: string } },
+  context: { params: Promise<{ userId: string }> },
 ) {
-  const { params } = context;
+  const params = await context.params;
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: params.userId },
-      select: { revoked: true },
-    });
+    const user = await getUserRevokeStatus(params.userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

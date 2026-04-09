@@ -1,24 +1,24 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
+import { setUserAdmin } from "@/lib/services/userService";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = params.id;
+  const body = (await req.json().catch(() => ({}))) as { userId?: string };
+  const userId = body.userId;
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
 
   try {
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { isAdmin: true },
-    });
+    const user = await setUserAdmin(userId, true);
     return NextResponse.json({ success: true, user }, { status: 200 });
   } catch (error) {
     return NextResponse.json(

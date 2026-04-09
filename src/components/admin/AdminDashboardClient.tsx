@@ -12,16 +12,16 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AdminQuizDraft } from "@/components/admin/types";
 
 const AdminDashboardClient = () => {
-  const [quizToReview, setQuizToReview] = useState<any>(null);
+  const [quizToReview, setQuizToReview] = useState<AdminQuizDraft | null>(null);
 
-  const handleQuizReady = (quiz: any) => {
+  const handleQuizReady = (quiz: AdminQuizDraft) => {
     setQuizToReview(quiz);
   };
 
-  const handleApprove = async (approvedQuiz: any) => {
+  const handleApprove = async (approvedQuiz: AdminQuizDraft) => {
     await fetch("/api/quiz-review", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

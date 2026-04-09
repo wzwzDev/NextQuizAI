@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import React from "react";
 
 type Props = {
-  params: {
+  params: Promise<{
     gameId: string;
-  };
+  }>;
 };
 
 const OpenEndedPage = async (props: Props) => {

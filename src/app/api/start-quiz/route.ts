@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getApprovedQuiz } from "@/lib/services/adminQuizService";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const quizId = params.id;
+  const { id: quizId } = await params;
 
   if (!quizId) {
     return NextResponse.json(
@@ -15,10 +15,7 @@ export async function GET(
   }
 
   try {
-    const quiz = await prisma.adminQuiz.findUnique({
-      where: { id: quizId, status: "approved" },
-      include: { questions: true },
-    });
+    const quiz = await getApprovedQuiz(quizId);
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found." }, { status: 404 });
     }

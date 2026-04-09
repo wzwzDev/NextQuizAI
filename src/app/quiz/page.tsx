@@ -9,9 +9,9 @@ export const metadata = {
 };
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     topic?: string;
-  };
+  }>;
 }
 
 const Quiz = async ({ searchParams }: Props) => {

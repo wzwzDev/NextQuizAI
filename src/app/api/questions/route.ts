@@ -6,7 +6,7 @@ import { ZodError } from "zod";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { amount, topic, type } = getQuestionsSchema.parse(body);

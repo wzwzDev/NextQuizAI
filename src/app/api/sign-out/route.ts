@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
-import { prisma } from "@/lib/db";
+import { markUserOfflineByEmail } from "@/lib/services/userService";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.email) {
-      await prisma.user.update({
-        where: { email: session.user.email },
-        data: { isOnline: false },
-      });
+      await markUserOfflineByEmail(session.user.email);
     }
     return NextResponse.json({ success: true });
   } catch (error: any) {

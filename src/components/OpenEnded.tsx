@@ -24,6 +24,10 @@ type Props = {
   game: Game & { questions: Pick<Question, "id" | "question" | "answer">[] };
 };
 
+type CheckAnswerResponse = {
+  percentageSimilar: number;
+};
+
 const OpenEnded = ({ game }: Props) => {
   const [hasEnded, setHasEnded] = React.useState(false);
   const [questionIndex, setQuestionIndex] = React.useState(0);
@@ -43,7 +47,11 @@ const OpenEnded = ({ game }: Props) => {
   });
   const { toast } = useToast();
   const [now, setNow] = React.useState(new Date());
-  const { mutate: checkAnswer, status: checkAnswerStatus } = useMutation({
+  const { mutate: checkAnswer, status: checkAnswerStatus } = useMutation<
+    CheckAnswerResponse,
+    Error,
+    void
+  >({
     mutationFn: async () => {
       let filledAnswer = blankAnswer;
       document.querySelectorAll("#user-blank-input").forEach((input) => {
@@ -57,7 +65,10 @@ const OpenEnded = ({ game }: Props) => {
         questionId: currentQuestion.id,
         userInput: filledAnswer,
       };
-      const response = await axios.post(`/api/checkAnswer`, payload);
+      const response = await axios.post<CheckAnswerResponse>(
+        `/api/checkAnswer`,
+        payload,
+      );
       return response.data;
     },
   });

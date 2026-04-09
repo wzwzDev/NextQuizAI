@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
+import { getUserBanStatus, setUserBanned } from "@/lib/services/userService";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { userId: string } },
+  { params }: { params: Promise<{ userId: string }> },
 ) {
+  const { userId } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    await prisma.user.update({
-      where: { id: params.userId },
-      data: { banned: true },
-    });
+    await setUserBanned(userId, true);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to ban user" }, { status: 500 });
@@ -23,13 +21,11 @@ export async function POST(
 }
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } },
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: params.userId },
-      select: { banned: true },
-    });
+    const { userId } = await params;
+    const user = await getUserBanStatus(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

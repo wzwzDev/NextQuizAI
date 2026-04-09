@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { AdminQuestion, AdminQuizDraft } from "@/components/admin/types";
 
 const categories = ["Math", "Science", "History", "Programming"];
 const difficulties = ["easy", "medium", "hard"];
@@ -8,10 +9,10 @@ export default function QuizReview({
   quiz,
   onApprove,
 }: {
-  quiz: any;
-  onApprove: (quiz: any) => void;
+  quiz: AdminQuizDraft;
+  onApprove: (quiz: AdminQuizDraft) => void;
 }) {
-  const [editedQuiz, setEditedQuiz] = useState(quiz);
+  const [editedQuiz, setEditedQuiz] = useState<AdminQuizDraft>(quiz);
   const [title, setTitle] = useState(quiz.title || "");
   const [category, setCategory] = useState(categories[0]);
   const [difficulty, setDifficulty] = useState(difficulties[0]);
@@ -97,7 +98,7 @@ export default function QuizReview({
             </tr>
           </thead>
           <tbody>
-            {questions.map((q: any, idx: number) => (
+            {questions.map((q: AdminQuestion, idx: number) => (
               <tr key={idx} className="hover:bg-blue-50">
                 <td className="p-2 border text-center">{idx + 1}</td>
                 <td className="p-2 border">

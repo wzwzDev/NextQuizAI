@@ -7,6 +7,15 @@ import {
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 
+const resolvedAuthSecret =
+  process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+
+if (!resolvedAuthSecret && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "Missing NextAuth secret. Set NEXTAUTH_SECRET (or AUTH_SECRET) in your environment.",
+  );
+}
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
@@ -31,7 +40,9 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  // In development we allow a deterministic fallback to avoid local boot failures.
+  // Production always requires NEXTAUTH_SECRET/AUTH_SECRET.
+  secret: resolvedAuthSecret ?? "local-dev-nextauth-secret",
   pages: {
     signIn: "/auth/signin",
   },

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/nextauth";
+import {
+  createApprovedAdminQuiz,
+  getAdminQuizzes,
+  removeAdminQuiz,
+} from "@/lib/services/adminQuizService";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -20,20 +24,15 @@ export async function POST(req: NextRequest) {
       title = "Untitled Quiz";
     }
 
-    const quiz = await prisma.adminQuiz.create({
-      data: {
-        title,
-        category,
-        difficulty,
-        status: "approved",
-        questions: {
-          create: questions.map((q: any) => ({
-            question: q.question,
-            answer: q.answer,
-          })),
-        },
-      },
-      include: { questions: true },
+    const quiz = await createApprovedAdminQuiz({
+      title,
+      fileName,
+      category,
+      difficulty,
+      questions: questions.map((q: { question: string; answer: string }) => ({
+        question: q.question,
+        answer: q.answer,
+      })),
     });
 
     return NextResponse.json({ quiz }, { status: 201 });
@@ -54,13 +53,9 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category");
   const difficulty = searchParams.get("difficulty");
 
-  const where: any = {};
-  if (category) where.category = category;
-  if (difficulty) where.difficulty = difficulty;
-
-  const quizzes = await prisma.adminQuiz.findMany({
-    where,
-    include: { questions: true },
+  const quizzes = await getAdminQuizzes({
+    category: category ?? undefined,
+    difficulty: difficulty ?? undefined,
   });
 
   return NextResponse.json({ quizzes });
@@ -77,9 +72,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing quiz id" }, { status: 400 });
   }
   try {
-    await prisma.adminQuiz.delete({
-      where: { id },
-    });
+    await removeAdminQuiz(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

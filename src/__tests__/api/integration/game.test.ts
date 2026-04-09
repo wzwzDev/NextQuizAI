@@ -51,14 +51,14 @@ describe("/api/game Route Handler", () => {
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     });
-    return await POST(req, {} as Response);
+    return await POST(req);
   };
 
   const callGet = async (gameId?: string, sessionUser: any = user) => {
     (getAuthSession as jest.Mock).mockResolvedValue(sessionUser ? { user: sessionUser } : null);
     const url = `http://localhost/api/game${gameId ? `?gameId=${gameId}` : ""}`;
     const req = new Request(url, { method: "GET" });
-    return await GET(req, {} as Response);
+    return await GET(req);
   };
 
   // POST tests
@@ -103,7 +103,7 @@ describe("/api/game Route Handler", () => {
       body: JSON.stringify({ topic: "math", type: "mcq", amount: 1 }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {} as Response);
+    const res = await POST(req);
     expect(res.status).toBe(500);
   });
 
@@ -134,7 +134,7 @@ describe("/api/game Route Handler", () => {
   it("returns 500 on unexpected error (GET)", async () => {
     (getAuthSession as jest.Mock).mockImplementation(() => { throw new Error("fail"); });
     const req = new Request("http://localhost/api/game?gameId=123", { method: "GET" });
-    const res = await GET(req, {} as Response);
+    const res = await GET(req);
     expect(res.status).toBe(500);
   });
 });

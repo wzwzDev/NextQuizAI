@@ -55,7 +55,7 @@ describe("/api/checkAnswer Route Handler", () => {
       body: JSON.stringify(data),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {} as Response);
+    const res = await POST(req);
     const json = await res?.json();
     return { status: res?.status, body: json };
   };
@@ -161,7 +161,7 @@ describe("/api/checkAnswer Route Handler", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const res = await POST(badRequest, {} as Response);
+    const res = await POST(badRequest);
     expect(res?.status).toBe(500);
   });
 });

@@ -1,8 +1,21 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "The OPENAI_API_KEY environment variable is missing or empty.",
+    );
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+
+  return openaiClient;
+}
 
 interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
@@ -34,14 +47,17 @@ function buildOutputFormatPrompt(
 }
 
 function normalizeOutputValue(
-  value: any,
+  value: unknown,
   choices: string[],
   default_category: string,
 ) {
   if (Array.isArray(value)) {
     value = value[0];
   }
-  if (default_category && !choices.includes(value)) {
+  if (
+    default_category &&
+    (typeof value !== "string" || !choices.includes(value))
+  ) {
     value = default_category;
   }
   if (typeof value === "string" && value.includes(":")) {
@@ -51,35 +67,42 @@ function normalizeOutputValue(
 }
 
 function validateAndNormalizeOutput(
-  output: any,
+  output: unknown,
   output_format: OutputFormat,
   default_category: string,
   output_value_only: boolean,
   list_input: boolean,
 ) {
-  const outputArr = list_input ? output : [output];
+  const outputArr = list_input
+    ? ((output as unknown[]) ?? [])
+    : [output];
+
   for (let index = 0; index < outputArr.length; index++) {
+    const item = outputArr[index] as Record<string, unknown>;
+
     for (const key in output_format) {
       // SAFE: Avoid regex, just check for both chars
       if (key.includes("<") && key.includes(">")) continue;
-      if (!(key in outputArr[index])) {
+      if (!(key in item)) {
         throw new Error(`${key} not in json output`);
       }
       if (Array.isArray(output_format[key])) {
-        outputArr[index][key] = normalizeOutputValue(
-          outputArr[index][key],
+        item[key] = normalizeOutputValue(
+          item[key],
           output_format[key] as string[],
           default_category,
         );
       }
     }
+
     if (output_value_only) {
-      outputArr[index] = Object.values(outputArr[index]);
-      if (outputArr[index].length === 1) {
-        outputArr[index] = outputArr[index][0];
-      }
+      const values = Object.values(item);
+      outputArr[index] = values.length === 1 ? values[0] : values;
+    } else {
+      outputArr[index] = item;
     }
   }
+
   return list_input ? outputArr : outputArr[0];
 }
 
@@ -115,12 +138,8 @@ export async function strict_output(
   temperature: number = 1,
   num_tries: number = 3,
   verbose: boolean = false,
-): Promise<
-  {
-    question: string;
-    answer: string;
-  }[]
-> {
+): Promise<any> {
+  const openai = getOpenAIClient();
   const list_input = Array.isArray(user_prompt);
   // SAFE: Avoid regex, just check for both chars
   const dynamic_elements =
@@ -180,7 +199,7 @@ export async function strict_output(
     }
 
     try {
-      let output = JSON.parse(res);
+      const output = JSON.parse(res);
       if (list_input && !Array.isArray(output)) {
         throw new Error("Output format not in a list of json");
       }
@@ -190,7 +209,7 @@ export async function strict_output(
         default_category,
         output_value_only,
         list_input,
-      );
+      ) as any;
     } catch (e) {
       error_msg = `\n\nResult: ${res}\n\nError message: ${e}`;
       console.log("An exception occurred:", e);

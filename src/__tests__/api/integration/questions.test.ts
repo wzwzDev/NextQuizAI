@@ -18,7 +18,7 @@ describe("/api/questions Route Handler", () => {
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     });
-    return await POST(req, {} as Response);
+    return await POST(req);
   };
 
   it("returns 200 and questions for valid open_ended request", async () => {
@@ -74,7 +74,7 @@ describe("/api/questions Route Handler", () => {
       body: "not-json",
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(badRequest, {} as Response);
+    const res = await POST(badRequest);
     expect(res?.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe("An unexpected error occurred.");

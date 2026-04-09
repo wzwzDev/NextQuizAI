@@ -1,8 +1,13 @@
 "use client";
 import React, { useRef, useState } from "react";
+import { AdminQuestion, AdminQuizDraft } from "@/components/admin/types";
 
 type QuizUploadProps = {
-  onQuizReady: (quiz: any) => void;
+  onQuizReady: (quiz: AdminQuizDraft) => void;
+};
+
+type UploadAndGenerateResponse = {
+  questions?: AdminQuestion[];
 };
 
 const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
@@ -69,14 +74,14 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data: UploadAndGenerateResponse = await res.json();
       if (data.questions && Array.isArray(data.questions)) {
         onQuizReady({ title: file.name, questions: data.questions });
         setFile(null);
       } else {
         setError("Failed to generate quiz from file.");
       }
-    } catch (e) {
+    } catch {
       setError("Failed to generate quiz from file.");
     } finally {
       setUploading(false);

@@ -1,11 +1,31 @@
-import { prisma } from "@/lib/db";
 import { getAuthSession } from "@/lib/nextauth";
+import {
+  createGameWithTopicCount,
+  getGameWithQuestions,
+  saveGeneratedQuestionsForGame,
+} from "@/lib/services/gameService";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import axios from "axios";
 
-export async function POST(req: Request, res: Response) {
+type QuestionsApiResponse = {
+  questions: Array<
+    | {
+        question: string;
+        answer: string;
+        option1: string;
+        option2: string;
+        option3: string;
+      }
+    | {
+        question: string;
+        answer: string;
+      }
+  >;
+};
+
+export async function POST(req: Request) {
   try {
     const session = await getAuthSession();
     if (!session?.user) {
@@ -18,30 +38,13 @@ export async function POST(req: Request, res: Response) {
     }
     const body = await req.json();
     const { topic, type, amount } = quizCreationSchema.parse(body);
-    const game = await prisma.game.create({
-      data: {
-        gameType: type,
-        timeStarted: new Date(),
-        userId: session.user.id,
-        topic,
-      },
-    });
-    await prisma.topicCount.upsert({
-      where: {
-        topic,
-      },
-      create: {
-        topic,
-        count: 1,
-      },
-      update: {
-        count: {
-          increment: 1,
-        },
-      },
+    const game = await createGameWithTopicCount({
+      userId: session.user.id,
+      topic,
+      type,
     });
 
-    const { data } = await axios.post(
+    const { data } = await axios.post<QuestionsApiResponse>(
       `${process.env.API_URL as string}/api/questions`,
       {
         amount,
@@ -50,51 +53,11 @@ export async function POST(req: Request, res: Response) {
       },
     );
 
-    if (type === "mcq") {
-      type mcqQuestion = {
-        question: string;
-        answer: string;
-        option1: string;
-        option2: string;
-        option3: string;
-      };
-
-      const manyData = data.questions.map((question: mcqQuestion) => {
-        // mix up the options lol
-        const options = [
-          question.option1,
-          question.option2,
-          question.option3,
-          question.answer,
-        ].sort(() => Math.random() - 0.5);
-        return {
-          question: question.question,
-          answer: question.answer,
-          options: JSON.stringify(options),
-          gameId: game.id,
-          questionType: "mcq",
-        };
-      });
-
-      await prisma.question.createMany({
-        data: manyData,
-      });
-    } else if (type === "open_ended") {
-      type openQuestion = {
-        question: string;
-        answer: string;
-      };
-      await prisma.question.createMany({
-        data: data.questions.map((question: openQuestion) => {
-          return {
-            question: question.question,
-            answer: question.answer,
-            gameId: game.id,
-            questionType: "open_ended",
-          };
-        }),
-      });
-    }
+    await saveGeneratedQuestionsForGame({
+      gameId: game.id,
+      type,
+      questions: data.questions,
+    });
 
     return NextResponse.json({ gameId: game.id }, { status: 200 });
   } catch (error) {
@@ -115,7 +78,7 @@ export async function POST(req: Request, res: Response) {
     }
   }
 }
-export async function GET(req: Request, res: Response) {
+export async function GET(req: Request) {
   try {
     const session = await getAuthSession();
     if (!session?.user) {
@@ -137,14 +100,7 @@ export async function GET(req: Request, res: Response) {
       );
     }
 
-    const game = await prisma.game.findUnique({
-      where: {
-        id: gameId,
-      },
-      include: {
-        questions: true,
-      },
-    });
+    const game = await getGameWithQuestions(gameId);
     if (!game) {
       return NextResponse.json(
         { error: "Game not found." },

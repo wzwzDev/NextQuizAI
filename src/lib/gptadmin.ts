@@ -1,8 +1,21 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "The OPENAI_API_KEY environment variable is missing or empty.",
+    );
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+
+  return openaiClient;
+}
 
 interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
@@ -18,13 +31,9 @@ export async function strict_output(
   temperature: number = 1,
   num_tries: number = 3,
   verbose: boolean = false,
-): Promise<
-  {
-    question: string;
-    answer: string;
-  }[]
-> {
+): Promise<any> {
   try {
+    const openai = getOpenAIClient();
     const list_input: boolean = Array.isArray(user_prompt);
     const dynamic_elements: boolean = /<.*?>/.test(JSON.stringify(output_format));
     const list_output: boolean = /\[.*?\]/.test(JSON.stringify(output_format));
@@ -74,44 +83,51 @@ export async function strict_output(
       }
 
       try {
-        let output: any = JSON.parse(res);
-
-        // Always treat output as an array for iteration
-        if (!Array.isArray(output)) {
-          output = [output];
-        }
+        const parsedOutput: unknown = JSON.parse(res);
+        const output = Array.isArray(parsedOutput)
+          ? parsedOutput
+          : [parsedOutput];
 
         for (let index = 0; index < output.length; index++) {
           for (const key in output_format) {
             if (/<.*?>/.test(key)) continue;
-            if (!(key in output[index])) {
+            if (!(key in (output[index] as Record<string, unknown>))) {
               throw new Error(`${key} not in json output`);
             }
             if (Array.isArray(output_format[key])) {
               const choices = output_format[key] as string[];
-              if (Array.isArray(output[index][key])) {
-                output[index][key] = output[index][key][0];
-              }
-              if (!choices.includes(output[index][key]) && default_category) {
-                output[index][key] = default_category;
+              if (Array.isArray((output[index] as Record<string, unknown>)[key])) {
+                (output[index] as Record<string, unknown>)[key] = ((output[index] as Record<string, unknown>)[key] as unknown[])[0];
               }
               if (
-                typeof output[index][key] === "string" &&
-                output[index][key].includes(":")
+                (!choices.includes(
+                  (output[index] as Record<string, string>)[key],
+                ) ||
+                  typeof (output[index] as Record<string, string>)[key] !==
+                    "string") &&
+                default_category
               ) {
-                output[index][key] = output[index][key].split(":")[0];
+                (output[index] as Record<string, unknown>)[key] = default_category;
+              }
+              if (
+                typeof (output[index] as Record<string, unknown>)[key] === "string" &&
+                ((output[index] as Record<string, unknown>)[key] as string).includes(":")
+              ) {
+                (output[index] as Record<string, unknown>)[key] = (
+                  (output[index] as Record<string, unknown>)[key] as string
+                ).split(":")[0];
               }
             }
           }
           if (output_value_only) {
-            output[index] = Object.values(output[index]);
-            if (output[index].length === 1) {
-              output[index] = output[index][0];
+            output[index] = Object.values(output[index] as Record<string, unknown>);
+            if ((output[index] as unknown[]).length === 1) {
+              output[index] = (output[index] as unknown[])[0];
             }
           }
         }
 
-        return output;
+        return output as any;
       } catch (e) {
         error_msg = `\n\nResult: ${res}\n\nError message: ${e}`;
         console.log("An exception occurred:", e);
@@ -120,7 +136,7 @@ export async function strict_output(
     }
 
     return [];
-  } catch (e) {
+  } catch {
     // Catch OpenAI errors and any other unexpected errors
     return [];
   }

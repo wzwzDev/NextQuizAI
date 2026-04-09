@@ -23,6 +23,10 @@ type Props = {
   game: Game & { questions: Pick<Question, "id" | "options" | "question">[] };
 };
 
+type CheckAnswerResponse = {
+  isCorrect: boolean;
+};
+
 const MCQ = ({ game }: Props) => {
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const [hasEnded, setHasEnded] = React.useState(false);
@@ -65,13 +69,20 @@ const MCQ = ({ game }: Props) => {
       .map(([, value]) => value);
   }, [currentQuestion]);
   const { toast } = useToast();
-  const { mutate: checkAnswer, status: checkAnswerStatus } = useMutation({
+  const { mutate: checkAnswer, status: checkAnswerStatus } = useMutation<
+    CheckAnswerResponse,
+    Error,
+    void
+  >({
     mutationFn: async () => {
       const payload: z.infer<typeof checkAnswerSchema> = {
         questionId: currentQuestion.id,
         userInput: options[selectedChoice],
       };
-      const response = await axios.post(`/api/checkAnswer`, payload);
+      const response = await axios.post<CheckAnswerResponse>(
+        `/api/checkAnswer`,
+        payload,
+      );
       return response.data;
     },
   });

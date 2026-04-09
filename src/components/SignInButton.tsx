@@ -8,6 +8,7 @@ type Props = { text: string };
 const SignInButton = ({ text }: Props) => {
   return (
     <Button
+      type="button"
       onClick={() => {
         signIn("google", { prompt: "select_account" }).catch(console.error);
       }}

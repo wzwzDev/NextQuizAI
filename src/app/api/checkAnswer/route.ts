@@ -1,10 +1,9 @@
-import { prisma } from "@/lib/db";
 import { checkAnswerSchema } from "@/schemas/questions";
+import { gradeAndSaveAnswer } from "@/lib/services/answerEvaluationService";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import stringSimilarity from "string-similarity";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   let body;
   try {
     body = await req.json();
@@ -25,52 +24,8 @@ export async function POST(req: Request, res: Response) {
 
   try {
     const { questionId, userInput } = checkAnswerSchema.parse(body);
-    const question = await prisma.question.findUnique({
-      where: { id: questionId },
-    });
-    if (!question) {
-      return NextResponse.json(
-        { message: "Question not found" },
-        { status: 404 }
-      );
-    }
-
-    await prisma.question.update({
-      where: { id: questionId },
-      data: { userAnswer: userInput },
-    });
-
-    if (question.questionType === "mcq") {
-      const isCorrect =
-        question.answer.toLowerCase().trim() === userInput.toLowerCase().trim();
-      await prisma.question.update({
-        where: { id: questionId },
-        data: { isCorrect },
-      });
-      return NextResponse.json({ isCorrect });
-    } else if (question.questionType === "open_ended") {
-      let percentageSimilar = stringSimilarity.compareTwoStrings(
-        question.answer.toLowerCase().trim(),
-        userInput.toLowerCase().trim()
-      );
-      // Set a threshold (e.g., 0.8 = 80%)
-      const threshold = 0.8;
-      if (percentageSimilar < threshold) {
-        percentageSimilar = 0;
-      } else {
-        percentageSimilar = Math.round(percentageSimilar * 100);
-      }
-      await prisma.question.update({
-        where: { id: questionId },
-        data: { percentageCorrect: percentageSimilar },
-      });
-      return NextResponse.json({ percentageSimilar });
-    }
-    // If questionType is not recognized
-    return NextResponse.json(
-      { message: "Invalid question type" },
-      { status: 400 }
-    );
+    const result = await gradeAndSaveAnswer(questionId, userInput);
+    return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

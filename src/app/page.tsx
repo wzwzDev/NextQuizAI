@@ -12,9 +12,13 @@ import { prisma } from "@/lib/db";
 export default async function Home() {
   const session = await getServerSession();
   if (session?.user) {
+    const email = session.user.email;
+    if (!email) {
+      redirect("/dashboard");
+    }
     // Fetch user from DB to check banned status
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email },
       select: { banned: true },
     });
     if (user?.banned) {
