@@ -30,7 +30,7 @@ const UserManagement = () => {
         setUsers([]);
         setError(data.error || "Failed to load users");
       }
-    } catch (err) {
+    } catch {
       setUsers([]);
       setError("Failed to load users");
     }

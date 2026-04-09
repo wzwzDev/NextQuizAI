@@ -61,7 +61,7 @@ export async function strict_output(
       ],
     });
 
-    let content = response.choices[0].message?.content ?? "";
+    const content = response.choices[0].message?.content ?? "";
 
     if (verbose) {
       console.log(

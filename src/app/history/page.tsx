@@ -6,11 +6,8 @@ import React from "react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { LucideLayoutDashboard } from "lucide-react";
-import { cookies } from "next/headers";
 
-type Props = {};
-
-const History = async (props: Props) => {
+const History = async () => {
   const session = await getAuthSession();
   const isAdmin = session?.user?.isAdmin === true;
   if (!session?.user && !isAdmin) {

@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json();
-    let { title, category, difficulty, questions, fileName } = body;
+    let { title } = body;
+    const { category, difficulty, questions, fileName } = body;
 
     // If no title, use fileName without extension, or fallback to "Untitled Quiz"
     if ((!title || title.trim() === "") && fileName) {
@@ -74,7 +75,7 @@ export async function DELETE(req: NextRequest) {
   try {
     await removeAdminQuiz(id);
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to delete quiz" },
       { status: 500 },

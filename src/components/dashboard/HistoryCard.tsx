@@ -2,11 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { History, FileClock } from "lucide-react";
+import { FileClock } from "lucide-react";
 
-type Props = {};
-
-const HistoryCard = (props: Props) => {
+const HistoryCard = () => {
   const router = useRouter();
   return (
     <Card

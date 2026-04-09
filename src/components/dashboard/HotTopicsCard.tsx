@@ -9,9 +9,7 @@ import {
 import WordCloud from "../WordCloud";
 import { prisma } from "@/server/core/db";
 
-type Props = {};
-
-const HotTopicsCard = async (props: Props) => {
+const HotTopicsCard = async () => {
   const topics = await prisma.topicCount.findMany({});
   const formattedTopics = topics.map((topic) => {
     return {

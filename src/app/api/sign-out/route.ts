@@ -1,20 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/core/auth";
 import { markUserOfflineByEmail } from "@/server/services/userService";
 
-export async function POST(req: NextRequest) {
+function getErrorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : undefined;
+}
+
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.email) {
       await markUserOfflineByEmail(session.user.email);
     }
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Sign-out error:", error);
+    const errorCode = getErrorCode(error);
 
     // Prisma error: user not found
-    if (error.code === "P2025") {
+    if (errorCode === "P2025") {
       return NextResponse.json(
         {
           success: false,
@@ -25,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Database connection error
-    if (error.code === "ECONNREFUSED") {
+    if (errorCode === "ECONNREFUSED") {
       return NextResponse.json(
         {
           success: false,

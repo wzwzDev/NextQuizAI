@@ -10,6 +10,9 @@ interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
 }
 
+type JsonRecord = Record<string, unknown>;
+type StrictOutputParsed = JsonRecord | JsonRecord[] | string | number | boolean | null;
+
 function buildOutputFormatPrompt(
   output_format: OutputFormat,
   list_output: boolean,
@@ -35,24 +38,25 @@ function buildOutputFormatPrompt(
 }
 
 function normalizeOutputValue(
-  value: any,
+  value: unknown,
   choices: string[],
   default_category: string,
 ) {
-  if (Array.isArray(value)) {
-    value = value[0];
+  let normalized: unknown = value;
+  if (Array.isArray(normalized)) {
+    normalized = normalized[0];
   }
-  if (default_category && !choices.includes(value)) {
-    value = default_category;
+  if (default_category && !choices.includes(String(normalized))) {
+    normalized = default_category;
   }
-  if (typeof value === "string" && value.includes(":")) {
-    value = value.split(":")[0];
+  if (typeof normalized === "string" && normalized.includes(":")) {
+    normalized = normalized.split(":")[0];
   }
-  return value;
+  return normalized;
 }
 
 function validateAndNormalizeOutput(
-  output: any,
+  output: StrictOutputParsed,
   output_format: OutputFormat,
   default_category: string,
   output_value_only: boolean,
@@ -73,7 +77,13 @@ function validateAndNormalizeOutput(
   }
 
   // The rest of your normalization logic
-  const outputArr = list_input ? output : [output];
+  if (typeof output !== "object" || output === null) {
+    throw new Error("Output format is not a JSON object");
+  }
+
+  const outputArr: JsonRecord[] = list_input
+    ? (output as JsonRecord[])
+    : [output as JsonRecord];
   for (let index = 0; index < outputArr.length; index++) {
     for (const key in output_format) {
       if (key.includes("<") && key.includes(">")) continue;
@@ -124,7 +134,7 @@ export async function strict_output(
   temperature: number = 1,
   num_tries: number = 3,
   verbose: boolean = false,
-): Promise<any> {
+): Promise<unknown> {
   const list_input = Array.isArray(user_prompt);
   const dynamic_elements =
     JSON.stringify(output_format).includes("<") &&
@@ -181,7 +191,7 @@ export async function strict_output(
     }
 
     try {
-      let output = JSON.parse(res);
+      const output = JSON.parse(res) as StrictOutputParsed;
       if (list_input && !Array.isArray(output)) {
         throw new Error("Output format not in a list of json");
       }

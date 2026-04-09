@@ -2,11 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { BrainCircuit, BotMessageSquare } from "lucide-react";
+import { BotMessageSquare } from "lucide-react";
 
-type Props = {};
-
-const QuizMeCard = (props: Props) => {
+const QuizMeCard = () => {
   const router = useRouter();
   return (
     <Card

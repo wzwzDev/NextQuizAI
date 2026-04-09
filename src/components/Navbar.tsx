@@ -4,8 +4,6 @@ import UserAccountNav from "./UserAccountNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { getAuthSession } from "@/server/core/auth";
 import SignInButton from "./SignInButton";
-import SignOutButton from "./SignOutButton";
-import { UserCircle2 } from "lucide-react";
 
 const Navbar = async () => {
   const session = await getAuthSession();

@@ -12,9 +12,7 @@ import { redirect } from "next/navigation";
 import HistoryComponent from "../HistoryComponent";
 import { prisma } from "@/server/core/db";
 
-type Props = {};
-
-const RecentActivityCard = async (props: Props) => {
+const RecentActivityCard = async () => {
   const session = await getAuthSession();
   if (!session?.user) {
     return redirect("/");

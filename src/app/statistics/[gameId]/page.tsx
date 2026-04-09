@@ -37,7 +37,7 @@ const Statistics = async (props: Props) => {
   if (questionCount === 0) {
     accuracy = 0;
   } else if (game.gameType === "mcq") {
-    let totalCorrect = game.questions.reduce((acc, question) => {
+    const totalCorrect = game.questions.reduce((acc, question) => {
       if (question.isCorrect) {
         return acc + 1;
       }
@@ -45,7 +45,7 @@ const Statistics = async (props: Props) => {
     }, 0);
     accuracy = Math.round((totalCorrect / questionCount) * 100 * 100) / 100;
   } else if (game.gameType === "open_ended") {
-    let totalPercentage = game.questions.reduce((acc, question) => {
+    const totalPercentage = game.questions.reduce((acc, question) => {
       return acc + (question.percentageCorrect ?? 0);
     }, 0);
     accuracy = Math.round((totalPercentage / questionCount) * 100) / 100;

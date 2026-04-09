@@ -7,14 +7,12 @@ import React from "react";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
 import { cookies } from "next/headers";
 
-type Props = {};
-
 export const metadata = {
   title: "Dashboard | Quizzzy",
   description: "Quiz yourself on anything!",
 };
 
-const Dasboard = async (props: Props) => {
+const Dasboard = async () => {
   const session = await getAuthSession();
   const cookieStore = await cookies();
   const isAdmin = cookieStore.get("admin_auth")?.value === "1";

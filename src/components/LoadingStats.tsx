@@ -16,7 +16,7 @@ const LoadingStats = () => {
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      let randomIndex = Math.floor(Math.random() * loadingTexts.length);
+      const randomIndex = Math.floor(Math.random() * loadingTexts.length);
       setLoadingText(loadingTexts[randomIndex]);
     }, 2000);
     return () => clearInterval(interval);

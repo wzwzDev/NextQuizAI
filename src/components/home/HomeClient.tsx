@@ -11,8 +11,16 @@ const categories = [
   { name: "Programming", img: "/categories/image--programming.svg" },
 ];
 
+type Quiz = {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: string;
+  questions?: unknown[];
+};
+
 export default function HomeClient() {
-  const [quizzes, setQuizzes] = useState([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -26,8 +34,8 @@ export default function HomeClient() {
     setError(null);
     fetch("/api/quiz-review")
       .then((res) => res.json())
-      .then((data) => {
-        setQuizzes(data.quizzes || []);
+      .then((data: { quizzes?: Quiz[] }) => {
+        setQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []);
         setLoading(false);
       })
       .catch(() => {
@@ -37,7 +45,7 @@ export default function HomeClient() {
   }, []);
 
   // Filtering logic for category and difficulty
-  const filteredQuizzes = quizzes.filter((quiz: any) => {
+  const filteredQuizzes = quizzes.filter((quiz) => {
     const categoryMatch =
       !selectedCategory || quiz.category === selectedCategory;
     const difficultyMatch =
@@ -89,7 +97,7 @@ export default function HomeClient() {
 
       {/* Quiz List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filteredQuizzes.map((quiz: any) => {
+        {filteredQuizzes.map((quiz) => {
           const cat = categories.find((c) => c.name === quiz.category);
           return (
             <div
