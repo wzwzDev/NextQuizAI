@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { authOptions } from "@/server/core/auth";
 import {
   createApprovedAdminQuiz,
   getAdminQuizzes,
   removeAdminQuiz,
-} from "@/lib/services/adminQuizService";
+} from "@/server/services/adminQuizService";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);

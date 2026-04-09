@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 import { Prisma } from "@prisma/client";
 
 export async function createUserQuizAttempt(params: {

@@ -1,6 +1,6 @@
 import MCQ from "@/components/MCQ";
-import { prisma } from "@/lib/db";
-import { getAuthSession } from "@/lib/nextauth";
+import { prisma } from "@/server/core/db";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 import React from "react";
 

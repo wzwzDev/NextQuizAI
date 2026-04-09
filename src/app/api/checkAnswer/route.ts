@@ -1,5 +1,5 @@
 import { checkAnswerSchema } from "@/schemas/questions";
-import { gradeAndSaveAnswer } from "@/lib/services/answerEvaluationService";
+import { gradeAndSaveAnswer } from "@/server/services/answerEvaluationService";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 

@@ -1,5 +1,5 @@
 import HistoryComponent from "@/components/HistoryComponent";
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import React from "react";

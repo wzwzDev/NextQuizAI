@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { authOptions } from "@/server/core/auth";
 import {
   getUserQuizStats,
   saveUserQuizAttempt,
-} from "@/lib/services/userQuizAttemptService";
+} from "@/server/services/userQuizAttemptService";
 
 export async function POST(req: NextRequest) {
   try {

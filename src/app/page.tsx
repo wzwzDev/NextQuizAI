@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 export default async function Home() {
   const session = await getServerSession();
   if (session?.user) {

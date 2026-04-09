@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 
 export type CreateAdminQuizInput = {
   title: string;

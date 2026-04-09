@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/db";
 import {
+  createQuestionsForGame,
   createGame,
   findGameById,
   findGameWithQuestionsById,
   markGameEnded,
-} from "@/lib/repositories/gameRepository";
-import { incrementTopicCount } from "@/lib/repositories/topicRepository";
+} from "@/server/repositories/gameRepository";
+import { incrementTopicCount } from "@/server/repositories/topicRepository";
 import { GameType } from "@prisma/client";
 
 type McqQuestion = {
@@ -58,7 +58,7 @@ export async function saveGeneratedQuestionsForGame(params: {
       };
     });
 
-    await prisma.question.createMany({ data: manyData });
+    await createQuestionsForGame(manyData);
     return;
   }
 
@@ -72,7 +72,7 @@ export async function saveGeneratedQuestionsForGame(params: {
     };
   });
 
-  await prisma.question.createMany({ data: manyData });
+  await createQuestionsForGame(manyData);
 }
 
 export async function getGameWithQuestions(gameId: string) {

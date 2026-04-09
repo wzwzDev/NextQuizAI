@@ -1,12 +1,12 @@
-import { authOptions, getAuthSession } from "@/lib/nextauth";
+import { authOptions, getAuthSession } from "@/server/core/auth";
 import * as nextAuth from "next-auth";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
 }));
 
-jest.mock("@/lib/db", () => ({
+jest.mock("@/server/core/db", () => ({
   prisma: {
     user: {
       findUnique: jest.fn(),

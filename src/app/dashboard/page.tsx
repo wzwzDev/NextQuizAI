@@ -1,7 +1,7 @@
 import HistoryCard from "@/components/dashboard/HistoryCard";
 import QuizMeCard from "@/components/dashboard/QuizMeCard";
 import HotTopicsCard from "@/components/dashboard/HotTopicsCard";
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 import React from "react";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";

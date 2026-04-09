@@ -13,7 +13,7 @@ jest.mock("openai", () => {
   };
 });
 
-import { strict_output } from "@/lib/gptadmin";
+import { strict_output } from "@/server/ai/gptadmin";
 
 describe("gptadmin.strict_output", () => {
   it("returns an array with normalized answers in choices", async () => {

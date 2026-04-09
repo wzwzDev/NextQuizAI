@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
-import { setUserBanned } from "@/lib/services/userService";
+import { authOptions } from "@/server/core/auth";
+import { setUserBanned } from "@/server/services/userService";
 
 export async function POST(
   req: NextRequest,

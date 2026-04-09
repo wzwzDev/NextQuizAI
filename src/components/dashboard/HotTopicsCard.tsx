@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import WordCloud from "../WordCloud";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 
 type Props = {};
 

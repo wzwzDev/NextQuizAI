@@ -1,11 +1,11 @@
 import { POST, GET } from "@/app/api/game/route";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 // Mock getAuthSession
-jest.mock("@/lib/nextauth", () => ({
+jest.mock("@/server/core/auth", () => ({
   getAuthSession: jest.fn(),
 }));
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 
 // Mock axios
 jest.mock("axios");
@@ -125,7 +125,7 @@ describe("/api/game Route Handler", () => {
 
   it("returns game with questions (GET)", async () => {
     const res = await callGet(game?.id, user);
-    expect([200, 400]).toContain(res.status); // Your handler returns 400, but 200 is more standard
+    expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.game).toBeDefined();
     expect(json.game.questions).toBeDefined();

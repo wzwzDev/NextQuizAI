@@ -1,4 +1,4 @@
-import { parseAndGenerateQuestions } from "@/lib/parseAndGenerateQuestions";
+import { parseAndGenerateQuestions } from "@/server/question-generation/parseAndGenerateQuestions";
 jest.setTimeout(30000);
 describe("parseAndGenerateQuestions", () => {
   const strict_output = jest.fn(async (content) => [

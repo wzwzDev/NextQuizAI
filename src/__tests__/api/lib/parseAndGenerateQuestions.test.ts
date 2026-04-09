@@ -1,4 +1,4 @@
-import { parseAndGenerateQuestions } from "@/lib/parseAndGenerateQuestions";
+import { parseAndGenerateQuestions } from "@/server/question-generation/parseAndGenerateQuestions";
 
 describe("parseAndGenerateQuestions", () => {
   it("throws if no file", async () => {

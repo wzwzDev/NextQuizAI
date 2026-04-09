@@ -1,10 +1,10 @@
 import React from "react";
 
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 import QuizCreation from "@/components/forms/QuizCreation";
 export const metadata = {
-  title: "Quiz | QuizUPM",
+  title: "Quiz | QuizUPMm",
   description: "Quiz yourself on anything!",
 };
 

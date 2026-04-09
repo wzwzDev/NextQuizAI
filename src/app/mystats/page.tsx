@@ -1,5 +1,5 @@
 import UserQuizStats from "@/components/UserQuizStats";
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 
 export default async function MyStatsPage() {

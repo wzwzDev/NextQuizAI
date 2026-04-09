@@ -7,10 +7,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import { redirect } from "next/navigation";
 import HistoryComponent from "../HistoryComponent";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 
 type Props = {};
 

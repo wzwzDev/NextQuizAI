@@ -6,7 +6,7 @@ import {
   updateUserBan,
   updateUserOnlineByEmail,
   updateUserRevoke,
-} from "@/lib/repositories/userRepository";
+} from "@/server/repositories/userRepository";
 
 export async function getUsersForAdmin() {
   return listUsersForAdmin();

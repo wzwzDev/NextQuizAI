@@ -263,3 +263,15 @@ flowchart TD
         AI --> Generation[🧠 Quiz Generation]
     end
 ```
+
+### Backend Folder Structure
+
+```text
+src/
+   server/
+      core/                 # auth and database bootstrap
+      ai/                   # OpenAI clients and strict output adapters
+      repositories/         # Prisma-only data access
+      services/             # business/application logic
+      question-generation/  # question parsing/generation helpers
+```

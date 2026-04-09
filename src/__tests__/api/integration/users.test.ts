@@ -1,15 +1,15 @@
 import { GET } from "@/app/api/users/route";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 // Mock getServerSession and authOptions
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
 }));
 import { getServerSession } from "next-auth";
-jest.mock("@/lib/nextauth", () => ({
+jest.mock("@/server/core/auth", () => ({
   authOptions: {},
 }));
-import { authOptions } from "@/lib/nextauth";
+import { authOptions } from "@/server/core/auth";
 
 describe("/api/users Route Handler", () => {
   let adminUser: any;

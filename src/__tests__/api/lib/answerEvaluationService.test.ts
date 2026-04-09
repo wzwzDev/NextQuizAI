@@ -1,4 +1,4 @@
-jest.mock("@/lib/openaiClient", () => ({
+jest.mock("@/server/ai/openaiClient", () => ({
   canUseEmbeddings: jest.fn(),
   getEmbedding: jest.fn(),
 }));
@@ -6,8 +6,8 @@ jest.mock("@/lib/openaiClient", () => ({
 import {
   cosineSimilarity,
   evaluateOpenEndedSimilarity,
-} from "@/lib/services/answerEvaluationService";
-import { canUseEmbeddings, getEmbedding } from "@/lib/openaiClient";
+} from "@/server/services/answerEvaluationService";
+import { canUseEmbeddings, getEmbedding } from "@/server/ai/openaiClient";
 
 const mockedCanUseEmbeddings = canUseEmbeddings as jest.Mock;
 const mockedGetEmbedding = getEmbedding as jest.Mock;

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getApprovedQuiz } from "@/lib/services/adminQuizService";
+import { getApprovedQuiz } from "@/server/services/adminQuizService";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id: quizId } = await params;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const quizId = searchParams.get("id");
 
   if (!quizId) {
     return NextResponse.json(

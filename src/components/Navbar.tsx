@@ -2,7 +2,7 @@ import Link from "next/link";
 import React from "react";
 import UserAccountNav from "./UserAccountNav";
 import { ThemeToggle } from "./ThemeToggle";
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import SignInButton from "./SignInButton";
 import SignOutButton from "./SignOutButton";
 import { UserCircle2 } from "lucide-react";

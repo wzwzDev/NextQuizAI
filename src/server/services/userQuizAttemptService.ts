@@ -1,7 +1,7 @@
 import {
   createUserQuizAttempt,
   listUserQuizAttemptsByUserId,
-} from "@/lib/repositories/userQuizAttemptRepository";
+} from "@/server/repositories/userQuizAttemptRepository";
 
 export async function saveUserQuizAttempt(params: {
   userId: string;

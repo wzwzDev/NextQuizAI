@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/db";
-import { GameType } from "@prisma/client";
+import { prisma } from "@/server/core/db";
+import { GameType, Prisma } from "@prisma/client";
 
 export async function createGame(params: {
   userId: string;
@@ -36,4 +36,10 @@ export async function markGameEnded(gameId: string) {
     where: { id: gameId },
     data: { timeEnded: new Date() },
   });
+}
+
+export async function createQuestionsForGame(
+  manyData: Prisma.QuestionCreateManyInput[],
+) {
+  return prisma.question.createMany({ data: manyData });
 }

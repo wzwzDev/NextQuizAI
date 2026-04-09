@@ -1,9 +1,9 @@
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
 import {
   createGameWithTopicCount,
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
-} from "@/lib/services/gameService";
+} from "@/server/services/gameService";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -113,7 +113,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { game },
       {
-        status: 400,
+        status: 200,
       },
     );
   } catch (error) {

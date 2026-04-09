@@ -1,4 +1,4 @@
-import { strict_output } from "@/lib/gpt";
+import { strict_output } from "@/server/ai/gpt";
 
 export async function generateQuestions({
   amount,

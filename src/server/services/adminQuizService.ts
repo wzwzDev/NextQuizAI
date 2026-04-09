@@ -4,7 +4,7 @@ import {
   findAdminQuizzes,
   findAllUserQuizAttempts,
   findApprovedQuizById,
-} from "@/lib/repositories/adminQuizRepository";
+} from "@/server/repositories/adminQuizRepository";
 
 export async function createApprovedAdminQuiz(input: {
   title?: string;

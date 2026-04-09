@@ -5,7 +5,7 @@ import {
   type DefaultSession,
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 
 const resolvedAuthSecret =
   process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;

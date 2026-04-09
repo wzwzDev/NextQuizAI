@@ -7,7 +7,7 @@ describe("prisma client singleton", () => {
   it("creates a new PrismaClient in production", () => {
     (process.env as any).NODE_ENV = "production";
     jest.resetModules();
-    const { prisma } = require("@/lib/db");
+    const { prisma } = require("@/server/core/db");
     // Only check for a PrismaClient method:
     expect(typeof prisma.$connect).toBe("function");
   });
@@ -15,8 +15,8 @@ describe("prisma client singleton", () => {
   it("reuses global PrismaClient in development", () => {
     (process.env as any).NODE_ENV = "development";
     jest.resetModules();
-    const { prisma: prisma1 } = require("@/lib/db");
-    const { prisma: prisma2 } = require("@/lib/db");
+    const { prisma: prisma1 } = require("@/server/core/db");
+    const { prisma: prisma2 } = require("@/server/core/db");
     expect(prisma1).toBe(prisma2);
   });
 
@@ -25,7 +25,7 @@ describe("prisma client singleton", () => {
     jest.resetModules();
     const fake = { test: "cached" };
     (global as any).cachedPrisma = fake;
-    const { prisma } = require("@/lib/db");
+    const { prisma } = require("@/server/core/db");
     expect(prisma).toBe(fake);
   });
 });

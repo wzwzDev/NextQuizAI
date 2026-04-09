@@ -13,7 +13,7 @@ jest.mock("openai", () => {
   };
 });
 
-import * as gpt from "@/lib/gpt";
+import * as gpt from "@/server/ai/gpt";
 
 describe("gpt.strict_output", () => {
   it("returns an array (mocked)", async () => {

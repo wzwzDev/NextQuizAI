@@ -1,5 +1,5 @@
-import { getAuthSession } from "@/lib/nextauth";
-import { prisma } from "@/lib/db";
+import { getAuthSession } from "@/server/core/auth";
+import { prisma } from "@/server/core/db";
 import { redirect } from "next/navigation";
 import HomeClient from "@/components/home/HomeClient";
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 import { Clock, CopyCheck, Edit2 } from "lucide-react";
 import Link from "next/link";
 import React from "react";

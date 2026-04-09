@@ -1,11 +1,11 @@
 import stringSimilarity from "string-similarity";
-import { canUseEmbeddings, getEmbedding } from "@/lib/openaiClient";
+import { canUseEmbeddings, getEmbedding } from "@/server/ai/openaiClient";
 import {
   findQuestionById,
   saveMcqResult,
   saveOpenEndedResult,
   saveUserAnswer,
-} from "@/lib/repositories/questionRepository";
+} from "@/server/repositories/questionRepository";
 
 const LEXICAL_THRESHOLD = 0.8;
 const SEMANTIC_THRESHOLD = 0.78;
