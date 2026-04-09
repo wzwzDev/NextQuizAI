@@ -35,14 +35,17 @@ export default function QuizPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/start-quiz/${quizId}`)
-      .then((res) => res.json())
+    fetch(`/api/start-quiz?id=${encodeURIComponent(quizId)}`)
+      .then(async (res) => {
+        const data = await res.json();
+        return { ok: res.ok, data };
+      })
       .then((data) => {
-        if (data && Array.isArray(data.quizzes) && data.quizzes.length > 0) {
-          setQuiz(data.quizzes[0]);
-          setUserAnswers(Array(data.quizzes[0].questions.length).fill(""));
+        if (data.ok && data.data?.quiz) {
+          setQuiz(data.data.quiz);
+          setUserAnswers(Array(data.data.quiz.questions.length).fill(""));
         } else {
-          setError("Quiz not found.");
+          setError(data.data?.error || "Quiz not found.");
         }
       })
       .catch(() => setError("Failed to load quiz."))
