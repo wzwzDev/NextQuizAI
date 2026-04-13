@@ -22,8 +22,10 @@ describe("/api/game Route Handler", () => {
   });
 
   afterAll(async () => {
-    await prisma.game.deleteMany({ where: { userId: user.id } });
-    await prisma.user.delete({ where: { id: user.id } });
+    if (user?.id) {
+      await prisma.game.deleteMany({ where: { userId: user.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+    }
     await prisma.$disconnect();
   });
 

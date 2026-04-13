@@ -17,7 +17,9 @@ describe("/api/sign-out Route Handler", () => {
   });
 
   afterAll(async () => {
-    await prisma.user.delete({ where: { id: user.id } });
+    if (user?.id) {
+      await prisma.user.delete({ where: { id: user.id } });
+    }
     await prisma.$disconnect();
   });
 

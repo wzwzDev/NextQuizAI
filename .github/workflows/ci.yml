@@ -15,9 +15,24 @@ jobs:
   sonarqube:
     name: SonarCloud
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,8 +65,16 @@ jobs:
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
       - name: Run frontend tests and collect coverage
         run: npx jest --config jest.frontend.config.js --coverage --coverageDirectory=coverage-frontend
+      - name: Prisma generate
+        run: npx prisma generate
+      - name: Prisma migrate (test DB)
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
       - name: Run backend tests and collect coverage
         run: npx jest --config jest.backend.config.js --coverage --coverageDirectory=coverage-backend --runInBand
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
       - name: Debug coverage files
         run: |
          ls -lh coverage-frontend
