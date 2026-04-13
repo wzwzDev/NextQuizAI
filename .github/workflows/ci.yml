@@ -66,6 +66,13 @@ jobs:
         run: npx jest --config jest.frontend.config.js --coverage --coverageDirectory=coverage-frontend
       - name: Prisma generate
         run: npx prisma generate
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            mysqladmin ping -h 127.0.0.1 -uroot -proot && exit 0
+            sleep 2
+          done
+          exit 1
       - name: Prisma migrate (test DB)
         run: npx prisma migrate deploy
         env:
@@ -74,6 +81,7 @@ jobs:
         run: npx jest --config jest.backend.config.js --coverage --coverageDirectory=coverage-backend --runInBand
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
+          DOTENV_CONFIG_PATH: .env.test
       - name: Debug coverage files
         run: |
          ls -lh coverage-frontend

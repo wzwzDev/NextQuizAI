@@ -1,14 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 //import "server-only";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var cachedPrisma: PrismaClient | undefined;
-}
+const globalForPrisma = globalThis as typeof globalThis & {
+  cachedPrisma?: PrismaClient;
+};
 
 const prisma =
-  process.env.NODE_ENV === "production"
-    ? new PrismaClient()
-    : global.cachedPrisma || (global.cachedPrisma = new PrismaClient());
+  globalForPrisma.cachedPrisma ??
+  new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.cachedPrisma = prisma;
+}
 
 export { prisma };

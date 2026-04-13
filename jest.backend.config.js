@@ -1,8 +1,7 @@
-require('dotenv').config({ path: '.env.test' });
-
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
+  setupFiles: ["<rootDir>/jest.env.setup.ts"],
   testMatch: ["**/__tests__/api/**/*.test.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
