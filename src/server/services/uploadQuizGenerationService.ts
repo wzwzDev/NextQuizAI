@@ -1,7 +1,14 @@
 import { strict_output } from "@/server/ai/gptadmin";
+import { getOpenAIClient } from "@/server/ai/openaiClient";
 
 const MIN_CONTENT_LENGTH = 10;
 const DEFAULT_UPLOAD_MODEL = process.env.OPENAI_QUIZ_MODEL?.trim() || "gpt-4o-mini";
+const DEFAULT_PDF_OCR_MODEL = process.env.OPENAI_PDF_OCR_MODEL?.trim() || "gpt-4o-mini";
+const JSON_MIME = "application/json";
+const TEXT_MIME = "text/plain";
+const PDF_MIME = "application/pdf";
+const MIN_OCR_WORD_COUNT = 6;
+const MIN_OCR_ALPHA_WORD_RATIO = 0.45;
 
 type GeneratedQuestion = {
   question: string;
@@ -13,21 +20,139 @@ type RawGeneratedQuestion = {
   answer?: unknown;
 };
 
+function isJsonFile(file: File) {
+  return file.type === JSON_MIME || file.name.toLowerCase().endsWith(".json");
+}
+
+function isTextFile(file: File) {
+  return file.type === TEXT_MIME || file.name.toLowerCase().endsWith(".txt");
+}
+
+function isPdfFile(file: File) {
+  return file.type === PDF_MIME || file.name.toLowerCase().endsWith(".pdf");
+}
+
+function isLikelyReadableOcrText(text: string) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return false;
+  }
+
+  const words = normalized.split(" ").filter(Boolean);
+  if (words.length < MIN_OCR_WORD_COUNT) {
+    return false;
+  }
+
+  const alphaWords = words.filter((word) => /[A-Za-zÀ-ÖØ-öø-ÿ]{2,}/.test(word));
+  const alphaWordRatio = alphaWords.length / words.length;
+  return alphaWordRatio >= MIN_OCR_ALPHA_WORD_RATIO;
+}
+
+async function extractTextFromPdf(file: File): Promise<string> {
+  try {
+    const pdfJs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const loadingTask = pdfJs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+    const pdfDocument = await loadingTask.promise;
+
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+      const page = await pdfDocument.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+
+      const pageText = textContent.items
+        .map((item) => {
+          if (typeof item === "object" && item !== null && "str" in item) {
+            const value = (item as { str?: unknown }).str;
+            return typeof value === "string" ? value : "";
+          }
+          return "";
+        })
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (pageText) {
+        pages.push(pageText);
+      }
+    }
+
+    return pages.join("\n");
+  } catch {
+    throw new Error("Invalid PDF file.");
+  }
+}
+
+async function extractTextFromPdfWithOcr(file: File): Promise<string> {
+  const openai = getOpenAIClient();
+  const pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+
+  try {
+    const response = await openai.responses.create({
+      model: DEFAULT_PDF_OCR_MODEL,
+      temperature: 0,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text:
+                "Extract all readable text from this course PDF. Return plain text only without markdown, explanation, or summaries.",
+            },
+            {
+              type: "input_file",
+              filename: file.name || "course.pdf",
+              file_data: `data:application/pdf;base64,${pdfBase64}`,
+            },
+          ],
+        },
+      ],
+    });
+
+    return response.output_text?.trim() || "";
+  } catch {
+    throw new Error("PDF OCR failed.");
+  }
+}
+
 function ensureAcceptedFile(file: File) {
-  if (
-    file.type !== "application/json" &&
-    file.type !== "text/plain" &&
-    !file.name.endsWith(".json") &&
-    !file.name.endsWith(".txt")
-  ) {
-    throw new Error("Only JSON or TXT files are accepted.");
+  if (!isJsonFile(file) && !isTextFile(file) && !isPdfFile(file)) {
+    throw new Error("Only JSON, TXT, or PDF files are accepted.");
   }
 }
 
 async function extractCourseContent(file: File) {
+  if (isPdfFile(file)) {
+    let textFromPdf = "";
+    try {
+      textFromPdf = await extractTextFromPdf(file);
+    } catch {
+      // Some valid/scanned PDFs can fail low-level parsing in certain runtimes.
+      // In that case, fall back to OCR before surfacing an error.
+      textFromPdf = "";
+    }
+
+    if (textFromPdf.trim().length >= MIN_CONTENT_LENGTH) {
+      return textFromPdf;
+    }
+
+    const textFromOcr = await extractTextFromPdfWithOcr(file);
+    if (!textFromOcr.trim()) {
+      throw new Error("Could not extract readable text from PDF.");
+    }
+
+    if (!isLikelyReadableOcrText(textFromOcr)) {
+      throw new Error(
+        "Extracted PDF text quality is too low. Please upload a clearer PDF or a text-based file.",
+      );
+    }
+
+    return textFromOcr;
+  }
+
   const text = await file.text();
 
-  if (file.type === "application/json" || file.name.endsWith(".json")) {
+  if (isJsonFile(file)) {
     let jsonData: Record<string, unknown>;
     try {
       jsonData = JSON.parse(text);
@@ -92,7 +217,18 @@ Respond ONLY with a JSON array of 5 objects, each with BOTH "question" and "answ
   ...
 ]
 Do not include any explanation, markdown, or extra text. Only output the JSON array.
-If you cannot generate a question or answer, use an empty string for that field.
+Never return empty strings for "question" or "answer".
+Every object must include a non-empty "question" and a non-empty concise "answer".
+`;
+
+  const fallbackSystemPrompt = `
+You are a quiz generator. Create exactly 3 high-confidence short-answer question/answer pairs from the course content below.
+Use only facts that are explicitly present in the content.
+Each answer must be 1 to 6 words and non-empty.
+Course content:
+${courseContent}
+Return ONLY a valid JSON array of objects with keys "question" and "answer".
+Do not include markdown or extra commentary.
 `;
 
   const outputFormat = {
@@ -100,25 +236,33 @@ If you cannot generate a question or answer, use an empty string for that field.
     answer: "",
   };
 
-  let generated: unknown;
-  try {
-    generated = await strict_output(
-      systemPrompt,
-      "",
-      outputFormat,
-      "",
-      false,
-      DEFAULT_UPLOAD_MODEL,
-      0,
-      3,
-      false,
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown OpenAI error";
-    throw new Error(`OpenAI generation failed: ${message}`);
+  async function requestNormalizedQuestions(prompt: string) {
+    let generated: unknown;
+    try {
+      generated = await strict_output(
+        prompt,
+        "",
+        outputFormat,
+        "",
+        false,
+        DEFAULT_UPLOAD_MODEL,
+        0,
+        3,
+        false,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown OpenAI error";
+      throw new Error(`OpenAI generation failed: ${message}`);
+    }
+
+    return normalizeGeneratedQuestions(generated);
   }
 
-  const normalizedQuestions = normalizeGeneratedQuestions(generated);
+  let normalizedQuestions = await requestNormalizedQuestions(systemPrompt);
+  if (normalizedQuestions.length === 0) {
+    normalizedQuestions = await requestNormalizedQuestions(fallbackSystemPrompt);
+  }
+
   if (normalizedQuestions.length === 0) {
     throw new Error("No valid questions could be generated from the uploaded file.");
   }

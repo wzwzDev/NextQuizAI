@@ -1,4 +1,5 @@
 export * from "@/server/services/adminQuizService";
+export * from "@/server/services/adminQuizAttemptService";
 export * from "@/server/services/answerEvaluationService";
 export * from "@/server/services/gameService";
 export * from "@/server/services/questionGenerationService";

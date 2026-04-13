@@ -38,8 +38,12 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       const knownClientErrors = new Set([
-        "Only JSON or TXT files are accepted.",
+        "Only JSON, TXT, or PDF files are accepted.",
         "Invalid JSON file.",
+        "Invalid PDF file.",
+        "PDF OCR failed.",
+        "Could not extract readable text from PDF.",
+        "Extracted PDF text quality is too low. Please upload a clearer PDF or a text-based file.",
         "No course content found in JSON.",
         "Course content is too short or missing.",
         "No valid questions could be generated from the uploaded file.",

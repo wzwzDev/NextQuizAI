@@ -11,6 +11,18 @@ type UploadAndGenerateResponse = {
   error?: string;
 };
 
+function isAcceptedUploadFile(file: File) {
+  const fileName = file.name.toLowerCase();
+  return (
+    file.type === "application/json" ||
+    file.type === "text/plain" ||
+    file.type === "application/pdf" ||
+    fileName.endsWith(".json") ||
+    fileName.endsWith(".txt") ||
+    fileName.endsWith(".pdf")
+  );
+}
+
 const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -20,13 +32,8 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const selectedFile = event.target.files[0];
-      if (
-        selectedFile.type !== "application/json" &&
-        selectedFile.type !== "text/plain" &&
-        !selectedFile.name.endsWith(".json") &&
-        !selectedFile.name.endsWith(".txt")
-      ) {
-        setError("Only JSON or TXT files are accepted.");
+      if (!isAcceptedUploadFile(selectedFile)) {
+        setError("Only JSON, TXT, or PDF files are accepted.");
         setFile(null);
         return;
       }
@@ -41,13 +48,8 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
     event.preventDefault();
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
       const droppedFile = event.dataTransfer.files[0];
-      if (
-        droppedFile.type !== "application/json" &&
-        droppedFile.type !== "text/plain" &&
-        !droppedFile.name.endsWith(".json") &&
-        !droppedFile.name.endsWith(".txt")
-      ) {
-        setError("Only JSON or TXT files are accepted.");
+      if (!isAcceptedUploadFile(droppedFile)) {
+        setError("Only JSON, TXT, or PDF files are accepted.");
         setFile(null);
         return;
       }
@@ -62,7 +64,7 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
 
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a JSON or TXT file to upload.");
+      setError("Please select a JSON, TXT, or PDF file to upload.");
       return;
     }
     setUploading(true);
@@ -126,17 +128,19 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       >
         <input
           type="file"
-          accept=".json,.txt"
+          accept=".json,.txt,.pdf"
           onChange={handleFileChange}
           ref={fileInputRef}
           style={{ display: "none" }}
         />
         <span className="text-4xl mb-2 text-blue-400">📁</span>
         <span className="font-semibold text-blue-700">
-          {file ? file.name : "Drag & drop or click to select a JSON/TXT file"}
+          {file
+            ? file.name
+            : "Drag & drop or click to select a JSON/TXT/PDF file"}
         </span>
         <span className="text-xs text-gray-500 mt-1">
-          Only .json or .txt files are accepted.
+          Only .json, .txt, or .pdf files are accepted.
         </span>
       </div>
       <button

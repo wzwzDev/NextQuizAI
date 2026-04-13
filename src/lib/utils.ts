@@ -21,7 +21,11 @@ export function formatTimeDelta(seconds: number) {
   }
   return parts.join(" ");
 }
-export function normalize(str: string) {
+export function normalize(str: unknown) {
+  if (typeof str !== "string") {
+    return "";
+  }
+
   return str
     .toLowerCase()
     .replace(/[^\w\s]|_/g, "")
@@ -29,23 +33,23 @@ export function normalize(str: string) {
     .trim();
 }
 
-export function similarity(a: string, b: string) {
-  a = normalize(a);
-  b = normalize(b);
+export function similarity(a: unknown, b: unknown) {
+  const normalizedA = normalize(a);
+  const normalizedB = normalize(b);
 
-  if (!a.length && !b.length) return 1;
-  if (!a.length || !b.length) return 0;
+  if (!normalizedA.length && !normalizedB.length) return 1;
+  if (!normalizedA.length || !normalizedB.length) return 0;
 
   const matrix = [];
-  for (let i = 0; i <= b.length; i++) {
+  for (let i = 0; i <= normalizedB.length; i++) {
     matrix[i] = [i];
   }
-  for (let j = 0; j <= a.length; j++) {
+  for (let j = 0; j <= normalizedA.length; j++) {
     matrix[0][j] = j;
   }
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+  for (let i = 1; i <= normalizedB.length; i++) {
+    for (let j = 1; j <= normalizedA.length; j++) {
+      if (normalizedB.charAt(i - 1) === normalizedA.charAt(j - 1)) {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
@@ -56,8 +60,8 @@ export function similarity(a: string, b: string) {
       }
     }
   }
-  const distance = matrix[b.length][a.length];
-  const maxLen = Math.max(a.length, b.length);
+  const distance = matrix[normalizedB.length][normalizedA.length];
+  const maxLen = Math.max(normalizedA.length, normalizedB.length);
   return maxLen === 0 ? 1 : 1 - distance / maxLen;
 }
 

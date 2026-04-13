@@ -15,18 +15,20 @@ describe("QuizUpload", () => {
 
   it("renders upload area and button", () => {
     render(<QuizUpload onQuizReady={jest.fn()} />);
-    expect(screen.getByText(/Drag & drop or click to select a JSON\/TXT file/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Drag & drop or click to select a JSON\/TXT\/PDF file/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Upload & Generate/i })).toBeInTheDocument();
   });
 
   it("shows error for invalid file type", () => {
     render(<QuizUpload onQuizReady={jest.fn()} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(["dummy"], "test.pdf", { type: "application/pdf" });
+    const file = new File(["dummy"], "test.png", { type: "image/png" });
     fireEvent.change(input, {
       target: { files: [file] },
     });
-    expect(screen.getByText(/Only JSON or TXT files are accepted/i)).toBeInTheDocument();
+    expect(screen.getByText(/Only JSON, TXT, or PDF files are accepted/i)).toBeInTheDocument();
   });
 
   it("accepts valid file and enables upload", () => {
@@ -46,6 +48,7 @@ describe("QuizUpload", () => {
     const mockQuestions = [{ question: "Q1", answer: "A1" }];
     // @ts-ignore
     global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
       json: async () => ({ questions: mockQuestions }),
     });
     const onQuizReady = jest.fn();
@@ -59,6 +62,7 @@ describe("QuizUpload", () => {
     await waitFor(() => {
       expect(onQuizReady).toHaveBeenCalledWith({
         title: "quiz.json",
+        quizType: "open_ended",
         questions: mockQuestions,
       });
     });

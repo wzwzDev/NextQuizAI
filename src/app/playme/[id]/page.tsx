@@ -17,8 +17,8 @@ type Quiz = {
 };
 
 //Similarity with a threshold for flexible answer checking
-function isAnswerCorrect(user: string, actual: string) {
-  return similarity(user, actual) >= 0.8; // Accept answers with 80% similarity
+function isAnswerCorrect(user: string | undefined, actual: string | undefined) {
+  return similarity(user ?? "", actual ?? "") >= 0.8; // Accept answers with 80% similarity
 }
 
 export default function QuizPage() {

@@ -81,11 +81,27 @@ export const authOptions: NextAuthOptions = {
               data: { isOnline: true },
             });
             break; // success, exit loop
-          } catch (err: any) {
+          } catch (err: unknown) {
+            const code =
+              typeof err === "object" &&
+              err !== null &&
+              "code" in err &&
+              typeof (err as { code?: unknown }).code === "string"
+                ? (err as { code: string }).code
+                : undefined;
+
+            const message =
+              typeof err === "object" &&
+              err !== null &&
+              "message" in err &&
+              typeof (err as { message?: unknown }).message === "string"
+                ? (err as { message: string }).message
+                : undefined;
+
             if (
               retries > 1 &&
-              (err.code === "P2034" ||
-                (err.message && err.message.includes("Lock wait timeout")))
+              (code === "P2034" ||
+                (message && message.includes("Lock wait timeout")))
             ) {
               await new Promise((res) => setTimeout(res, 500));
               retries--;
