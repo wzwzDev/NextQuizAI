@@ -21,6 +21,46 @@ interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
 }
 
+const MIN_RATE_LIMIT_DELAY_MS = 250;
+const MAX_RATE_LIMIT_DELAY_MS = 10_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number" &&
+    (error as { status: number }).status === 429
+  ) {
+    return true;
+  }
+
+  const message = getErrorMessage(error).toLowerCase();
+  return message.includes("rate limit") || message.includes("429");
+}
+
+function parseRetryDelayMs(error: unknown, attempt: number): number {
+  const message = getErrorMessage(error);
+  const suggestedMsMatch = message.match(/try again in\s*(\d+)ms/i);
+  if (suggestedMsMatch) {
+    const parsed = Number.parseInt(suggestedMsMatch[1], 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.min(
+        MAX_RATE_LIMIT_DELAY_MS,
+        Math.max(MIN_RATE_LIMIT_DELAY_MS, parsed + 100),
+      );
+    }
+  }
+
+  const exponential = MIN_RATE_LIMIT_DELAY_MS * Math.pow(2, attempt);
+  const jitter = Math.floor(Math.random() * 150);
+  return Math.min(MAX_RATE_LIMIT_DELAY_MS, exponential + jitter);
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -92,6 +132,10 @@ export async function strict_output(
 
       if (verbose) {
         console.log("OpenAI request failed:", lastErrorMessage);
+      }
+
+      if (isRateLimitError(error) && i < num_tries - 1) {
+        await sleep(parseRetryDelayMs(error, i));
       }
 
       continue;

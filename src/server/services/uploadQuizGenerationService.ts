@@ -9,6 +9,7 @@ const TEXT_MIME = "text/plain";
 const PDF_MIME = "application/pdf";
 const MIN_OCR_WORD_COUNT = 6;
 const MIN_OCR_ALPHA_WORD_RATIO = 0.45;
+const MAX_CONTENT_CHARS = 16_000;
 
 type GeneratedQuestion = {
   question: string;
@@ -182,6 +183,15 @@ function ensureMinimumContentLength(courseContent: string) {
   }
 }
 
+function prepareCourseContentForGeneration(courseContent: string) {
+  const normalized = courseContent.replace(/\s+/g, " ").trim();
+  if (normalized.length <= MAX_CONTENT_CHARS) {
+    return normalized;
+  }
+
+  return normalized.slice(0, MAX_CONTENT_CHARS);
+}
+
 function normalizeGeneratedQuestions(rawOutput: unknown): GeneratedQuestion[] {
   const rawQuestions = Array.isArray(rawOutput) ? rawOutput : [rawOutput];
 
@@ -274,5 +284,7 @@ export async function generateQuestionsFromUploadedFile(file: File) {
   ensureAcceptedFile(file);
   const courseContent = await extractCourseContent(file);
   ensureMinimumContentLength(courseContent);
-  return generateQuestionsFromCourseContent(courseContent);
+  return generateQuestionsFromCourseContent(
+    prepareCourseContentForGeneration(courseContent),
+  );
 }

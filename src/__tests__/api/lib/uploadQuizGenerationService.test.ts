@@ -82,6 +82,20 @@ describe("uploadQuizGenerationService", () => {
     );
   });
 
+  it("truncates oversized extracted content before generation", async () => {
+    const longContent = "A".repeat(25000);
+    const file = makeFile("course.txt", "text/plain", longContent);
+
+    (strict_output as jest.Mock).mockResolvedValue([{ question: "Q1", answer: "A1" }]);
+
+    const result = await generateQuestionsFromUploadedFile(file);
+
+    expect(result).toEqual([{ question: "Q1", answer: "A1" }]);
+    expect(strict_output).toHaveBeenCalledTimes(1);
+    const calledPrompt = (strict_output as jest.Mock).mock.calls[0][0] as string;
+    expect(calledPrompt.length).toBeLessThan(20000);
+  });
+
   it("returns array when model returns object", async () => {
     (strict_output as jest.Mock).mockResolvedValue({ question: "Q1", answer: "A1" });
 

@@ -54,6 +54,17 @@ export async function POST(req: NextRequest) {
       }
 
       if (error.message.startsWith("OpenAI generation failed:")) {
+        if (/rate limit|\b429\b/i.test(error.message)) {
+          return NextResponse.json(
+            {
+              questions: [],
+              error:
+                "Rate limit reached while generating quiz questions. Please retry in a few seconds.",
+            },
+            { status: 429 },
+          );
+        }
+
         return NextResponse.json(
           { questions: [], error: error.message },
           { status: 502 },

@@ -162,6 +162,35 @@ describe("gptadmin.strict_output", () => {
     ).rejects.toThrow(/OpenAI strict output failed after 1 attempt\(s\): fail/);
   });
 
+  it("retries on 429 and succeeds on next attempt", async () => {
+    createImpl = jest
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error("429 Rate limit reached. Please try again in 50ms."), {
+          status: 429,
+        }),
+      )
+      .mockResolvedValueOnce({
+        choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a" }]) } }],
+      });
+
+    const result = await strict_output(
+      "system",
+      "user",
+      { question: "", answer: ["a", "b"] },
+      "a",
+      false,
+      "gpt-3.5-turbo",
+      1,
+      3,
+      false,
+    );
+
+    expect(createImpl).toHaveBeenCalledTimes(2);
+    expect(result[0].question).toBe("q");
+    expect(result[0].answer).toBe("a");
+  });
+
   it("throws if required key is missing in output", async () => {
     createImpl = jest.fn().mockResolvedValue({
       choices: [{ message: { content: JSON.stringify([{ notquestion: "q", answer: "a" }]) } }],

@@ -5,6 +5,7 @@ on:
       - master
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 jobs:
   sonarqube:
     name: SonarCloud
@@ -54,8 +55,8 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           args: >
-            -Dsonar.projectKey=wzzzzwwzw_TFM
-            -Dsonar.organization=wzzzzwwzw
+            -Dsonar.projectKey=wzwzDev_NextQuizAI
+            -Dsonar.organization=wzwzdev
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.coverage.exclusions=src/app/api/questions/route.ts,**/lib/**
         env:
