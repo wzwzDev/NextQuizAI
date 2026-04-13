@@ -140,6 +140,46 @@ export const authOptions: NextAuthOptions = {
   ],
 };
 
-export const getAuthSession = () => {
-  return getServerSession(authOptions);
+async function getTestSessionFromRequest(req?: Request) {
+  if (process.env.NODE_ENV !== "test" || !req) {
+    return null;
+  }
+
+  const testEmail = req.headers.get("x-test-user-email")?.trim();
+  if (!testEmail) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: testEmail },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    user: {
+      id: user.id,
+      isAdmin: user.isAdmin,
+      banned: user.banned,
+      revoked: user.revoked,
+      name: user.name ?? undefined,
+      email: user.email ?? undefined,
+      image: user.image ?? undefined,
+    },
+  };
+}
+
+export const getAuthSession = async (req?: Request) => {
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user) {
+      return session;
+    }
+  } catch {
+    // In isolated route tests there may be no request scope for next-auth.
+  }
+
+  return getTestSessionFromRequest(req);
 };

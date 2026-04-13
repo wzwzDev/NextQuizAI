@@ -27,7 +27,7 @@ type QuestionsApiResponse = {
 
 export async function POST(req: Request) {
   try {
-    const session = await getAuthSession();
+    const session = await getAuthSession(req);
     if (!session?.user) {
       return NextResponse.json(
         { error: "You must be logged in to create a game." },
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 }
 export async function GET(req: Request) {
   try {
-    const session = await getAuthSession();
+    const session = await getAuthSession(req);
     if (!session?.user) {
       return NextResponse.json(
         { error: "You must be logged in to create a game." },

@@ -4,53 +4,68 @@ import {
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
 } from "@/server/services/gameService";
-import {
-  createGame,
-  createQuestionsForGame,
-  findGameById,
-  findGameWithQuestionsById,
-  markGameEnded,
-} from "@/server/repositories/gameRepository";
-import { incrementTopicCount } from "@/server/repositories/topicRepository";
+import { prisma } from "@/server/core/db";
+import type { Game, User } from "@prisma/client";
 
-jest.mock("@/server/repositories/gameRepository", () => ({
-  createGame: jest.fn(),
-  createQuestionsForGame: jest.fn(),
-  findGameById: jest.fn(),
-  findGameWithQuestionsById: jest.fn(),
-  markGameEnded: jest.fn(),
-}));
-
-jest.mock("@/server/repositories/topicRepository", () => ({
-  incrementTopicCount: jest.fn(),
-}));
+jest.setTimeout(30000);
 
 describe("gameService", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  let user: User;
+
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "game-service-user@example.com" } });
+    user = await prisma.user.create({
+      data: { email: "game-service-user@example.com" },
+    });
+  });
+
+  afterEach(async () => {
+    const games = await prisma.game.findMany({ where: { userId: user.id }, select: { id: true } });
+    const gameIds = games.map((game) => game.id);
+    if (gameIds.length > 0) {
+      await prisma.question.deleteMany({ where: { gameId: { in: gameIds } } });
+    }
+    await prisma.game.deleteMany({ where: { userId: user.id } });
+    await prisma.topicCount.deleteMany({
+      where: {
+        OR: [
+          { topic: { in: ["math", "science"] } },
+          { topic: { startsWith: "game-service-topic-" } },
+        ],
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { id: user.id } });
+    await prisma.$disconnect();
   });
 
   it("creates game and increments topic count", async () => {
-    (createGame as jest.Mock).mockResolvedValue({ id: "game-1" });
+    const topic = `game-service-topic-${Date.now()}`;
+    const before = await prisma.topicCount.findUnique({ where: { topic } });
 
     const result = await createGameWithTopicCount({
-      userId: "user-1",
+      userId: user.id,
+      topic,
+      type: "mcq",
+    });
+
+    expect(result.id).toBeDefined();
+
+    const after = await prisma.topicCount.findUnique({ where: { topic } });
+    expect(after?.count).toBe((before?.count ?? 0) + 1);
+  });
+
+  it("saves MCQ generated questions", async () => {
+    const game = await createGameWithTopicCount({
+      userId: user.id,
       topic: "math",
       type: "mcq",
     });
 
-    expect(result.id).toBe("game-1");
-    expect(createGame).toHaveBeenCalledWith({
-      userId: "user-1",
-      topic: "math",
-      gameType: "mcq",
-    });
-    expect(incrementTopicCount).toHaveBeenCalledWith("math");
-  });
-
-  it("saves MCQ generated questions", async () => {
     await saveGeneratedQuestionsForGame({
-      gameId: "game-1",
+      gameId: game.id,
       type: "mcq",
       questions: [
         {
@@ -63,64 +78,81 @@ describe("gameService", () => {
       ],
     });
 
-    expect(createQuestionsForGame).toHaveBeenCalledTimes(1);
-    const [payload] = (createQuestionsForGame as jest.Mock).mock.calls[0];
-    expect(payload[0]).toEqual(
-      expect.objectContaining({
-        question: "2+2?",
-        answer: "4",
-        gameId: "game-1",
-        questionType: "mcq",
-      }),
-    );
+    const question = await prisma.question.findFirst({ where: { gameId: game.id } });
+    expect(question?.question).toBe("2+2?");
+    expect(question?.answer).toBe("4");
+    expect(question?.questionType).toBe("mcq");
 
-    const options = JSON.parse(payload[0].options);
+    const options = JSON.parse(String(question?.options ?? "[]"));
     expect(options).toEqual(expect.arrayContaining(["3", "4", "5", "6"]));
   });
 
   it("saves open ended generated questions", async () => {
+    const game = await createGameWithTopicCount({
+      userId: user.id,
+      topic: "science",
+      type: "open_ended",
+    });
+
     await saveGeneratedQuestionsForGame({
-      gameId: "game-1",
+      gameId: game.id,
       type: "open_ended",
       questions: [{ question: "Explain gravity", answer: "Force of attraction" }],
     });
 
-    const [payload] = (createQuestionsForGame as jest.Mock).mock.calls[0];
-    expect(payload[0]).toEqual(
-      expect.objectContaining({
-        question: "Explain gravity",
-        answer: "Force of attraction",
-        gameId: "game-1",
-        questionType: "open_ended",
-      }),
-    );
+    const question = await prisma.question.findFirst({ where: { gameId: game.id } });
+    expect(question?.question).toBe("Explain gravity");
+    expect(question?.answer).toBe("Force of attraction");
+    expect(question?.questionType).toBe("open_ended");
   });
 
   it("delegates game retrieval", async () => {
-    (findGameWithQuestionsById as jest.Mock).mockResolvedValue({ id: "game-1" });
-    await getGameWithQuestions("game-1");
-    expect(findGameWithQuestionsById).toHaveBeenCalledWith("game-1");
+    const game = await createGameWithTopicCount({
+      userId: user.id,
+      topic: "math",
+      type: "mcq",
+    });
+    await saveGeneratedQuestionsForGame({
+      gameId: game.id,
+      type: "mcq",
+      questions: [
+        {
+          question: "Q",
+          answer: "A",
+          option1: "B",
+          option2: "C",
+          option3: "D",
+        },
+      ],
+    });
+
+    const loaded = await getGameWithQuestions(game.id);
+    expect(loaded?.id).toBe(game.id);
+    expect(loaded?.questions.length).toBe(1);
   });
 
   it("returns 404 when ending unknown game", async () => {
-    (findGameById as jest.Mock).mockResolvedValue(null);
-
     const result = await endGame("missing");
     expect(result).toEqual({
       status: 404,
       body: { message: "Game not found" },
     });
-    expect(markGameEnded).not.toHaveBeenCalled();
   });
 
   it("marks game ended when game exists", async () => {
-    (findGameById as jest.Mock).mockResolvedValue({ id: "game-1" });
+    const game: Game = await createGameWithTopicCount({
+      userId: user.id,
+      topic: "math",
+      type: "mcq",
+    });
 
-    const result = await endGame("game-1");
-    expect(markGameEnded).toHaveBeenCalledWith("game-1");
+    const result = await endGame(game.id);
     expect(result).toEqual({
       status: 200,
       body: { message: "Game ended" },
     });
+
+    const ended = await prisma.game.findUnique({ where: { id: game.id } });
+    expect(ended?.timeEnded).toBeTruthy();
   });
 });

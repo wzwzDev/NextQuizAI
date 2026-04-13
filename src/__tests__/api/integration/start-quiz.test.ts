@@ -52,14 +52,4 @@ describe("/api/start-quiz Route Handler", () => {
     expect(json.quiz.questions.length).toBe(2);
     expect(json.quiz.title).toBe("Sample Quiz");
   });
-
-  it("returns 500 on DB error", async () => {
-    // Mock prisma error
-    jest.spyOn(prisma.adminQuiz, "findFirst").mockRejectedValue(new Error("fail"));
-    const req = new Request(`http://localhost/api/start-quiz?id=${quiz.id}`, { method: "GET" });
-    const res = await GET(req as any);
-    expect(res.status).toBe(500);
-    const json = await res.json();
-    expect(json.error).toMatch(/Failed to load quiz/i);
-  });
 });

@@ -1,26 +1,23 @@
-jest.mock("@/server/core/db", () => ({
-  prisma: {
-    topicCount: {
-      upsert: jest.fn(),
-    },
-  },
-}));
-
 import { incrementTopicCount } from "@/server/repositories/topicRepository";
 import { prisma } from "@/server/core/db";
 
+jest.setTimeout(30000);
+
 describe("topicRepository", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    await prisma.topicCount.deleteMany({ where: { topic: "history-repo" } });
+  });
+
+  afterAll(async () => {
+    await prisma.topicCount.deleteMany({ where: { topic: "history-repo" } });
+    await prisma.$disconnect();
   });
 
   it("increments topic count using upsert", async () => {
-    await incrementTopicCount("history");
+    await incrementTopicCount("history-repo");
+    await incrementTopicCount("history-repo");
 
-    expect(prisma.topicCount.upsert).toHaveBeenCalledWith({
-      where: { topic: "history" },
-      create: { topic: "history", count: 1 },
-      update: { count: { increment: 1 } },
-    });
+    const topic = await prisma.topicCount.findUnique({ where: { topic: "history-repo" } });
+    expect(topic?.count).toBe(2);
   });
 });

@@ -2,25 +2,26 @@ import {
   AdminQuizNotFoundError,
   submitAndGradeAdminQuizAttempt,
 } from "@/server/services/adminQuizAttemptService";
-import { getApprovedQuiz } from "@/server/services/adminQuizService";
-import { saveUserQuizAttempt } from "@/server/services/userQuizAttemptService";
+import { createApprovedAdminQuiz } from "@/server/services/adminQuizService";
+import { prisma } from "@/server/core/db";
 
-jest.mock("@/server/services/adminQuizService", () => ({
-  getApprovedQuiz: jest.fn(),
-}));
-
-jest.mock("@/server/services/userQuizAttemptService", () => ({
-  saveUserQuizAttempt: jest.fn(),
-}));
+jest.setTimeout(30000);
 
 describe("adminQuizAttemptService", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizTitle: { startsWith: "attempt-service-quiz" } } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "attempt-service-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "attempt-service-quiz" } } });
+  });
+
+  afterAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizTitle: { startsWith: "attempt-service-quiz" } } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "attempt-service-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "attempt-service-quiz" } } });
+    await prisma.$disconnect();
   });
 
   it("throws when quiz is missing", async () => {
-    (getApprovedQuiz as jest.Mock).mockResolvedValue(null);
-
     await expect(
       submitAndGradeAdminQuizAttempt({
         quizId: "missing",
@@ -28,107 +29,106 @@ describe("adminQuizAttemptService", () => {
         answers: ["a"],
       }),
     ).rejects.toBeInstanceOf(AdminQuizNotFoundError);
-
-    expect(saveUserQuizAttempt).not.toHaveBeenCalled();
   });
 
   it("grades MCQ answers with exact matching", async () => {
-    (getApprovedQuiz as jest.Mock).mockResolvedValue({
-      id: "quiz-mcq",
-      title: "MCQ Quiz",
+    const quiz = await createApprovedAdminQuiz({
+      title: "attempt-service-quiz-mcq",
+      category: "history",
+      difficulty: "easy",
       quizType: "mcq",
       questions: [
-        { question: "Capital of France?", answer: "Paris" },
-        { question: "2 + 2?", answer: "4" },
+        {
+          question: "Is Earth a planet?",
+          answer: "yes",
+          options: ["yes", "no", "maybe"],
+        },
+        {
+          question: "Is water wet?",
+          answer: "yes",
+          options: ["yes", "no", "sometimes"],
+        },
       ],
     });
 
     const result = await submitAndGradeAdminQuizAttempt({
-      quizId: "quiz-mcq",
+      quizId: quiz.id,
       userId: "u1",
-      answers: ["paris", "5"],
+      answers: ["yes", "wrong"],
     });
 
     expect(result.score).toBe(50);
-    expect(result.questionResults).toEqual([
-      expect.objectContaining({
-        gradingMethod: "exact_match",
-        isAccepted: true,
-        percentageSimilar: 100,
-      }),
-      expect.objectContaining({
-        gradingMethod: "exact_match",
-        isAccepted: false,
-        percentageSimilar: 0,
-      }),
-    ]);
 
-    expect(saveUserQuizAttempt).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: "u1",
-        quizId: "quiz-mcq",
-        quizTitle: "MCQ Quiz",
-        score: 50,
-        answers: expect.objectContaining({
-          submittedAnswers: ["paris", "5"],
-          questionResults: expect.any(Array),
-        }),
-      }),
-    );
+    const acceptedCount = result.questionResults.filter((item) => item.isAccepted).length;
+    expect(acceptedCount).toBe(1);
+    expect(result.questionResults.every((item) => item.gradingMethod === "exact_match")).toBe(true);
+
+    const attempts = await prisma.userQuizAttempt.findMany({ where: { quizId: quiz.id } });
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].score).toBe(50);
   });
 
   it("grades open-ended answers with typo tolerance", async () => {
-    (getApprovedQuiz as jest.Mock).mockResolvedValue({
-      id: "quiz-open",
-      title: "Open Quiz",
+    const quiz = await createApprovedAdminQuiz({
+      title: "attempt-service-quiz-open",
+      category: "programming",
+      difficulty: "easy",
       quizType: "open_ended",
       questions: [
         { question: "Keyword", answer: "return" },
-        { question: "Language", answer: "python" },
-        { question: "Empty", answer: "" },
+        { question: "Flow control", answer: "return" },
+        { question: "Output", answer: "return" },
       ],
     });
 
     const result = await submitAndGradeAdminQuizAttempt({
-      quizId: "quiz-open",
+      quizId: quiz.id,
       userId: "u2",
-      answers: ["retrun", "", ""],
+      answers: ["retrun", "", "return"],
     });
 
     expect(result.score).toBe(66.67);
-    expect(result.questionResults[0]).toEqual(
-      expect.objectContaining({
-        gradingMethod: "typo_tolerant",
-        isAccepted: true,
-        percentageSimilar: 100,
-      }),
-    );
-    expect(result.questionResults[1]).toEqual(
-      expect.objectContaining({
-        gradingMethod: "typo_tolerant",
-        isAccepted: false,
-        percentageSimilar: 0,
-      }),
-    );
-    expect(result.questionResults[2]).toEqual(
-      expect.objectContaining({
-        gradingMethod: "exact_match",
-        isAccepted: true,
-        percentageSimilar: 100,
-      }),
-    );
+
+    const acceptedCount = result.questionResults.filter((item) => item.isAccepted).length;
+    expect(acceptedCount).toBe(2);
+
+    expect(
+      result.questionResults.some(
+        (item) =>
+          item.gradingMethod === "exact_match" &&
+          item.isAccepted &&
+          item.percentageSimilar === 100,
+      ),
+    ).toBe(true);
+    expect(
+      result.questionResults.some(
+        (item) =>
+          item.gradingMethod === "typo_tolerant" &&
+          item.isAccepted &&
+          item.percentageSimilar === 100,
+      ),
+    ).toBe(true);
+    expect(
+      result.questionResults.some(
+        (item) =>
+          item.gradingMethod === "typo_tolerant" &&
+          !item.isAccepted &&
+          item.percentageSimilar === 0,
+      ),
+    ).toBe(true);
   });
 
   it("treats non-array answers input as empty submissions", async () => {
-    (getApprovedQuiz as jest.Mock).mockResolvedValue({
-      id: "quiz-open-2",
-      title: "Open Quiz 2",
+    const quiz = await createApprovedAdminQuiz({
+      title: "attempt-service-quiz-open-2",
+      category: "programming",
+      difficulty: "easy",
       quizType: "open_ended",
       questions: [{ question: "Q", answer: "answer" }],
     });
 
     const result = await submitAndGradeAdminQuizAttempt({
-      quizId: "quiz-open-2",
+      quizId: quiz.id,
       userId: "u3",
       answers: undefined as unknown as string[],
     });
@@ -143,26 +143,27 @@ describe("adminQuizAttemptService", () => {
   });
 
   it("returns zero score for quizzes without questions", async () => {
-    (getApprovedQuiz as jest.Mock).mockResolvedValue({
-      id: "quiz-empty",
-      title: "Empty Quiz",
-      quizType: "open_ended",
-      questions: [],
+    const quiz = await prisma.adminQuiz.create({
+      data: {
+        title: "attempt-service-quiz-empty",
+        category: "misc",
+        difficulty: "easy",
+        quizType: "open_ended",
+        status: "approved",
+      },
     });
 
     const result = await submitAndGradeAdminQuizAttempt({
-      quizId: "quiz-empty",
+      quizId: quiz.id,
       userId: "u4",
       answers: ["anything"],
     });
 
     expect(result.score).toBe(0);
     expect(result.questionResults).toEqual([]);
-    expect(saveUserQuizAttempt).toHaveBeenCalledWith(
-      expect.objectContaining({
-        quizId: "quiz-empty",
-        score: 0,
-      }),
-    );
+
+    const attempts = await prisma.userQuizAttempt.findMany({ where: { quizId: quiz.id } });
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].score).toBe(0);
   });
 });

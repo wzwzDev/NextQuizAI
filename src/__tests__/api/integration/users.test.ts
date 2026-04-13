@@ -1,15 +1,6 @@
 import { GET } from "@/app/api/users/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
-// Mock getServerSession and authOptions
-jest.mock("next-auth", () => ({
-  getServerSession: jest.fn(),
-}));
-import { getServerSession } from "next-auth";
-jest.mock("@/server/core/auth", () => ({
-  authOptions: {},
-}));
-import { authOptions } from "@/server/core/auth";
 
 describe("/api/users Route Handler", () => {
   let adminUser: any;
@@ -40,8 +31,10 @@ describe("/api/users Route Handler", () => {
   });
 
   it("returns 401 if not admin", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: normalUser });
-    const req = new Request("http://localhost/api/users", { method: "GET" });
+    const req = new Request("http://localhost/api/users", {
+      method: "GET",
+      headers: { "x-test-user-email": normalUser.email },
+    });
     const res = await GET(req as any);
     expect(res.status).toBe(401);
     const json = await res.json();
@@ -49,8 +42,10 @@ describe("/api/users Route Handler", () => {
   });
 
   it("returns all users for admin", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-    const req = new Request("http://localhost/api/users", { method: "GET" });
+    const req = new Request("http://localhost/api/users", {
+      method: "GET",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await GET(req as any);
     expect(res.status).toBe(200);
     const users = await res.json();

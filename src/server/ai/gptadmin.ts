@@ -10,8 +10,14 @@ function getOpenAIClient(): OpenAI {
     );
   }
 
+  const baseURL = process.env.OPENAI_BASE_URL?.trim();
+
   if (!openaiClient) {
-    openaiClient = new OpenAI({ apiKey });
+    openaiClient = new OpenAI(
+      baseURL
+        ? { apiKey, baseURL }
+        : { apiKey },
+    );
   }
 
   return openaiClient;

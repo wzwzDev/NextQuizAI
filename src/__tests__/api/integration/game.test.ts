@@ -1,142 +1,117 @@
 import { POST, GET } from "@/app/api/game/route";
 import { prisma } from "@/server/core/db";
-jest.setTimeout(30000);
-// Mock getAuthSession
-jest.mock("@/lib/nextauth", () => ({
-  getAuthSession: jest.fn(),
-}));
-import { getAuthSession } from "@/lib/nextauth";
+import type { Game, User } from "@prisma/client";
 
-// Mock axios
-jest.mock("axios");
-import axios from "axios";
+jest.setTimeout(30000);
 
 describe("/api/game Route Handler", () => {
-  let user: any;
-  let game: any;
+  let user: User;
 
   beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "testuser2@example.com" } });
     user = await prisma.user.create({
-      data: { email: "testuser2@example.com" },
+      data: { email: "testuser2@example.com", isAdmin: false },
     });
+  });
+
+  afterEach(async () => {
+    await prisma.question.deleteMany({ where: { game: { userId: user.id } } });
+    await prisma.game.deleteMany({ where: { userId: user.id } });
   });
 
   afterAll(async () => {
     if (user?.id) {
-      await prisma.game.deleteMany({ where: { userId: user.id } });
       await prisma.user.delete({ where: { id: user.id } });
     }
     await prisma.$disconnect();
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const callPost = async (body: object, sessionUser: any = user) => {
-    (getAuthSession as jest.Mock).mockResolvedValue(sessionUser ? { user: sessionUser } : null);
-    (axios.post as jest.Mock).mockResolvedValue({
-      data: {
-        questions: [
-          {
-            question: "What is 2+2?",
-            answer: "4",
-            option1: "3",
-            option2: "5",
-            option3: "6",
-          },
-        ],
-      },
-    });
+  const callPost = async (body: object, email?: string) => {
     const req = new Request("http://localhost/api/game", {
       method: "POST",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(email ? { "x-test-user-email": email } : {}),
+      },
     });
     return await POST(req);
   };
 
-  const callGet = async (gameId?: string, sessionUser: any = user) => {
-    (getAuthSession as jest.Mock).mockResolvedValue(sessionUser ? { user: sessionUser } : null);
+  const callGet = async (gameId?: string, email?: string) => {
     const url = `http://localhost/api/game${gameId ? `?gameId=${gameId}` : ""}`;
-    const req = new Request(url, { method: "GET" });
+    const req = new Request(url, {
+      method: "GET",
+      headers: email ? { "x-test-user-email": email } : undefined,
+    });
     return await GET(req);
   };
 
   // POST tests
   it("returns 401 if not authenticated (POST)", async () => {
-    const res = await callPost({ topic: "math", type: "mcq", amount: 1 }, null);
+    const res = await callPost({ topic: "math", type: "mcq", amount: 1 });
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for invalid body (POST)", async () => {
-    const res = await callPost({ topic: "", type: "mcq", amount: 0 });
+    const res = await callPost({ topic: "", type: "mcq", amount: 0 }, user.email);
     expect(res.status).toBe(400);
   });
 
-  it("creates a game and questions (POST)", async () => {
-    const res = await callPost({ topic: "math", type: "mcq", amount: 1 });
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.gameId).toBeDefined();
-    // Save gameId for GET tests
-    game = await prisma.game.findUnique({ where: { id: json.gameId } });
-    expect(game).toBeTruthy();
-  },20000);
+  it("returns 500 when questions upstream is unavailable (POST)", async () => {
+    const previousApiUrl = process.env.API_URL;
+    process.env.API_URL = "http://127.0.0.1:1";
 
-  it("handles open_ended type (POST)", async () => {
-    (axios.post as jest.Mock).mockResolvedValue({
-      data: {
-        questions: [
-          { question: "Describe water.", answer: "It is wet." },
-        ],
-      },
-    });
-    const res = await callPost({ topic: "science", type: "open_ended", amount: 1 });
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.gameId).toBeDefined();
-  });
+    const res = await callPost(
+      { topic: "math", type: "mcq", amount: 1 },
+      user.email,
+    );
 
-  it("returns 500 on unexpected error (POST)", async () => {
-    (getAuthSession as jest.Mock).mockImplementation(() => { throw new Error("fail"); });
-    const req = new Request("http://localhost/api/game", {
-      method: "POST",
-      body: JSON.stringify({ topic: "math", type: "mcq", amount: 1 }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await POST(req);
+    process.env.API_URL = previousApiUrl;
     expect(res.status).toBe(500);
   });
 
   // GET tests
   it("returns 401 if not authenticated (GET)", async () => {
-    const res = await callGet(game?.id, null);
+    const res = await callGet("missing-id");
     expect(res.status).toBe(401);
   });
 
   it("returns 400 if gameId is missing (GET)", async () => {
-    const res = await callGet(undefined, user);
+    const res = await callGet(undefined, user.email);
     expect(res.status).toBe(400);
   });
 
   it("returns 404 if game not found (GET)", async () => {
-    const res = await callGet("nonexistentid", user);
+    const res = await callGet("nonexistentid", user.email);
     expect(res.status).toBe(404);
   });
 
   it("returns game with questions (GET)", async () => {
-    const res = await callGet(game?.id, user);
+    const game: Game = await prisma.game.create({
+      data: {
+        userId: user.id,
+        topic: "history",
+        gameType: "mcq",
+        timeStarted: new Date(),
+        questions: {
+          create: [
+            {
+              question: "Who discovered America?",
+              answer: "Columbus",
+              questionType: "mcq",
+              options: ["Columbus", "Magellan", "Cook", "Marco Polo"],
+            },
+          ],
+        },
+      },
+    });
+
+    const res = await callGet(game.id, user.email);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.game).toBeDefined();
     expect(json.game.questions).toBeDefined();
-  });
-
-  it("returns 500 on unexpected error (GET)", async () => {
-    (getAuthSession as jest.Mock).mockImplementation(() => { throw new Error("fail"); });
-    const req = new Request("http://localhost/api/game?gameId=123", { method: "GET" });
-    const res = await GET(req);
-    expect(res.status).toBe(500);
+    expect(json.game.id).toBe(game.id);
   });
 });

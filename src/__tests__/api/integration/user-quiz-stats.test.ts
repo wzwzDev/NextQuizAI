@@ -1,15 +1,6 @@
 import { POST, GET } from "@/app/api/user-quiz-stats/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
-// Mock getServerSession and authOptions
-jest.mock("next-auth", () => ({
-  getServerSession: jest.fn(),
-}));
-import { getServerSession } from "next-auth";
-jest.mock("@/server/core/auth", () => ({
-  authOptions: {},
-}));
-import { authOptions } from "@/server/core/auth";
 
 describe("/api/user-quiz-stats Route Handler", () => {
   let user: any;
@@ -42,8 +33,6 @@ afterAll(async () => {
   });
 
   it("POST creates a quiz attempt", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: { id: user.id } });
-
     const req = new Request("http://localhost/api/user-quiz-stats", {
       method: "POST",
       body: JSON.stringify({
@@ -52,7 +41,10 @@ afterAll(async () => {
         answers: [],
         score: 80,
       }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": user.email,
+      },
     });
     const res = await POST(req as any);
     expect(res.status).toBe(201);
@@ -63,7 +55,6 @@ afterAll(async () => {
   });
 
   it("GET returns empty stats if not authenticated", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue(null);
     const req = new Request("http://localhost/api/user-quiz-stats", { method: "GET" });
     const res = await GET(req as any);
     expect(res.status).toBe(200);
@@ -73,7 +64,6 @@ afterAll(async () => {
   });
 
   it("GET returns aggregated stats for user", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user });
     // Add more attempts for aggregation
     await prisma.userQuizAttempt.createMany({
       data: [
@@ -81,7 +71,10 @@ afterAll(async () => {
         { userId: user.id, quizId: "quiz2", quizTitle: "Quiz 2", answers: [], score: 70 },
       ],
     });
-    const req = new Request("http://localhost/api/user-quiz-stats", { method: "GET" });
+    const req = new Request("http://localhost/api/user-quiz-stats", {
+      method: "GET",
+      headers: { "x-test-user-email": user.email },
+    });
     const res = await GET(req as any);
     expect(res.status).toBe(200);
     const json = await res.json();

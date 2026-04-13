@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/core/auth";
+import { getAuthSession } from "@/server/core/auth";
 import { markUserOfflineByEmail } from "@/server/services/userService";
 
 function getErrorCode(error: unknown): string | undefined {
@@ -12,9 +11,9 @@ function getErrorCode(error: unknown): string | undefined {
   return typeof code === "string" ? code : undefined;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(req);
     if (session?.user?.email) {
       await markUserOfflineByEmail(session.user.email);
     }

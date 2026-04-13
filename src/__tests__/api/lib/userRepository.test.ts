@@ -1,13 +1,3 @@
-jest.mock("@/server/core/db", () => ({
-  prisma: {
-    user: {
-      findMany: jest.fn(),
-      update: jest.fn(),
-      findUnique: jest.fn(),
-    },
-  },
-}));
-
 import {
   findUserBanStatus,
   findUserRevokeStatus,
@@ -18,55 +8,63 @@ import {
   updateUserRevoke,
 } from "@/server/repositories/userRepository";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+
+jest.setTimeout(30000);
 
 describe("userRepository", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  let user: User;
+
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "repo-user@example.com" } });
+    user = await prisma.user.create({
+      data: {
+        email: "repo-user@example.com",
+        banned: false,
+        revoked: false,
+        isAdmin: false,
+        isOnline: true,
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { id: user.id } });
+    await prisma.$disconnect();
   });
 
   it("lists users for admin", async () => {
-    await listUsersForAdmin();
-    expect(prisma.user.findMany).toHaveBeenCalled();
+    const users = await listUsersForAdmin();
+    const found = users.find((candidate) => candidate.id === user.id);
+    expect(found).toBeDefined();
+    expect(found).toHaveProperty("email");
+    expect(found).toHaveProperty("isAdmin");
+    expect(found).toHaveProperty("banned");
+    expect(found).toHaveProperty("revoked");
   });
 
   it("updates ban/revoke/admin fields", async () => {
-    await updateUserBan("u1", true);
-    await updateUserRevoke("u1", true);
-    await updateUserAdmin("u1", true);
+    await updateUserBan(user.id, true);
+    await updateUserRevoke(user.id, true);
+    await updateUserAdmin(user.id, true);
 
-    expect(prisma.user.update).toHaveBeenNthCalledWith(1, {
-      where: { id: "u1" },
-      data: { banned: true },
-    });
-    expect(prisma.user.update).toHaveBeenNthCalledWith(2, {
-      where: { id: "u1" },
-      data: { revoked: true },
-    });
-    expect(prisma.user.update).toHaveBeenNthCalledWith(3, {
-      where: { id: "u1" },
-      data: { isAdmin: true },
-    });
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
+    expect(updated?.banned).toBe(true);
+    expect(updated?.revoked).toBe(true);
+    expect(updated?.isAdmin).toBe(true);
   });
 
   it("fetches user ban/revoke status", async () => {
-    await findUserBanStatus("u1");
-    await findUserRevokeStatus("u1");
+    const ban = await findUserBanStatus(user.id);
+    const revoke = await findUserRevokeStatus(user.id);
 
-    expect(prisma.user.findUnique).toHaveBeenNthCalledWith(1, {
-      where: { id: "u1" },
-      select: { banned: true },
-    });
-    expect(prisma.user.findUnique).toHaveBeenNthCalledWith(2, {
-      where: { id: "u1" },
-      select: { revoked: true },
-    });
+    expect(ban?.banned).toBe(true);
+    expect(revoke?.revoked).toBe(true);
   });
 
   it("updates online status by email", async () => {
-    await updateUserOnlineByEmail("user@example.com", false);
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { email: "user@example.com" },
-      data: { isOnline: false },
-    });
+    await updateUserOnlineByEmail(user.email, false);
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
+    expect(updated?.isOnline).toBe(false);
   });
 });

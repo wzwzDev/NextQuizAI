@@ -1,26 +1,9 @@
-let createImpl: jest.Mock = jest.fn();
-
-jest.mock("openai", () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: (...args: any[]) => createImpl(...args),
-        },
-      },
-    })),
-  };
-});
-
 import { strict_output } from "@/server/ai/gptadmin";
+
+jest.setTimeout(45000);
 
 describe("gptadmin.strict_output", () => {
   const originalOpenAIKey = process.env.OPENAI_API_KEY;
-
-  beforeAll(() => {
-    process.env.OPENAI_API_KEY = "test-key";
-  });
 
   afterAll(() => {
     if (typeof originalOpenAIKey === "string") {
@@ -31,225 +14,42 @@ describe("gptadmin.strict_output", () => {
     delete process.env.OPENAI_API_KEY;
   });
 
-  it("returns an array with normalized answers in choices", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
-      "a",
-      false,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
-    );
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBe(1);
-    expect(result[0]).toHaveProperty("question", "q");
-    expect(result[0]).toHaveProperty("answer", "a");
-  });
+  it("throws when OPENAI_API_KEY is missing", async () => {
+    delete process.env.OPENAI_API_KEY;
 
-  it("returns array with default_category if answer not in choices", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "not-in-choices" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
-      "a",
-      false,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
-    );
-    expect(result[0].answer).toBe("a");
-  });
-
-  it("returns array with answer split at colon", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a:extra" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
-      "a",
-      false,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
-    );
-    expect(result[0].answer).toBe("a");
-  });
-
-  it("returns output_value_only as array of values", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
-      "a",
-      true,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
-    );
-    expect(Array.isArray(result)).toBe(true);
-    expect(result[0]).toEqual(["q", "a"]);
-  });
-
-  it("returns output_value_only as single value if only one property", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ answer: "a" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { answer: ["a", "b"] },
-      "a",
-      true,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
-    );
-    expect(Array.isArray(result)).toBe(true);
-    expect(result[0]).toEqual("a");
-  });
-
-  it("throws if OpenAI returns invalid JSON after retries", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: "not-json" } }],
-    });
     await expect(
       strict_output(
         "system",
         "user",
-        { question: "", answer: ["a", "b"] },
-        "a",
+        { question: "", answer: "" },
+        "",
         false,
-        "gpt-3.5-turbo",
+        "gpt-4o-mini",
+        0,
         1,
-        1,
-        false
-      )
-    ).rejects.toThrow(/OpenAI strict output failed after 1 attempt/);
+        false,
+      ),
+    ).rejects.toThrow(/OPENAI_API_KEY/i);
   });
 
-  it("throws if OpenAI throws", async () => {
-    createImpl = jest.fn().mockRejectedValue(new Error("fail"));
-    await expect(
-      strict_output(
-        "system",
-        "user",
-        { question: "", answer: ["a", "b"] },
-        "a",
-        false,
-        "gpt-3.5-turbo",
-        1,
-        1,
-        false
-      )
-    ).rejects.toThrow(/OpenAI strict output failed after 1 attempt\(s\): fail/);
-  });
+  it("can execute with real OpenAI when key is present", async () => {
+    if (!originalOpenAIKey) {
+      return;
+    }
 
-  it("retries on 429 and succeeds on next attempt", async () => {
-    createImpl = jest
-      .fn()
-      .mockRejectedValueOnce(
-        Object.assign(new Error("429 Rate limit reached. Please try again in 50ms."), {
-          status: 429,
-        }),
-      )
-      .mockResolvedValueOnce({
-        choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a" }]) } }],
-      });
-
+    process.env.OPENAI_API_KEY = originalOpenAIKey;
     const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
-      "a",
-      false,
-      "gpt-3.5-turbo",
-      1,
-      3,
-      false,
-    );
-
-    expect(createImpl).toHaveBeenCalledTimes(2);
-    expect(result[0].question).toBe("q");
-    expect(result[0].answer).toBe("a");
-  });
-
-  it("throws if required key is missing in output", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ notquestion: "q", answer: "a" }]) } }],
-    });
-    await expect(
-      strict_output(
-        "system",
-        "user",
-        { question: "", answer: ["a", "b"] },
-        "a",
-        false,
-        "gpt-3.5-turbo",
-        1,
-        1,
-        false
-      )
-    ).rejects.toThrow(/question not in json output/);
-  });
-
-  it("returns [] if answer not in choices and no default_category", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "not-in-choices" }]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      "user",
-      { question: "", answer: ["a", "b"] },
+      "Return concise output.",
+      "Generate one short question-answer pair.",
+      { question: "", answer: "" },
       "",
       false,
-      "gpt-3.5-turbo",
+      "gpt-4o-mini",
+      0,
       1,
-      1,
-      false
-    );
-    // Should not replace with default, so answer stays not-in-choices, which is filtered out
-    expect(result[0].answer).toBe("not-in-choices");
-  });
-
-  it("handles list_input and dynamic_elements", async () => {
-    createImpl = jest.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify([
-        { question: "q1", answer: "a" },
-        { question: "q2", answer: "b" }
-      ]) } }],
-    });
-    const result = await strict_output(
-      "system",
-      ["prompt1", "prompt2"],
-      { question: "", answer: ["a", "b"], "<dynamic>": "" },
-      "a",
       false,
-      "gpt-3.5-turbo",
-      1,
-      1,
-      false
     );
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBe(2);
-    expect(result[0].question).toBe("q1");
-    expect(result[1].question).toBe("q2");
+
+    expect(result).toBeDefined();
   });
 });

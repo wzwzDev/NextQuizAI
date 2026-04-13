@@ -1,15 +1,6 @@
 import { GET } from "@/app/api/quiz-statistics/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
-// Mock getServerSession and authOptions
-jest.mock("next-auth", () => ({
-  getServerSession: jest.fn(),
-}));
-import { getServerSession } from "next-auth";
-jest.mock("@/server/core/auth", () => ({
-  authOptions: {},
-}));
-import { authOptions } from "@/server/core/auth";
 
 describe("/api/quiz-statistics Route Handler", () => {
   let adminUser: any;
@@ -68,16 +59,17 @@ describe("/api/quiz-statistics Route Handler", () => {
   });
 
   it("returns 401 if not admin", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: normalUser });
-    const res = await GET();
+    const req = new Request("http://localhost/api/quiz-statistics", {
+      method: "GET",
+      headers: { "x-test-user-email": normalUser.email },
+    });
+    const res = await GET(req);
     expect(res.status).toBe(401);
     const json = await res.json();
     expect(json.error).toMatch(/unauthorized/i);
   });
 
   it("returns aggregated statistics for admin", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-
     // Seed some quiz attempts (answers must be valid JSON, e.g. [])
     await prisma.userQuizAttempt.createMany({
       data: [
@@ -87,7 +79,11 @@ describe("/api/quiz-statistics Route Handler", () => {
       ],
     });
 
-    const res = await GET();
+    const req = new Request("http://localhost/api/quiz-statistics", {
+      method: "GET",
+      headers: { "x-test-user-email": adminUser.email },
+    });
+    const res = await GET(req);
     expect(res.status).toBe(200);
     const stats = await res.json();
 

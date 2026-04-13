@@ -1,17 +1,3 @@
-jest.mock("@/server/core/db", () => ({
-  prisma: {
-    adminQuiz: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      delete: jest.fn(),
-      findFirst: jest.fn(),
-    },
-    userQuizAttempt: {
-      findMany: jest.fn(),
-    },
-  },
-}));
-
 import {
   createAdminQuiz,
   deleteAdminQuizById,
@@ -21,52 +7,73 @@ import {
 } from "@/server/repositories/adminQuizRepository";
 import { prisma } from "@/server/core/db";
 
+jest.setTimeout(30000);
+
 describe("adminQuizRepository", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  let createdQuizId = "";
+
+  beforeAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizId: "admin-repo-attempt" } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "repo-admin-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "repo-admin-quiz" } } });
+  });
+
+  afterAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizId: "admin-repo-attempt" } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "repo-admin-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "repo-admin-quiz" } } });
+    await prisma.$disconnect();
   });
 
   it("creates admin quiz with nested questions", async () => {
-    await createAdminQuiz({
-      title: "Quiz 1",
+    const created = await createAdminQuiz({
+      title: "repo-admin-quiz-1",
       category: "math",
       difficulty: "easy",
       questions: [{ question: "Q1", answer: "A1" }],
     });
 
-    expect(prisma.adminQuiz.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          title: "Quiz 1",
-          questions: { create: [{ question: "Q1", answer: "A1" }] },
-        }),
-      }),
-    );
+    createdQuizId = created.id;
+    expect(created.title).toBe("repo-admin-quiz-1");
+    expect(created.questions.length).toBe(1);
   });
 
   it("finds admin quizzes with filter", async () => {
-    await findAdminQuizzes({ category: "math", difficulty: "easy" });
-    expect(prisma.adminQuiz.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { category: "math", difficulty: "easy" } }),
-    );
+    const quizzes = await findAdminQuizzes({ category: "math", difficulty: "easy" });
+    expect(quizzes.some((quiz) => quiz.id === createdQuizId)).toBe(true);
   });
 
   it("deletes admin quiz by id", async () => {
-    await deleteAdminQuizById("quiz-1");
-    expect(prisma.adminQuiz.delete).toHaveBeenCalledWith({ where: { id: "quiz-1" } });
+    const extraQuiz = await createAdminQuiz({
+      title: "repo-admin-quiz-delete",
+      category: "math",
+      difficulty: "easy",
+      questions: [{ question: "QD", answer: "AD" }],
+    });
+
+    await deleteAdminQuizById(extraQuiz.id);
+    const deleted = await prisma.adminQuiz.findUnique({ where: { id: extraQuiz.id } });
+    expect(deleted).toBeNull();
   });
 
   it("finds approved quiz by id", async () => {
-    await findApprovedQuizById("quiz-1");
-    expect(prisma.adminQuiz.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "quiz-1", status: "approved" },
-      }),
-    );
+    const approved = await findApprovedQuizById(createdQuizId);
+    expect(approved?.id).toBe(createdQuizId);
+    expect(approved?.status).toBe("approved");
   });
 
   it("lists all user quiz attempts", async () => {
-    await findAllUserQuizAttempts();
-    expect(prisma.userQuizAttempt.findMany).toHaveBeenCalled();
+    await prisma.userQuizAttempt.create({
+      data: {
+        userId: "repo-user-1",
+        quizId: "admin-repo-attempt",
+        quizTitle: "repo-admin-quiz-attempt",
+        answers: [],
+        score: 77,
+      },
+    });
+
+    const attempts = await findAllUserQuizAttempts();
+    expect(attempts.some((attempt) => attempt.quizId === "admin-repo-attempt")).toBe(true);
   });
 });

@@ -1,48 +1,47 @@
-jest.mock("@/server/core/db", () => ({
-  prisma: {
-    userQuizAttempt: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-    },
-  },
-}));
-
 import {
   createUserQuizAttempt,
   listUserQuizAttemptsByUserId,
 } from "@/server/repositories/userQuizAttemptRepository";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+
+jest.setTimeout(30000);
 
 describe("userQuizAttemptRepository", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  let user: User;
+
+  beforeAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizId: "repo-quiz-1" } });
+    await prisma.user.deleteMany({ where: { email: "repo-attempt-user@example.com" } });
+
+    user = await prisma.user.create({
+      data: { email: "repo-attempt-user@example.com" },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { userId: user.id } });
+    await prisma.user.deleteMany({ where: { id: user.id } });
+    await prisma.$disconnect();
   });
 
   it("creates user quiz attempt", async () => {
-    await createUserQuizAttempt({
-      userId: "u1",
-      quizId: "q1",
-      quizTitle: "Quiz 1",
+    const created = await createUserQuizAttempt({
+      userId: user.id,
+      quizId: "repo-quiz-1",
+      quizTitle: "Repo Quiz 1",
       answers: [{ question: "Q", answer: "A" }],
       score: 90,
     });
 
-    expect(prisma.userQuizAttempt.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          userId: "u1",
-          quizId: "q1",
-          quizTitle: "Quiz 1",
-          score: 90,
-        }),
-      }),
-    );
+    expect(created.userId).toBe(user.id);
+    expect(created.quizId).toBe("repo-quiz-1");
+    expect(created.score).toBe(90);
   });
 
   it("lists quiz attempts by user", async () => {
-    await listUserQuizAttemptsByUserId("u1");
-    expect(prisma.userQuizAttempt.findMany).toHaveBeenCalledWith({
-      where: { userId: "u1" },
-    });
+    const attempts = await listUserQuizAttemptsByUserId(user.id);
+    expect(attempts.length).toBeGreaterThan(0);
+    expect(attempts.every((attempt) => attempt.userId === user.id)).toBe(true);
   });
 });

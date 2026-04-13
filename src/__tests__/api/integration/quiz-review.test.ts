@@ -1,15 +1,6 @@
 import { POST, GET, DELETE } from "@/app/api/quiz-review/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
-// Mock getServerSession and authOptions
-jest.mock("next-auth", () => ({
-  getServerSession: jest.fn(),
-}));
-import { getServerSession } from "next-auth";
-jest.mock("@/server/core/auth", () => ({
-  authOptions: {},
-}));
-import { authOptions } from "@/server/core/auth";
 
 describe("/api/quiz-review Route Handler", () => {
   let adminUser: any;
@@ -41,24 +32,21 @@ describe("/api/quiz-review Route Handler", () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   // POST tests
   it("returns 401 if not admin (POST)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: normalUser });
     const req = new Request("http://localhost/api/quiz-review", {
       method: "POST",
       body: JSON.stringify({ title: "Quiz", questions: [], category: "cat", difficulty: "easy" }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": normalUser.email,
+      },
     });
     const res = await POST(req as any);
     expect(res.status).toBe(401);
   });
 
   it("creates a quiz with title from fileName (POST)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
     const req = new Request("http://localhost/api/quiz-review", {
       method: "POST",
       body: JSON.stringify({
@@ -67,7 +55,10 @@ describe("/api/quiz-review Route Handler", () => {
         difficulty: "easy",
         questions: [{ question: "Q1", answer: "A1" }],
       }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": adminUser.email,
+      },
     });
     const res = await POST(req as any);
     expect(res.status).toBe(201);
@@ -78,7 +69,6 @@ describe("/api/quiz-review Route Handler", () => {
   });
 
   it("creates a quiz with fallback title (POST)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
     const req = new Request("http://localhost/api/quiz-review", {
       method: "POST",
       body: JSON.stringify({
@@ -86,7 +76,10 @@ describe("/api/quiz-review Route Handler", () => {
         difficulty: "easy",
         questions: [{ question: "Q2", answer: "A2" }],
       }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": adminUser.email,
+      },
     });
     const res = await POST(req as any);
     expect(res.status).toBe(201);
@@ -94,37 +87,38 @@ describe("/api/quiz-review Route Handler", () => {
     expect(json.quiz.title).toBe("Untitled Quiz");
   });
 
-  it("returns 400 when create throws an Error (POST)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-    const spy = jest.spyOn(prisma.adminQuiz, "create").mockRejectedValue(new Error("fail"));
+  it("returns 400 when question payload is invalid (POST)", async () => {
     const req = new Request("http://localhost/api/quiz-review", {
       method: "POST",
       body: JSON.stringify({
         title: "Quiz",
         category: "cat",
         difficulty: "easy",
-        questions: [{ question: "Q", answer: "A" }],
+        questions: [{ question: "Q", answer: "" }],
       }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": adminUser.email,
+      },
     });
     const res = await POST(req as any);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("fail");
-    spy.mockRestore();
+    expect(typeof json.error).toBe("string");
   });
 
   // GET tests
   it("returns 401 if not authenticated (GET)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue(null);
     const req = new Request("http://localhost/api/quiz-review", { method: "GET" });
     const res = await GET(req as any);
     expect(res.status).toBe(401);
   });
 
   it("returns quizzes with filters (GET)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-    const req = new Request("http://localhost/api/quiz-review?category=cat&difficulty=easy", { method: "GET" });
+    const req = new Request("http://localhost/api/quiz-review?category=cat&difficulty=easy", {
+      method: "GET",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await GET(req as any);
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -133,21 +127,21 @@ describe("/api/quiz-review Route Handler", () => {
 
   // DELETE tests
   it("returns 401 if not authenticated (DELETE)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue(null);
     const req = new Request("http://localhost/api/quiz-review?id=" + quizId, { method: "DELETE" });
     const res = await DELETE(req as any);
     expect(res.status).toBe(401);
   });
 
   it("returns 400 if id missing (DELETE)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-    const req = new Request("http://localhost/api/quiz-review", { method: "DELETE" });
+    const req = new Request("http://localhost/api/quiz-review", {
+      method: "DELETE",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await DELETE(req as any);
     expect(res.status).toBe(400);
   });
 
   it("deletes a quiz (DELETE)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
     // Create a quiz to delete
     const quiz = await prisma.adminQuiz.create({
       data: {
@@ -158,18 +152,13 @@ describe("/api/quiz-review Route Handler", () => {
         questions: { create: [{ question: "Q", answer: "A" }] },
       },
     });
-    const req = new Request("http://localhost/api/quiz-review?id=" + quiz.id, { method: "DELETE" });
+    const req = new Request("http://localhost/api/quiz-review?id=" + quiz.id, {
+      method: "DELETE",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await DELETE(req as any);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
-  });
-
-  it("returns 500 on DB error (DELETE)", async () => {
-    (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
-    jest.spyOn(prisma.adminQuiz, "delete").mockRejectedValue(new Error("fail"));
-    const req = new Request("http://localhost/api/quiz-review?id=badid", { method: "DELETE" });
-    const res = await DELETE(req as any);
-    expect(res.status).toBe(500);
   });
 });

@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/nextauth";
+import { getAuthSession } from "@/lib/nextauth";
 import { setUserAdmin } from "@/lib/services/userService";
 
 export async function POST(
   req: Request,
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
   if (!session?.user?.isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

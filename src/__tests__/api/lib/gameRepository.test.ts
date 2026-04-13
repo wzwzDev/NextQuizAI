@@ -1,16 +1,3 @@
-jest.mock("@/server/core/db", () => ({
-  prisma: {
-    game: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    question: {
-      createMany: jest.fn(),
-    },
-  },
-}));
-
 import {
   createGame,
   createQuestionsForGame,
@@ -19,53 +6,79 @@ import {
   markGameEnded,
 } from "@/server/repositories/gameRepository";
 import { prisma } from "@/server/core/db";
+import type { Prisma } from "@prisma/client";
+import type { Game, User } from "@prisma/client";
+
+jest.setTimeout(30000);
 
 describe("gameRepository", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  let user: User;
+  let game: Game;
 
-  it("creates a game", async () => {
-    await createGame({ userId: "u1", topic: "math", gameType: "mcq" });
-    expect(prisma.game.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ userId: "u1" }) }),
-    );
-  });
-
-  it("finds game by id", async () => {
-    await findGameById("g1");
-    expect(prisma.game.findUnique).toHaveBeenCalledWith({ where: { id: "g1" } });
-  });
-
-  it("finds game with questions", async () => {
-    await findGameWithQuestionsById("g1");
-    expect(prisma.game.findUnique).toHaveBeenCalledWith({
-      where: { id: "g1" },
-      include: { questions: true },
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "game-repo-user@example.com" } });
+    user = await prisma.user.create({ data: { email: "game-repo-user@example.com" } });
+    game = await prisma.game.create({
+      data: {
+        userId: user.id,
+        topic: "math",
+        gameType: "mcq",
+        timeStarted: new Date(),
+      },
     });
   });
 
+  afterAll(async () => {
+    await prisma.question.deleteMany({ where: { gameId: game.id } });
+    await prisma.game.deleteMany({ where: { userId: user.id } });
+    await prisma.user.deleteMany({ where: { id: user.id } });
+    await prisma.$disconnect();
+  });
+
+  it("creates a game", async () => {
+    const created = await createGame({ userId: user.id, topic: "science", gameType: "open_ended" });
+    expect(created.userId).toBe(user.id);
+    expect(created.topic).toBe("science");
+  });
+
+  it("finds game by id", async () => {
+    const found = await findGameById(game.id);
+    expect(found?.id).toBe(game.id);
+  });
+
+  it("finds game with questions", async () => {
+    await prisma.question.create({
+      data: {
+        gameId: game.id,
+        question: "2+2?",
+        answer: "4",
+        questionType: "mcq",
+      },
+    });
+
+    const withQuestions = await findGameWithQuestionsById(game.id);
+    expect(withQuestions?.questions.length).toBeGreaterThan(0);
+  });
+
   it("marks game ended", async () => {
-    await markGameEnded("g1");
-    expect(prisma.game.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "g1" }, data: expect.any(Object) }),
-    );
+    await markGameEnded(game.id);
+    const updated = await prisma.game.findUnique({ where: { id: game.id } });
+    expect(updated?.timeEnded).toBeTruthy();
   });
 
   it("creates many questions for game", async () => {
-    await createQuestionsForGame([
+    const questionPayload: Prisma.QuestionCreateManyInput[] = [
       {
-        gameId: "g1",
+        gameId: game.id,
         question: "Q",
         answer: "A",
         questionType: "mcq",
       },
-    ] as any);
+    ];
 
-    expect(prisma.question.createMany).toHaveBeenCalledWith({
-      data: [
-        expect.objectContaining({ gameId: "g1", question: "Q", answer: "A" }),
-      ],
-    });
+    await createQuestionsForGame(questionPayload);
+
+    const created = await prisma.question.findMany({ where: { gameId: game.id, question: "Q" } });
+    expect(created.length).toBeGreaterThan(0);
   });
 });

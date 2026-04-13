@@ -5,31 +5,26 @@ import {
   getQuizStatisticsSummary,
   removeAdminQuiz,
 } from "@/server/services/adminQuizService";
-import {
-  createAdminQuiz,
-  deleteAdminQuizById,
-  findAdminQuizzes,
-  findAllUserQuizAttempts,
-  findApprovedQuizById,
-} from "@/server/repositories/adminQuizRepository";
+import { prisma } from "@/server/core/db";
 
-jest.mock("@/server/repositories/adminQuizRepository", () => ({
-  createAdminQuiz: jest.fn(),
-  deleteAdminQuizById: jest.fn(),
-  findAdminQuizzes: jest.fn(),
-  findAllUserQuizAttempts: jest.fn(),
-  findApprovedQuizById: jest.fn(),
-}));
+jest.setTimeout(30000);
 
 describe("adminQuizService", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizTitle: { startsWith: "service-admin-quiz" } } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "service-admin-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "service-admin-quiz" } } });
+  });
+
+  afterAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({ where: { quizTitle: { startsWith: "service-admin-quiz" } } });
+    await prisma.adminQuizQuestion.deleteMany({ where: { quiz: { title: { startsWith: "service-admin-quiz" } } } });
+    await prisma.adminQuiz.deleteMany({ where: { title: { startsWith: "service-admin-quiz" } } });
+    await prisma.$disconnect();
   });
 
   it("uses fileName as title fallback when title is blank", async () => {
-    (createAdminQuiz as jest.Mock).mockResolvedValue({ id: "quiz-1" });
-
-    await createApprovedAdminQuiz({
+    const quiz = await createApprovedAdminQuiz({
       title: "   ",
       fileName: "chapter-1.pdf",
       category: "science",
@@ -37,67 +32,80 @@ describe("adminQuizService", () => {
       questions: [{ question: "Q1", answer: "A1" }],
     });
 
-    expect(createAdminQuiz).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "chapter-1",
-        status: "approved",
-      }),
-    );
+    expect(quiz.title).toBe("chapter-1");
+    expect(quiz.status).toBe("approved");
   });
 
   it("uses default title when no title and no filename", async () => {
-    (createAdminQuiz as jest.Mock).mockResolvedValue({ id: "quiz-1" });
-
-    await createApprovedAdminQuiz({
+    const quiz = await createApprovedAdminQuiz({
       category: "science",
       difficulty: "easy",
       questions: [{ question: "Q1", answer: "A1" }],
     });
 
-    expect(createAdminQuiz).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Untitled Quiz" }),
-    );
+    expect(quiz.title).toBe("Untitled Quiz");
   });
 
   it("delegates quiz listing", async () => {
-    (findAdminQuizzes as jest.Mock).mockResolvedValue([]);
-    await getAdminQuizzes({ category: "math" });
-    expect(findAdminQuizzes).toHaveBeenCalledWith({ category: "math" });
+    await createApprovedAdminQuiz({
+      title: "service-admin-quiz-list",
+      category: "math",
+      difficulty: "easy",
+      questions: [{ question: "Q", answer: "A" }],
+    });
+
+    const quizzes = await getAdminQuizzes({ category: "math" });
+    expect(quizzes.some((quiz) => quiz.title === "service-admin-quiz-list")).toBe(true);
   });
 
   it("delegates approved quiz fetch", async () => {
-    (findApprovedQuizById as jest.Mock).mockResolvedValue({ id: "quiz-1" });
-    await getApprovedQuiz("quiz-1");
-    expect(findApprovedQuizById).toHaveBeenCalledWith("quiz-1");
+    const quiz = await createApprovedAdminQuiz({
+      title: "service-admin-quiz-approved",
+      category: "math",
+      difficulty: "easy",
+      questions: [{ question: "Q", answer: "A" }],
+    });
+
+    const approved = await getApprovedQuiz(quiz.id);
+    expect(approved?.id).toBe(quiz.id);
   });
 
   it("delegates quiz deletion", async () => {
-    (deleteAdminQuizById as jest.Mock).mockResolvedValue({ id: "quiz-1" });
-    await removeAdminQuiz("quiz-1");
-    expect(deleteAdminQuizById).toHaveBeenCalledWith("quiz-1");
+    const quiz = await createApprovedAdminQuiz({
+      title: "service-admin-quiz-delete",
+      category: "math",
+      difficulty: "easy",
+      questions: [{ question: "Q", answer: "A" }],
+    });
+
+    await removeAdminQuiz(quiz.id);
+    const removed = await prisma.adminQuiz.findUnique({ where: { id: quiz.id } });
+    expect(removed).toBeNull();
   });
 
   it("builds quiz statistics summary by quiz title", async () => {
-    (findAllUserQuizAttempts as jest.Mock).mockResolvedValue([
-      { quizId: "q1", quizTitle: "Quiz A", score: 80 },
-      { quizId: "q1", quizTitle: "Quiz A", score: 60 },
-      { quizId: "q2", quizTitle: "Quiz B", score: 90 },
-    ]);
+    await prisma.userQuizAttempt.createMany({
+      data: [
+        { quizId: "service-q1", quizTitle: "service-admin-quiz-a", score: 80, userId: "u1", answers: [] },
+        { quizId: "service-q1", quizTitle: "service-admin-quiz-a", score: 60, userId: "u2", answers: [] },
+        { quizId: "service-q2", quizTitle: "service-admin-quiz-b", score: 90, userId: "u3", answers: [] },
+      ],
+    });
 
     const summary = await getQuizStatisticsSummary();
 
     expect(summary).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          quizId: "q1",
-          quizTitle: "Quiz A",
+          quizId: "service-q1",
+          quizTitle: "service-admin-quiz-a",
           attempts: 2,
           averageScore: 70,
           completionRate: 100,
         }),
         expect.objectContaining({
-          quizId: "q2",
-          quizTitle: "Quiz B",
+          quizId: "service-q2",
+          quizTitle: "service-admin-quiz-b",
           attempts: 1,
           averageScore: 90,
           completionRate: 100,
