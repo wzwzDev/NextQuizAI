@@ -1,9 +1,9 @@
 import { POST } from "@/app/api/questions/route";
-import { strict_output } from "@/server/ai/gpt";
+import { strict_output } from "@/lib/gpt";
 jest.setTimeout(30000);
 
 // Mock strict_output
-jest.mock("@/server/ai/gpt", () => ({
+jest.mock("@/lib/gpt", () => ({
   strict_output: jest.fn(),
 }));
 

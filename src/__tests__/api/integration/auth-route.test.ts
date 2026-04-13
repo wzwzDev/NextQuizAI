@@ -4,7 +4,7 @@ jest.mock("next-auth/next", () => ({
 }));
 
 import NextAuth from "next-auth/next";
-import { authOptions } from "@/server/core/auth";
+import { authOptions } from "@/lib/nextauth";
 import { GET, POST } from "@/app/api/auth/[...nextauth]/route";
 
 describe("/api/auth/[...nextauth] Route Handler", () => {

@@ -85,8 +85,13 @@ const OpenEnded = ({ game }: Props) => {
   const handleNext = React.useCallback(() => {
     checkAnswer(undefined, {
       onSuccess: ({ percentageSimilar }) => {
+        const isCorrect = percentageSimilar === 100;
         toast({
-          title: `Your answer is ${percentageSimilar}% similar to the correct answer`,
+          title: isCorrect ? "Correct answer" : "Incorrect answer",
+          description: isCorrect
+            ? "Your answer matches the expected result."
+            : "Your answer does not match the expected result.",
+          variant: isCorrect ? "success" : "destructive",
         });
         setAveragePercentage((prev) => {
           return (prev + percentageSimilar) / (questionIndex + 1);

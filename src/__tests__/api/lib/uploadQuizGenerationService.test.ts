@@ -52,6 +52,16 @@ describe("uploadQuizGenerationService", () => {
     expect(result).toEqual([{ question: "Q1", answer: "A1" }]);
   });
 
+  it("rethrows strict_output failures with OpenAI generation prefix", async () => {
+    (strict_output as jest.Mock).mockRejectedValue(new Error("quota exceeded"));
+
+    await expect(
+      generateQuestionsFromCourseContent(
+        "This is sufficiently long content for generation.",
+      ),
+    ).rejects.toThrow("OpenAI generation failed: quota exceeded");
+  });
+
   it("parses valid json file and returns generated questions", async () => {
     (strict_output as jest.Mock).mockResolvedValue([
       { question: "Q1", answer: "A1" },

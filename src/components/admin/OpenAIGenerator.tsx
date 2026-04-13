@@ -33,7 +33,11 @@ const OpenAIGenerator = ({ onQuizReady }: OpenAIGeneratorProps) => {
         data.questions.length > 0
       ) {
         setQuestions(data.questions);
-        onQuizReady({ title: prompt, questions: data.questions });
+        onQuizReady({
+          title: prompt,
+          quizType: "open_ended",
+          questions: data.questions,
+        });
       } else {
         setError("Failed to generate quiz questions.");
       }

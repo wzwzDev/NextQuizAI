@@ -11,6 +11,11 @@ export const checkAnswerSchema = z.object({
   questionId: z.string(),
 });
 
+export const submitAdminQuizAttemptSchema = z.object({
+  quizId: z.string().min(1),
+  answers: z.array(z.string()),
+});
+
 export const endGameSchema = z.object({
   gameId: z.string(),
 });

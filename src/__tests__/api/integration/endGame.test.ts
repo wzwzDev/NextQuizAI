@@ -1,7 +1,7 @@
 import { POST } from "@/app/api/endGame/route";
-import { endGame } from "@/server/services/gameService";
+import { endGame } from "@/lib/services/gameService";
 
-jest.mock("@/server/services/gameService", () => ({
+jest.mock("@/lib/services/gameService", () => ({
   endGame: jest.fn(),
 }));
 

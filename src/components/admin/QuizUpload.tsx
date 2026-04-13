@@ -8,6 +8,7 @@ type QuizUploadProps = {
 
 type UploadAndGenerateResponse = {
   questions?: AdminQuestion[];
+  error?: string;
 };
 
 const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
@@ -75,11 +76,34 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         body: formData,
       });
       const data: UploadAndGenerateResponse = await res.json();
-      if (data.questions && Array.isArray(data.questions)) {
-        onQuizReady({ title: file.name, questions: data.questions });
+
+      if (!res.ok) {
+        setError(data.error || "Failed to generate quiz from file.");
+        return;
+      }
+
+      const generatedQuestions = Array.isArray(data.questions)
+        ? data.questions.filter(
+            (q) =>
+              typeof q?.question === "string" &&
+              q.question.trim().length > 0 &&
+              typeof q?.answer === "string" &&
+              q.answer.trim().length > 0,
+          )
+        : [];
+
+      if (generatedQuestions.length > 0) {
+        onQuizReady({
+          title: file.name,
+          quizType: "open_ended",
+          questions: generatedQuestions,
+        });
         setFile(null);
       } else {
-        setError("Failed to generate quiz from file.");
+        setError(
+          data.error ||
+            "No valid question/answer pairs were generated. Please try another file.",
+        );
       }
     } catch {
       setError("Failed to generate quiz from file.");

@@ -112,6 +112,7 @@ model AdminQuiz {
   title       String
   category    String
   difficulty  String
+  quizType    GameType         @default(open_ended)
   status      String           @default("pending") // e.g. "pending", "approved", "rejected"
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -124,7 +125,7 @@ model AdminQuizQuestion {
   quiz      AdminQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
   question  String
   answer    String
-  // Optionally: type, options, etc.
+  options   Json?
 }
 
 model UserQuizAttempt {

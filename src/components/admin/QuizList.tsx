@@ -2,31 +2,133 @@
 import React, { useEffect, useState } from "react";
 import { AdminQuizDraft } from "@/components/admin/types";
 
-const categories = ["Math", "Science", "History", "Programming"];
-const difficulties = ["easy", "medium", "hard"];
+function normalizeFilterValue(value?: string) {
+  return (value ?? "").trim().toLowerCase();
+}
 
-export default function QuizList() {
-  const [quizzes, setQuizzes] = useState<AdminQuizDraft[]>([]);
+type QuizListProps = {
+  refreshKey?: number;
+};
+
+export default function QuizList({ refreshKey = 0 }: QuizListProps) {
+  const [allQuizzes, setAllQuizzes] = useState<AdminQuizDraft[]>([]);
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
+  const [quizType, setQuizType] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams();
-    if (category) params.append("category", category);
-    if (difficulty) params.append("difficulty", difficulty);
 
-    fetch(`/api/quiz-review?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) =>
-        setQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []),
-      )
-      .catch(() => setError("Failed to load quizzes."))
-      .finally(() => setLoading(false));
-  }, [category, difficulty]);
+    (async () => {
+      try {
+        const res = await fetch("/api/quiz-review");
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to load quizzes.");
+        }
+
+        if (isMounted) {
+          setAllQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Failed to load quizzes.",
+          );
+          setAllQuizzes([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshKey]);
+
+  const categories = React.useMemo(() => {
+    return Array.from(
+      new Set(
+        allQuizzes
+          .map((quiz) => quiz.category)
+          .filter((value): value is string =>
+            Boolean(value && value.trim().length > 0),
+          ),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [allQuizzes]);
+
+  const difficulties = React.useMemo(() => {
+    return Array.from(
+      new Set(
+        allQuizzes
+          .map((quiz) => quiz.difficulty)
+          .filter((value): value is string =>
+            Boolean(value && value.trim().length > 0),
+          ),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [allQuizzes]);
+
+  const quizTypes = React.useMemo(() => {
+    return Array.from(
+      new Set(
+        allQuizzes
+          .map((quiz) => quiz.quizType)
+          .filter(
+            (
+              value,
+            ): value is NonNullable<AdminQuizDraft["quizType"]> =>
+              Boolean(value && value.trim().length > 0),
+          ),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [allQuizzes]);
+
+  const filteredQuizzes = React.useMemo(() => {
+    const selectedCategory = normalizeFilterValue(category);
+    const selectedDifficulty = normalizeFilterValue(difficulty);
+    const selectedQuizType = normalizeFilterValue(quizType);
+
+    return allQuizzes.filter((quiz) => {
+      const quizCategory = normalizeFilterValue(quiz.category);
+      const quizDifficulty = normalizeFilterValue(quiz.difficulty);
+      const quizKind = normalizeFilterValue(quiz.quizType);
+
+      const categoryMatch =
+        selectedCategory.length === 0 || quizCategory === selectedCategory;
+      const difficultyMatch =
+        selectedDifficulty.length === 0 || quizDifficulty === selectedDifficulty;
+      const quizTypeMatch =
+        selectedQuizType.length === 0 || quizKind === selectedQuizType;
+
+      return categoryMatch && difficultyMatch && quizTypeMatch;
+    });
+  }, [allQuizzes, category, difficulty, quizType]);
+
+  const formatQuizTypeLabel = (value?: string) => {
+    const normalized = normalizeFilterValue(value);
+    if (normalized === "mcq") {
+      return "MCQ";
+    }
+
+    if (normalized === "open_ended") {
+      return "Open Ended";
+    }
+
+    return "Unknown";
+  };
 
   const handleDelete = async (quiz: AdminQuizDraft) => {
     if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
@@ -35,7 +137,7 @@ export default function QuizList() {
           method: "DELETE",
         });
         if (res.ok) {
-          setQuizzes((qs) => qs.filter((q) => q.id !== quiz.id));
+          setAllQuizzes((qs) => qs.filter((q) => q.id !== quiz.id));
         } else {
           const data = await res.json();
           alert(data.error || "Failed to delete quiz.");
@@ -56,7 +158,9 @@ export default function QuizList() {
         >
           <option value="">All Categories</option>
           {categories.map((cat) => (
-            <option key={cat}>{cat}</option>
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
         <select
@@ -66,14 +170,28 @@ export default function QuizList() {
         >
           <option value="">All Difficulties</option>
           {difficulties.map((diff) => (
-            <option key={diff}>{diff}</option>
+            <option key={diff} value={diff}>
+              {diff}
+            </option>
+          ))}
+        </select>
+        <select
+          className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
+          value={quizType}
+          onChange={(e) => setQuizType(e.target.value)}
+        >
+          <option value="">All Types</option>
+          {quizTypes.map((type) => (
+            <option key={type} value={type}>
+              {formatQuizTypeLabel(type)}
+            </option>
           ))}
         </select>
       </div>
       {loading && <div>Loading quizzes...</div>}
       {error && <div className="text-red-500">{error}</div>}
-      {!loading && quizzes.length === 0 && <div>No quizzes found.</div>}
-      {!loading && quizzes.length > 0 && (
+      {!loading && filteredQuizzes.length === 0 && <div>No quizzes found.</div>}
+      {!loading && filteredQuizzes.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full border rounded-lg">
             <thead>
@@ -82,17 +200,19 @@ export default function QuizList() {
                 <th className="p-2 border text-left">Title</th>
                 <th className="p-2 border text-left">Category</th>
                 <th className="p-2 border text-left">Difficulty</th>
+                <th className="p-2 border text-left">Type</th>
                 <th className="p-2 border text-center">Questions</th>
                 <th className="p-2 border text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {quizzes.map((quiz: AdminQuizDraft, idx: number) => (
+              {filteredQuizzes.map((quiz: AdminQuizDraft, idx: number) => (
                 <tr key={quiz.id} className="hover:bg-blue-50">
                   <td className="p-2 border text-center">{idx + 1}</td>
                   <td className="p-2 border">{quiz.title}</td>
                   <td className="p-2 border">{quiz.category}</td>
                   <td className="p-2 border">{quiz.difficulty}</td>
+                  <td className="p-2 border">{formatQuizTypeLabel(quiz.quizType)}</td>
                   <td className="p-2 border text-center">
                     {quiz.questions && Array.isArray(quiz.questions)
                       ? quiz.questions.length

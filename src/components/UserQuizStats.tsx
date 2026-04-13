@@ -7,8 +7,7 @@ import {
   TableBody,
   TableHead,
   TableRow,
-  TableCell,
-  TableCaption,
+  TableCell
 } from "./ui/table"; // Adjust the import path if needed
 
 import { ChartContainer, ChartTooltip, ChartLegend } from "./ui/chart"; // Adjust the path if needed

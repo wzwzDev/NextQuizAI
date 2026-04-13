@@ -16,18 +16,44 @@ import { AdminQuizDraft } from "@/components/admin/types";
 
 const AdminDashboardClient = () => {
   const [quizToReview, setQuizToReview] = useState<AdminQuizDraft | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [quizListRefreshKey, setQuizListRefreshKey] = useState(0);
 
   const handleQuizReady = (quiz: AdminQuizDraft) => {
+    setApproveError(null);
     setQuizToReview(quiz);
   };
 
   const handleApprove = async (approvedQuiz: AdminQuizDraft) => {
-    await fetch("/api/quiz-review", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(approvedQuiz),
-    });
-    setQuizToReview(null);
+    if (isApproving) {
+      return;
+    }
+
+    setIsApproving(true);
+    setApproveError(null);
+
+    try {
+      const response = await fetch("/api/quiz-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(approvedQuiz),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to save approved quiz.");
+      }
+
+      setQuizToReview(null);
+      setQuizListRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      setApproveError(
+        error instanceof Error ? error.message : "Failed to save approved quiz.",
+      );
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   return (
@@ -69,9 +95,19 @@ const AdminDashboardClient = () => {
           </CardHeader>
           <CardContent>
             {quizToReview ? (
-              <QuizReview quiz={quizToReview} onApprove={handleApprove} />
+              <>
+                {approveError && (
+                  <div className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {approveError}
+                  </div>
+                )}
+                <QuizReview quiz={quizToReview} onApprove={handleApprove} />
+                {isApproving && (
+                  <div className="mt-3 text-sm text-blue-700">Saving quiz...</div>
+                )}
+              </>
             ) : (
-              <QuizList />
+              <QuizList refreshKey={quizListRefreshKey} />
             )}
           </CardContent>
         </Card>

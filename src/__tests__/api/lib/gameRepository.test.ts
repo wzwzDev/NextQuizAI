@@ -1,4 +1,4 @@
-jest.mock("@/server/core/db", () => ({
+jest.mock("@/lib/db", () => ({
   prisma: {
     game: {
       create: jest.fn(),
@@ -17,8 +17,8 @@ import {
   findGameById,
   findGameWithQuestionsById,
   markGameEnded,
-} from "@/server/repositories/gameRepository";
-import { prisma } from "@/server/core/db";
+} from "@/lib/repositories/gameRepository";
+import { prisma } from "@/lib/db";
 
 describe("gameRepository", () => {
   beforeEach(() => {

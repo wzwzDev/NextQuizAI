@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/core/auth";
-import { getQuizStatisticsSummary } from "@/server/services/adminQuizService";
+import { authOptions } from "@/lib/nextauth";
+import { getQuizStatisticsSummary } from "@/lib/services/adminQuizService";
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isAdmin) {

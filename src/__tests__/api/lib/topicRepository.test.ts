@@ -1,4 +1,4 @@
-jest.mock("@/server/core/db", () => ({
+jest.mock("@/lib/db", () => ({
   prisma: {
     topicCount: {
       upsert: jest.fn(),
@@ -6,8 +6,8 @@ jest.mock("@/server/core/db", () => ({
   },
 }));
 
-import { incrementTopicCount } from "@/server/repositories/topicRepository";
-import { prisma } from "@/server/core/db";
+import { incrementTopicCount } from "@/lib/repositories/topicRepository";
+import { prisma } from "@/lib/db";
 
 describe("topicRepository", () => {
   beforeEach(() => {

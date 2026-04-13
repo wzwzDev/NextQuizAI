@@ -1,4 +1,4 @@
-import { generateQuestionsByTopic } from "@/server/services/questionGenerationService";
+import { generateQuestionsByTopic } from "@/lib/services/questionGenerationService";
 import { getQuestionsSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";

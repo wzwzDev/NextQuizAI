@@ -1,9 +1,9 @@
-import { getAuthSession } from "@/server/core/auth";
+import { getAuthSession } from "@/lib/nextauth";
 import {
   createGameWithTopicCount,
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
-} from "@/server/services/gameService";
+} from "@/lib/services/gameService";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { NextResponse } from "next/server";
 import { z } from "zod";

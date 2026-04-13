@@ -6,7 +6,7 @@ import {
   setUserAdmin,
   setUserBanned,
   setUserRevoked,
-} from "@/server/services/userService";
+} from "@/lib/services/userService";
 import {
   findUserBanStatus,
   findUserRevokeStatus,
@@ -15,9 +15,9 @@ import {
   updateUserBan,
   updateUserOnlineByEmail,
   updateUserRevoke,
-} from "@/server/repositories/userRepository";
+} from "@/lib/repositories/userRepository";
 
-jest.mock("@/server/repositories/userRepository", () => ({
+jest.mock("@/lib/repositories/userRepository", () => ({
   findUserBanStatus: jest.fn(),
   findUserRevokeStatus: jest.fn(),
   listUsersForAdmin: jest.fn(),

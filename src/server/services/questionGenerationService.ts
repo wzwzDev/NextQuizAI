@@ -9,13 +9,13 @@ export type TopicQuestionInput = {
 export async function generateQuestionsByTopic(input: TopicQuestionInput) {
   if (input.type === "open_ended") {
     return strict_output(
-      "You are a helpful AI that is able to generate a pair of question and answers, the length of each answer should not be more than 15 words, store all the pairs of answers and questions in a JSON array",
+      "You are a helpful AI that generates short-answer quiz pairs. Every answer must be an exact, objective target (code output, keyword, syntax token, function name, number, or short phrase). Avoid definition/explanation style questions. Answers must be 1-6 words and never a paragraph.",
       new Array(input.amount).fill(
-        `You are to generate a random hard open-ended questions about ${input.topic}`,
+        `Generate a random hard short-answer question about ${input.topic}. Require an exact concise answer (1-6 words), not a definition.`,
       ),
       {
         question: "question",
-        answer: "answer with max length of 15 words",
+        answer: "exact answer with max length of 6 words",
       },
     );
   }

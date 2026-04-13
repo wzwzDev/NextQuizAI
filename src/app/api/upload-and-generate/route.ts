@@ -42,10 +42,18 @@ export async function POST(req: NextRequest) {
         "Invalid JSON file.",
         "No course content found in JSON.",
         "Course content is too short or missing.",
+        "No valid questions could be generated from the uploaded file.",
       ]);
 
       if (knownClientErrors.has(error.message)) {
         return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      if (error.message.startsWith("OpenAI generation failed:")) {
+        return NextResponse.json(
+          { questions: [], error: error.message },
+          { status: 502 },
+        );
       }
     }
 

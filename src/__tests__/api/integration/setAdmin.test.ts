@@ -1,12 +1,12 @@
 import { POST } from "@/app/api/setAdmin/route";
 import { getServerSession } from "next-auth";
-import { setUserAdmin } from "@/server/services/userService";
+import { setUserAdmin } from "@/lib/services/userService";
 
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
 }));
 
-jest.mock("@/server/services/userService", () => ({
+jest.mock("@/lib/services/userService", () => ({
   setUserAdmin: jest.fn(),
 }));
 

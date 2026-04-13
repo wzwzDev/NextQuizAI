@@ -16,8 +16,13 @@ type Quiz = {
   title: string;
   category: string;
   difficulty: string;
+  quizType?: "mcq" | "open_ended";
   questions?: unknown[];
 };
+
+function normalizeFilterValue(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
 
 export default function HomeClient() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -27,6 +32,7 @@ export default function HomeClient() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
     null,
   );
+  const [selectedQuizType, setSelectedQuizType] = useState<string | null>(null);
 
   // Fetch quizzes
   useEffect(() => {
@@ -46,12 +52,38 @@ export default function HomeClient() {
 
   // Filtering logic for category and difficulty
   const filteredQuizzes = quizzes.filter((quiz) => {
+    const selectedCategoryNormalized = normalizeFilterValue(selectedCategory);
+    const selectedDifficultyNormalized =
+      normalizeFilterValue(selectedDifficulty);
+    const selectedQuizTypeNormalized = normalizeFilterValue(selectedQuizType);
+    const quizCategoryNormalized = normalizeFilterValue(quiz.category);
+    const quizDifficultyNormalized = normalizeFilterValue(quiz.difficulty);
+    const quizTypeNormalized = normalizeFilterValue(quiz.quizType);
+
     const categoryMatch =
-      !selectedCategory || quiz.category === selectedCategory;
+      !selectedCategoryNormalized ||
+      quizCategoryNormalized === selectedCategoryNormalized;
     const difficultyMatch =
-      !selectedDifficulty || quiz.difficulty === selectedDifficulty;
-    return categoryMatch && difficultyMatch;
+      !selectedDifficultyNormalized ||
+      quizDifficultyNormalized === selectedDifficultyNormalized;
+    const quizTypeMatch =
+      !selectedQuizTypeNormalized ||
+      quizTypeNormalized === selectedQuizTypeNormalized;
+
+    return categoryMatch && difficultyMatch && quizTypeMatch;
   });
+
+  const formatQuizTypeLabel = (quizType?: string) => {
+    if (normalizeFilterValue(quizType) === "mcq") {
+      return "MCQ";
+    }
+
+    if (normalizeFilterValue(quizType) === "open_ended") {
+      return "Open Ended";
+    }
+
+    return "Unknown";
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -85,9 +117,23 @@ export default function HomeClient() {
           className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
         >
           <option value="">All</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
           <option value="hard">Hard</option>
+        </select>
+
+        <label htmlFor="quizType" className="font-semibold">
+          Quiz Type:
+        </label>
+        <select
+          id="quizType"
+          value={selectedQuizType || ""}
+          onChange={(e) => setSelectedQuizType(e.target.value || null)}
+          className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
+        >
+          <option value="">All</option>
+          <option value="mcq">MCQ</option>
+          <option value="open_ended">Open Ended</option>
         </select>
       </div>
 
@@ -98,7 +144,11 @@ export default function HomeClient() {
       {/* Quiz List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {filteredQuizzes.map((quiz) => {
-          const cat = categories.find((c) => c.name === quiz.category);
+          const cat = categories.find(
+            (c) =>
+              normalizeFilterValue(c.name) ===
+              normalizeFilterValue(quiz.category),
+          );
           return (
             <div
               key={quiz.id}
@@ -122,6 +172,9 @@ export default function HomeClient() {
                 </span>
                 <span className="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs font-semibold">
                   Difficulty: {quiz.difficulty}
+                </span>
+                <span className="inline-block bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-xs font-semibold">
+                  Type: {formatQuizTypeLabel(quiz.quizType)}
                 </span>
                 <span className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-semibold">
                   Questions: {quiz.questions?.length || 0}

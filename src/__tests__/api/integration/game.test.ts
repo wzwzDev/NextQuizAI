@@ -1,11 +1,11 @@
 import { POST, GET } from "@/app/api/game/route";
-import { prisma } from "@/server/core/db";
+import { prisma } from "@/lib/db";
 jest.setTimeout(30000);
 // Mock getAuthSession
-jest.mock("@/server/core/auth", () => ({
+jest.mock("@/lib/nextauth", () => ({
   getAuthSession: jest.fn(),
 }));
-import { getAuthSession } from "@/server/core/auth";
+import { getAuthSession } from "@/lib/nextauth";
 
 // Mock axios
 jest.mock("axios");

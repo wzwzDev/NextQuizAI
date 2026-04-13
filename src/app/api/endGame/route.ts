@@ -1,4 +1,4 @@
-import { endGame } from "@/server/services/gameService";
+import { endGame } from "@/lib/services/gameService";
 import { endGameSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";
 

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     let { title } = body;
-    const { category, difficulty, questions, fileName } = body;
+    const { category, difficulty, questions, fileName, quizType } = body;
 
     // If no title, use fileName without extension, or fallback to "Untitled Quiz"
     if ((!title || title.trim() === "") && fileName) {
@@ -30,14 +30,25 @@ export async function POST(req: NextRequest) {
       fileName,
       category,
       difficulty,
-      questions: questions.map((q: { question: string; answer: string }) => ({
-        question: q.question,
-        answer: q.answer,
-      })),
+      quizType,
+      questions: questions.map(
+        (q: { question: string; answer: string; options?: string[] }) => ({
+          question: q.question,
+          answer: q.answer,
+          options: Array.isArray(q.options) ? q.options : undefined,
+        }),
+      ),
     });
 
     return NextResponse.json({ quiz }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to save quiz", details: error },
       { status: 500 },
@@ -64,7 +75,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  if (!session?.user?.isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { searchParams } = new URL(req.url);

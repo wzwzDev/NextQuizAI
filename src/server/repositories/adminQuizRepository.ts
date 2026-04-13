@@ -4,8 +4,9 @@ export type CreateAdminQuizInput = {
   title: string;
   category: string;
   difficulty: string;
+  quizType?: "mcq" | "open_ended";
   status?: string;
-  questions: Array<{ question: string; answer: string }>;
+  questions: Array<{ question: string; answer: string; options?: string[] }>;
 };
 
 export async function createAdminQuiz(input: CreateAdminQuizInput) {
@@ -14,9 +15,17 @@ export async function createAdminQuiz(input: CreateAdminQuizInput) {
       title: input.title,
       category: input.category,
       difficulty: input.difficulty,
+      quizType: input.quizType ?? "open_ended",
       status: input.status ?? "approved",
       questions: {
-        create: input.questions,
+        create: input.questions.map((question) => ({
+          question: question.question,
+          answer: question.answer,
+          options:
+            Array.isArray(question.options) && question.options.length > 0
+              ? question.options
+              : undefined,
+        })),
       },
     },
     include: { questions: true },

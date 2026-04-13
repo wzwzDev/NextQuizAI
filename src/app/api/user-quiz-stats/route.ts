@@ -8,9 +8,14 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, quizId, quizTitle, answers, score } = await req.json();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { quizId, quizTitle, answers, score } = await req.json();
     const attempt = await saveUserQuizAttempt({
-      userId,
+      userId: session.user.id,
       quizId,
       quizTitle,
       answers,

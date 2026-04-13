@@ -1,5 +1,4 @@
 import stringSimilarity from "string-similarity";
-import { canUseEmbeddings, getEmbedding } from "@/server/ai/openaiClient";
 import {
   findQuestionById,
   saveMcqResult,
@@ -7,10 +6,9 @@ import {
   saveUserAnswer,
 } from "@/server/repositories/questionRepository";
 
-const LEXICAL_THRESHOLD = 0.8;
-const SEMANTIC_THRESHOLD = 0.78;
+const TYPO_TOLERANCE_THRESHOLD = 0.8;
 
-export type OpenEndedGradingMethod = "semantic" | "lexical_fallback";
+export type OpenEndedGradingMethod = "exact_match" | "typo_tolerant";
 
 export function cosineSimilarity(a: number[], b: number[]) {
   if (!a.length || !b.length || a.length !== b.length) {
@@ -35,12 +33,7 @@ export function cosineSimilarity(a: number[], b: number[]) {
 }
 
 function normalizeText(value: string) {
-  return value.toLowerCase().trim();
-}
-
-function toPercentage(score: number, threshold: number) {
-  const clamped = Math.max(0, Math.min(1, score));
-  return clamped < threshold ? 0 : Math.round(clamped * 100);
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 function lexicalScore(expected: string, userInput: string) {
@@ -48,6 +41,44 @@ function lexicalScore(expected: string, userInput: string) {
     normalizeText(expected),
     normalizeText(userInput),
   );
+}
+
+function hasSingleAdjacentSwap(expected: string, userInput: string) {
+  if (expected.length !== userInput.length || expected.length < 2) {
+    return false;
+  }
+
+  const mismatchIndexes: number[] = [];
+  for (let i = 0; i < expected.length; i++) {
+    if (expected[i] !== userInput[i]) {
+      mismatchIndexes.push(i);
+      if (mismatchIndexes.length > 2) {
+        return false;
+      }
+    }
+  }
+
+  if (mismatchIndexes.length !== 2) {
+    return false;
+  }
+
+  const [first, second] = mismatchIndexes;
+  if (second !== first + 1) {
+    return false;
+  }
+
+  return (
+    expected[first] === userInput[second] &&
+    expected[second] === userInput[first]
+  );
+}
+
+function typoSimilarityScore(expected: string, userInput: string) {
+  if (hasSingleAdjacentSwap(expected, userInput)) {
+    return 1;
+  }
+
+  return lexicalScore(expected, userInput);
 }
 
 export async function evaluateOpenEndedSimilarity(
@@ -64,7 +95,7 @@ export async function evaluateOpenEndedSimilarity(
   if (!normalizedExpected && !normalizedUserInput) {
     return {
       percentageSimilar: 100,
-      gradingMethod: "lexical_fallback",
+      gradingMethod: "exact_match",
       rawScore: 1,
     };
   }
@@ -72,32 +103,24 @@ export async function evaluateOpenEndedSimilarity(
   if (!normalizedUserInput) {
     return {
       percentageSimilar: 0,
-      gradingMethod: "lexical_fallback",
+      gradingMethod: "typo_tolerant",
       rawScore: 0,
     };
   }
 
-  if (canUseEmbeddings()) {
-    try {
-      const [expectedEmbedding, userEmbedding] = await Promise.all([
-        getEmbedding(normalizedExpected),
-        getEmbedding(normalizedUserInput),
-      ]);
-      const semanticScore = cosineSimilarity(expectedEmbedding, userEmbedding);
-      return {
-        percentageSimilar: toPercentage(semanticScore, SEMANTIC_THRESHOLD),
-        gradingMethod: "semantic",
-        rawScore: semanticScore,
-      };
-    } catch {
-      // Fall through to lexical fallback for resiliency.
-    }
+  if (normalizedExpected === normalizedUserInput) {
+    return {
+      percentageSimilar: 100,
+      gradingMethod: "exact_match",
+      rawScore: 1,
+    };
   }
 
-  const score = lexicalScore(normalizedExpected, normalizedUserInput);
+  const score = typoSimilarityScore(normalizedExpected, normalizedUserInput);
+  const isAccepted = score >= TYPO_TOLERANCE_THRESHOLD;
   return {
-    percentageSimilar: toPercentage(score, LEXICAL_THRESHOLD),
-    gradingMethod: "lexical_fallback",
+    percentageSimilar: isAccepted ? 100 : 0,
+    gradingMethod: "typo_tolerant",
     rawScore: score,
   };
 }
