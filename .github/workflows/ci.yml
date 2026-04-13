@@ -43,6 +43,9 @@ jobs:
         run: npm run build
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-nextauth-secret' }}
+          AUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-nextauth-secret' }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
       - name: Run frontend tests and collect coverage
         run: npx jest --config jest.frontend.config.js --coverage --coverageDirectory=coverage-frontend
       - name: Run backend tests and collect coverage
