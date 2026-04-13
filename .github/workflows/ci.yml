@@ -16,23 +16,22 @@ jobs:
     name: SonarCloud
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:16
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: railway
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/railway
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,7 +47,7 @@ jobs:
       - name: Create .env.test
         run: |
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY || 'ci-openai-key' }}" >> .env.test
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}" >> .env.test
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env.test
           echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET || 'ci-nextauth-secret' }}" >> .env.test
           echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}" >> .env.test
           echo "API_URL=${{ secrets.API_URL || 'http://localhost:3000' }}" >> .env.test
@@ -59,7 +58,7 @@ jobs:
         run: npm run build
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'ci-openai-key' }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-nextauth-secret' }}
           AUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-nextauth-secret' }}
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
@@ -70,11 +69,11 @@ jobs:
       - name: Prisma migrate (test DB)
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
       - name: Run backend tests and collect coverage
         run: npx jest --config jest.backend.config.js --coverage --coverageDirectory=coverage-backend --runInBand
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres?schema=public' }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
       - name: Debug coverage files
         run: |
          ls -lh coverage-frontend
