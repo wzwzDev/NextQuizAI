@@ -29,8 +29,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/railway
     steps:
       - uses: actions/checkout@v4
@@ -101,9 +99,23 @@ jobs:
         run: |
           ls -lh coverage
           head -20 coverage/lcov.info
+      - name: Check Sonar token availability
+        id: sonar_token
+        run: |
+          if [ -n "${SONAR_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "SONAR_TOKEN is not available; skipping SonarCloud Scan."
+          fi
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: SonarCloud Scan
-        if: success() && env.SONAR_TOKEN != ''
+        if: ${{ success() && steps.sonar_token.outputs.available == 'true' }}
         uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=wzwzDev_NextQuizAI
