@@ -1,5 +1,5 @@
 import { POST, GET } from "@/app/api/game/route";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 // Mock getAuthSession
 jest.mock("@/lib/nextauth", () => ({

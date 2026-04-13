@@ -36,6 +36,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# prisma generated artifact to avoid schema drift confusion
+src/generated/prisma/schema.prisma
+
 # vercel
 .vercel
 
