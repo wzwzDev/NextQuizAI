@@ -1,4 +1,4 @@
-jest.mock("@/lib/db", () => ({
+jest.mock("@/server/core/db", () => ({
   prisma: {
     user: {
       findMany: jest.fn(),
@@ -16,8 +16,8 @@ import {
   updateUserBan,
   updateUserOnlineByEmail,
   updateUserRevoke,
-} from "@/lib/repositories/userRepository";
-import { prisma } from "@/lib/db";
+} from "@/server/repositories/userRepository";
+import { prisma } from "@/server/core/db";
 
 describe("userRepository", () => {
   beforeEach(() => {

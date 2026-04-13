@@ -1,4 +1,4 @@
-jest.mock("@/lib/db", () => ({
+jest.mock("@/server/core/db", () => ({
   prisma: {
     question: {
       findUnique: jest.fn(),
@@ -12,8 +12,8 @@ import {
   saveMcqResult,
   saveOpenEndedResult,
   saveUserAnswer,
-} from "@/lib/repositories/questionRepository";
-import { prisma } from "@/lib/db";
+} from "@/server/repositories/questionRepository";
+import { prisma } from "@/server/core/db";
 
 describe("questionRepository", () => {
   beforeEach(() => {

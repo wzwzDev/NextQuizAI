@@ -45,6 +45,7 @@ describe("OpenAIGenerator", () => {
       expect(screen.getByText(/Artificial Intelligence/)).toBeInTheDocument();
       expect(onQuizReady).toHaveBeenCalledWith({
         title: "AI",
+        quizType: "open_ended",
         questions: mockQuestions,
       });
     });

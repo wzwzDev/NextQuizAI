@@ -1,13 +1,13 @@
 import {
   getUserQuizStats,
   saveUserQuizAttempt,
-} from "@/lib/services/userQuizAttemptService";
+} from "@/server/services/userQuizAttemptService";
 import {
   createUserQuizAttempt,
   listUserQuizAttemptsByUserId,
-} from "@/lib/repositories/userQuizAttemptRepository";
+} from "@/server/repositories/userQuizAttemptRepository";
 
-jest.mock("@/lib/repositories/userQuizAttemptRepository", () => ({
+jest.mock("@/server/repositories/userQuizAttemptRepository", () => ({
   createUserQuizAttempt: jest.fn(),
   listUserQuizAttemptsByUserId: jest.fn(),
 }));

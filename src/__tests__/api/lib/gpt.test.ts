@@ -16,6 +16,16 @@ jest.mock("openai", () => {
 import * as gpt from "@/server/ai/gpt";
 
 describe("gpt.strict_output", () => {
+  const originalOpenAiApiKey = process.env.OPENAI_API_KEY;
+
+  beforeEach(() => {
+    process.env.OPENAI_API_KEY = "test-openai-key";
+  });
+
+  afterAll(() => {
+    process.env.OPENAI_API_KEY = originalOpenAiApiKey;
+  });
+
   it("returns an array (mocked)", async () => {
     createImpl = jest.fn().mockResolvedValue({
       choices: [{ message: { content: JSON.stringify([{ question: "q", answer: "a" }]) } }],

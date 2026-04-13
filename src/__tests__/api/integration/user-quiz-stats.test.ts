@@ -42,10 +42,11 @@ afterAll(async () => {
   });
 
   it("POST creates a quiz attempt", async () => {
+    (getServerSession as jest.Mock).mockResolvedValue({ user: { id: user.id } });
+
     const req = new Request("http://localhost/api/user-quiz-stats", {
       method: "POST",
       body: JSON.stringify({
-        userId: user.id,
         quizId: "quiz1",
         quizTitle: "Quiz 1",
         answers: [],

@@ -94,7 +94,7 @@ describe("/api/quiz-review Route Handler", () => {
     expect(json.quiz.title).toBe("Untitled Quiz");
   });
 
-  it("returns 500 on DB error (POST)", async () => {
+  it("returns 400 when create throws an Error (POST)", async () => {
     (getServerSession as jest.Mock).mockResolvedValue({ user: adminUser });
     const spy = jest.spyOn(prisma.adminQuiz, "create").mockRejectedValue(new Error("fail"));
     const req = new Request("http://localhost/api/quiz-review", {
@@ -108,7 +108,9 @@ describe("/api/quiz-review Route Handler", () => {
       headers: { "Content-Type": "application/json" },
     });
     const res = await POST(req as any);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("fail");
     spy.mockRestore();
   });
 

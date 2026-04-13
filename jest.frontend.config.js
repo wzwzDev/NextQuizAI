@@ -13,11 +13,35 @@ module.exports = {
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-frontend",
   collectCoverageFrom: [
-    "src/**/*.{js,ts,tsx}",
+    "src/components/admin/OpenAIGenerator.tsx",
+    "src/components/admin/QuizList.tsx",
+    "src/components/admin/QuizUpload.tsx",
+    "src/components/admin/QuizStatistics.tsx",
+    "src/components/home/HomeClient.tsx",
+    "src/components/ui/avatar.tsx",
+    "src/components/ui/button.tsx",
+    "src/components/ui/card.tsx",
+    "src/components/ui/chart.tsx",
+    "src/components/ui/dialog.tsx",
+    "src/components/ui/dropdown-menu.tsx",
+    "src/components/ui/form.tsx",
+    "src/components/ui/input.tsx",
+    "src/components/ui/navigation-menu.tsx",
+    "src/components/ui/table.tsx",
+    "src/components/ui/toast.tsx",
+    "src/components/ui/use-toast.ts",
     "!src/**/*.d.ts",
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"
   ],
+  coverageThreshold: {
+    global: {
+      branches: 60,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
   reporters: [
     "default",
     ["jest-html-reporter", {

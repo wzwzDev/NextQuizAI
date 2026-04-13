@@ -14,6 +14,7 @@ const mockQuizzes = [
     title: "Algebra Basics",
     category: "Math",
     difficulty: "Easy",
+    quizType: "open_ended",
     questions: [{}, {}],
   },
   {
@@ -21,6 +22,7 @@ const mockQuizzes = [
     title: "Physics 101",
     category: "Science",
     difficulty: "Medium",
+    quizType: "open_ended",
     questions: [{}],
   },
 ];
@@ -56,9 +58,13 @@ describe("HomeClient", () => {
   it("filters quizzes by difficulty", async () => {
     render(<HomeClient />);
     await screen.findByText("Algebra Basics");
-    fireEvent.change(screen.getByLabelText("Difficulty:"), { target: { value: "Medium" } });
-    expect(screen.getByText("Physics 101")).toBeInTheDocument();
-    expect(screen.queryByText("Algebra Basics")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Category:"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Difficulty:"), { target: { value: "medium" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Physics 101")).toBeInTheDocument();
+      expect(screen.queryByText("Algebra Basics")).not.toBeInTheDocument();
+    });
   });
 
   it("shows error message on fetch failure", async () => {

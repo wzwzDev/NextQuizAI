@@ -1,4 +1,4 @@
-jest.mock("@/lib/db", () => ({
+jest.mock("@/server/core/db", () => ({
   prisma: {
     adminQuiz: {
       create: jest.fn(),
@@ -18,8 +18,8 @@ import {
   findAdminQuizzes,
   findAllUserQuizAttempts,
   findApprovedQuizById,
-} from "@/lib/repositories/adminQuizRepository";
-import { prisma } from "@/lib/db";
+} from "@/server/repositories/adminQuizRepository";
+import { prisma } from "@/server/core/db";
 
 describe("adminQuizRepository", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
-import { strict_output } from "@/lib/gpt";
-import { generateQuestionsByTopic } from "@/lib/services/questionGenerationService";
+import { strict_output } from "@/server/ai/gpt";
+import { generateQuestionsByTopic } from "@/server/services/questionGenerationService";
 
-jest.mock("@/lib/gpt", () => ({
+jest.mock("@/server/ai/gpt", () => ({
   strict_output: jest.fn(),
 }));
 

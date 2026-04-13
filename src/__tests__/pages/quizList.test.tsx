@@ -7,6 +7,7 @@ beforeEach(() => {
   // @ts-ignore
   global.fetch = jest.fn().mockImplementation(() =>
     Promise.resolve({
+      ok: true,
       json: () =>
         Promise.resolve({
           quizzes: [
@@ -39,6 +40,7 @@ describe("QuizList", () => {
   
   it("shows 'No quizzes found.' if API returns empty", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ quizzes: [] }),
     });
     render(<QuizList />);
@@ -60,22 +62,32 @@ describe("QuizList", () => {
     await waitFor(() => {
       expect(screen.getByText("Math Quiz")).toBeInTheDocument();
     });
+
     fireEvent.change(screen.getByDisplayValue("All Categories"), {
       target: { value: "Science" },
     });
+
     await waitFor(() => {
       expect(screen.getByText("Science Quiz")).toBeInTheDocument();
+      expect(screen.queryByText("Math Quiz")).not.toBeInTheDocument();
     });
+
     fireEvent.change(screen.getByDisplayValue("All Difficulties"), {
       target: { value: "easy" },
     });
-    // The fetch is mocked, so the table will still show both quizzes unless you mock fetch again.
+
+    await waitFor(() => {
+      expect(screen.queryByText("Science Quiz")).not.toBeInTheDocument();
+      expect(screen.queryByText("Math Quiz")).not.toBeInTheDocument();
+      expect(screen.getByText(/No quizzes found/i)).toBeInTheDocument();
+    });
   });
 
   it("calls handleDelete and removes quiz from table", async () => {
     window.confirm = jest.fn(() => true);
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({
           quizzes: [
             {

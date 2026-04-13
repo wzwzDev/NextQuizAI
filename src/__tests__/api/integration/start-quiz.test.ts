@@ -55,7 +55,7 @@ describe("/api/start-quiz Route Handler", () => {
 
   it("returns 500 on DB error", async () => {
     // Mock prisma error
-    jest.spyOn(prisma.adminQuiz, "findUnique").mockRejectedValue(new Error("fail"));
+    jest.spyOn(prisma.adminQuiz, "findFirst").mockRejectedValue(new Error("fail"));
     const req = new Request(`http://localhost/api/start-quiz?id=${quiz.id}`, { method: "GET" });
     const res = await GET(req as any);
     expect(res.status).toBe(500);

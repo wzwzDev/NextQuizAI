@@ -4,16 +4,16 @@ import {
   getApprovedQuiz,
   getQuizStatisticsSummary,
   removeAdminQuiz,
-} from "@/lib/services/adminQuizService";
+} from "@/server/services/adminQuizService";
 import {
   createAdminQuiz,
   deleteAdminQuizById,
   findAdminQuizzes,
   findAllUserQuizAttempts,
   findApprovedQuizById,
-} from "@/lib/repositories/adminQuizRepository";
+} from "@/server/repositories/adminQuizRepository";
 
-jest.mock("@/lib/repositories/adminQuizRepository", () => ({
+jest.mock("@/server/repositories/adminQuizRepository", () => ({
   createAdminQuiz: jest.fn(),
   deleteAdminQuizById: jest.fn(),
   findAdminQuizzes: jest.fn(),

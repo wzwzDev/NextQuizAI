@@ -15,6 +15,8 @@ module.exports = {
     "src/app/api/**/*.ts",
     "src/server/**/*.ts",
     "src/schemas/**/*.ts",
+    "!src/server/**/index.ts",
+    "!src/server/ai/experimental/**",
     "!src/**/*.d.ts",
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"

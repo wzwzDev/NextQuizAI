@@ -3,17 +3,17 @@ import {
   endGame,
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
-} from "@/lib/services/gameService";
+} from "@/server/services/gameService";
 import {
   createGame,
   createQuestionsForGame,
   findGameById,
   findGameWithQuestionsById,
   markGameEnded,
-} from "@/lib/repositories/gameRepository";
-import { incrementTopicCount } from "@/lib/repositories/topicRepository";
+} from "@/server/repositories/gameRepository";
+import { incrementTopicCount } from "@/server/repositories/topicRepository";
 
-jest.mock("@/lib/repositories/gameRepository", () => ({
+jest.mock("@/server/repositories/gameRepository", () => ({
   createGame: jest.fn(),
   createQuestionsForGame: jest.fn(),
   findGameById: jest.fn(),
@@ -21,7 +21,7 @@ jest.mock("@/lib/repositories/gameRepository", () => ({
   markGameEnded: jest.fn(),
 }));
 
-jest.mock("@/lib/repositories/topicRepository", () => ({
+jest.mock("@/server/repositories/topicRepository", () => ({
   incrementTopicCount: jest.fn(),
 }));
 

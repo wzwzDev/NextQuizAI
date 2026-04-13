@@ -57,7 +57,7 @@ jobs:
       - name: Merge coverage reports
         run: |
           npx mkdirp coverage
-          npx lcov-result-merger 'coverage-frontend/lcov.info' 'coverage-backend/lcov.info' > coverage/lcov.info
+          npx lcov-result-merger 'coverage-*/lcov.info' 'coverage/lcov.info'
       - name: Debug merged coverage
         run: |
           ls -lh coverage
@@ -70,4 +70,3 @@ jobs:
             -Dsonar.projectKey=wzwzDev_NextQuizAI
             -Dsonar.organization=wzwzdev
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=src/app/api/questions/route.ts,**/lib/**
