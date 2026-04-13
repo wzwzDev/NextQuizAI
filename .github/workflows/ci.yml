@@ -15,6 +15,9 @@ jobs:
   sonarqube:
     name: SonarCloud
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,7 +60,7 @@ jobs:
           ls -lh coverage
           head -20 coverage/lcov.info
       - name: SonarCloud Scan
-        if: always()
+        if: success() && env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           args: >
@@ -65,6 +68,3 @@ jobs:
             -Dsonar.organization=wzwzdev
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.coverage.exclusions=src/app/api/questions/route.ts,**/lib/**
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
