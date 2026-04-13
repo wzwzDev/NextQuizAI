@@ -95,7 +95,7 @@ jobs:
          ls -lh coverage-backend
       - name: Merge coverage reports
         run: |
-          npx mkdirp coverage
+          mkdir -p coverage
           npx lcov-result-merger 'coverage-*/lcov.info' 'coverage/lcov.info'
       - name: Debug merged coverage
         run: |
