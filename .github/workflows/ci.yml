@@ -102,11 +102,17 @@ jobs:
       - name: Check Sonar token availability
         id: sonar_token
         run: |
-          if [ -n "${SONAR_TOKEN}" ]; then
+          if [ -z "${SONAR_TOKEN}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "SONAR_TOKEN is not available; skipping SonarCloud Scan."
+            exit 0
+          fi
+
+          if curl -fsS -u "${SONAR_TOKEN}:" "https://sonarcloud.io/api/authentication/validate" | grep -q '"valid"[[:space:]]*:[[:space:]]*true'; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "SONAR_TOKEN is not available; skipping SonarCloud Scan."
+            echo "SONAR_TOKEN is invalid in this workflow context; skipping SonarCloud Scan."
           fi
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
