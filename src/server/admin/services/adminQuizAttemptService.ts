@@ -4,6 +4,7 @@ import {
   completePendingQuizAttempt,
   ensurePendingQuizAttempt,
 } from "@/server/services/userQuizAttemptService";
+import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
 
 const TYPO_TOLERANCE_THRESHOLD = 0.8;
 
@@ -18,6 +19,16 @@ export type AdminQuizQuestionResult = {
   percentageSimilar: number;
   isAccepted: boolean;
   gradingMethod: AdminQuizGradingMethod;
+  confidence: number;
+  confidenceLevel: "low" | "medium" | "high";
+  decisionReason: string;
+  reviewRequired: boolean;
+  rawSimilarity: number;
+  citation?: {
+    source: string;
+    snippet: string;
+    confidence?: number;
+  };
 };
 
 export type SubmitAdminQuizResult = {
@@ -86,11 +97,30 @@ function typoSimilarity(expected: string, userInput: string) {
 
 function scoreMcqAnswer(expected: string, userInput: string) {
   const matches = normalizeText(expected) === normalizeText(userInput);
+
   return {
     percentageSimilar: matches ? 100 : 0,
     gradingMethod: "exact_match" as const,
     isAccepted: matches,
+    confidence: matches ? 0.99 : 0.97,
+    decisionReason: matches
+      ? "Exact option match."
+      : "Selected option does not match the expected answer.",
+    reviewRequired: false,
+    rawSimilarity: matches ? 1 : 0,
   };
+}
+
+function toConfidenceLevel(confidence: number) {
+  if (confidence >= 0.8) {
+    return "high" as const;
+  }
+
+  if (confidence >= 0.6) {
+    return "medium" as const;
+  }
+
+  return "low" as const;
 }
 
 async function scoreOpenEndedAnswer(expected: string, userInput: string) {
@@ -102,6 +132,10 @@ async function scoreOpenEndedAnswer(expected: string, userInput: string) {
       percentageSimilar: 100,
       gradingMethod: "exact_match" as const,
       isAccepted: true,
+      confidence: 0.99,
+      decisionReason: "Both expected and submitted answers are empty after normalization.",
+      reviewRequired: false,
+      rawSimilarity: 1,
     };
   }
 
@@ -110,6 +144,10 @@ async function scoreOpenEndedAnswer(expected: string, userInput: string) {
       percentageSimilar: 0,
       gradingMethod: "typo_tolerant" as const,
       isAccepted: false,
+      confidence: 0.4,
+      decisionReason: "No answer provided.",
+      reviewRequired: true,
+      rawSimilarity: 0,
     };
   }
 
@@ -118,15 +156,41 @@ async function scoreOpenEndedAnswer(expected: string, userInput: string) {
       percentageSimilar: 100,
       gradingMethod: "exact_match" as const,
       isAccepted: true,
+      confidence: 0.99,
+      decisionReason: "Exact text match after normalization.",
+      reviewRequired: false,
+      rawSimilarity: 1,
     };
   }
 
   const lexicalScore = typoSimilarity(normalizedExpected, normalizedUserInput);
   const isAccepted = lexicalScore >= TYPO_TOLERANCE_THRESHOLD;
+  const thresholdDistance = Math.abs(lexicalScore - TYPO_TOLERANCE_THRESHOLD);
+
+  const confidence = isAccepted
+    ? lexicalScore >= 0.92
+      ? 0.9
+      : lexicalScore >= 0.86
+        ? 0.78
+        : 0.66
+    : lexicalScore <= 0.45
+      ? 0.88
+      : lexicalScore <= 0.7
+        ? 0.72
+        : 0.58;
+
+  const decisionReason = isAccepted
+    ? `Accepted by typo-tolerant match (similarity ${Math.round(lexicalScore * 100)}%).`
+    : `Rejected by typo-tolerant match (similarity ${Math.round(lexicalScore * 100)}%).`;
+
   return {
     percentageSimilar: isAccepted ? 100 : 0,
     gradingMethod: "typo_tolerant" as const,
     isAccepted,
+    confidence,
+    decisionReason,
+    reviewRequired: confidence < 0.7 || thresholdDistance < 0.06,
+    rawSimilarity: lexicalScore,
   };
 }
 
@@ -151,6 +215,7 @@ export async function submitAndGradeAdminQuizAttempt(input: {
         quiz.quizType === "mcq"
           ? scoreMcqAnswer(question.answer, userAnswer)
           : await scoreOpenEndedAnswer(question.answer, userAnswer);
+      const metadata = parseQuestionMetadata(question.options);
 
       return {
         question: question.question,
@@ -159,6 +224,12 @@ export async function submitAndGradeAdminQuizAttempt(input: {
         percentageSimilar: grading.percentageSimilar,
         isAccepted: grading.isAccepted,
         gradingMethod: grading.gradingMethod,
+        confidence: grading.confidence,
+        confidenceLevel: toConfidenceLevel(grading.confidence),
+        decisionReason: grading.decisionReason,
+        reviewRequired: grading.reviewRequired,
+        rawSimilarity: grading.rawSimilarity,
+        ...(metadata.citation ? { citation: metadata.citation } : {}),
       };
     }),
   );

@@ -165,3 +165,133 @@ export async function getUserQuizStats(userId: string) {
     lastAttempt: stat.lastAttempt,
   }));
 }
+
+export type AdaptiveQuizRecommendation = {
+  quizId: string;
+  recommendationScore: number;
+  recommendationReason: string;
+  categoryMastery: number | null;
+  difficultyReadiness: number | null;
+};
+
+function normalizeText(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function roundToTwo(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function clamp(value: number, min = 0, max = 1) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getDifficultyTarget(difficulty?: string) {
+  const normalized = normalizeText(difficulty);
+  if (normalized === "easy") {
+    return 0.5;
+  }
+
+  if (normalized === "medium") {
+    return 0.68;
+  }
+
+  if (normalized === "hard") {
+    return 0.82;
+  }
+
+  return 0.65;
+}
+
+function extractAttemptMasteryScore(attempt: { score: number; answers: unknown }) {
+  const payload = attempt.answers;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return clamp(attempt.score / 100);
+  }
+
+  const questionResults = (payload as { questionResults?: unknown }).questionResults;
+  if (!Array.isArray(questionResults) || questionResults.length === 0) {
+    return clamp(attempt.score / 100);
+  }
+
+  const acceptedCount = questionResults.filter(
+    (questionResult) =>
+      questionResult &&
+      typeof questionResult === "object" &&
+      (questionResult as { isAccepted?: unknown }).isAccepted === true,
+  ).length;
+
+  return clamp(acceptedCount / questionResults.length);
+}
+
+export async function getAdaptiveQuizRecommendations(
+  userId: string,
+  quizzes: Array<{ id: string; category?: string; difficulty?: string }>,
+): Promise<AdaptiveQuizRecommendation[]> {
+  const attempts = (await listUserQuizAttemptsByUserId(userId)).filter(
+    (attempt) => attempt.status === "completed",
+  );
+
+  const quizById = new Map(quizzes.map((quiz) => [quiz.id, quiz]));
+  const categoryStats: Record<string, { count: number; scoreSum: number }> = {};
+
+  for (const attempt of attempts) {
+    const attemptQuiz = quizById.get(attempt.quizId);
+    if (!attemptQuiz) {
+      continue;
+    }
+
+    const categoryKey = normalizeText(attemptQuiz.category);
+    if (!categoryKey) {
+      continue;
+    }
+
+    const masteryScore = extractAttemptMasteryScore(attempt);
+    if (!categoryStats[categoryKey]) {
+      categoryStats[categoryKey] = { count: 0, scoreSum: 0 };
+    }
+
+    categoryStats[categoryKey].count += 1;
+    categoryStats[categoryKey].scoreSum += masteryScore;
+  }
+
+  return quizzes.map((quiz) => {
+    const categoryKey = normalizeText(quiz.category);
+    const categoryMastery =
+      categoryKey && categoryStats[categoryKey]?.count
+        ? clamp(categoryStats[categoryKey].scoreSum / categoryStats[categoryKey].count)
+        : null;
+
+    const difficultyTarget = getDifficultyTarget(quiz.difficulty);
+    const difficultyReadiness =
+      categoryMastery === null
+        ? null
+        : clamp(1 - Math.abs(difficultyTarget - categoryMastery));
+
+    const recommendationScore =
+      categoryMastery === null
+        ? 0.65
+        : clamp((1 - categoryMastery) * 0.65 + (difficultyReadiness ?? 0.5) * 0.35);
+
+    let recommendationReason = "Recommended by AI based on your recent activity.";
+    if (categoryMastery === null) {
+      recommendationReason = "New category for you. Good option to diversify practice.";
+    } else if (categoryMastery < 0.55) {
+      recommendationReason = `You need more practice in ${quiz.category ?? "this category"}.`;
+    } else if (difficultyReadiness !== null && difficultyReadiness < 0.55) {
+      recommendationReason = "This level may be challenging now and can accelerate learning.";
+    } else if (difficultyReadiness !== null && difficultyReadiness > 0.8) {
+      recommendationReason = "Difficulty is well aligned with your current mastery.";
+    }
+
+    return {
+      quizId: quiz.id,
+      recommendationScore: roundToTwo(recommendationScore),
+      recommendationReason,
+      categoryMastery:
+        categoryMastery === null ? null : roundToTwo(categoryMastery),
+      difficultyReadiness:
+        difficultyReadiness === null ? null : roundToTwo(difficultyReadiness),
+    };
+  });
+}

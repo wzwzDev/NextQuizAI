@@ -28,6 +28,27 @@ type CheckAnswerResponse = {
   percentageSimilar: number;
 };
 
+function extractErrorMessage(error: unknown, fallback: string) {
+  const axiosLikeError = error as {
+    isAxiosError?: boolean;
+    response?: { data?: { message?: unknown } };
+  };
+
+  if (axiosLikeError?.isAxiosError) {
+    const responseData = axiosLikeError.response?.data;
+    const responseMessage = responseData?.message;
+    if (typeof responseMessage === "string" && responseMessage.trim()) {
+      return responseMessage;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 const OpenEnded = ({ game }: Props) => {
   const [hasEnded, setHasEnded] = React.useState(false);
   const [questionIndex, setQuestionIndex] = React.useState(0);
@@ -85,6 +106,10 @@ const OpenEnded = ({ game }: Props) => {
   }, [hasEnded]);
 
   const handleNext = React.useCallback(() => {
+    if (isChecking || hasEnded || !currentQuestion) {
+      return;
+    }
+
     checkAnswer(undefined, {
       onSuccess: ({ percentageSimilar }) => {
         const isCorrect = percentageSimilar === 100;
@@ -111,12 +136,35 @@ const OpenEnded = ({ game }: Props) => {
       },
       onError: (error) => {
         toast({
-          title: "Something went wrong",
+          title: "Could not validate this answer",
+          description: `${extractErrorMessage(error, "Unexpected error")} Moving to the next question.`,
           variant: "destructive",
         });
+
+        setAveragePercentage((prev) => {
+          const answeredBeforeCurrent = questionIndex;
+          return (prev * answeredBeforeCurrent) / (answeredBeforeCurrent + 1);
+        });
+
+        if (questionIndex === game.questions.length - 1) {
+          endGame();
+          setHasEnded(true);
+          return;
+        }
+
+        setQuestionIndex((prev) => prev + 1);
       },
     });
-  }, [checkAnswer, questionIndex, toast, endGame, game.questions.length]);
+  }, [
+    checkAnswer,
+    isChecking,
+    hasEnded,
+    currentQuestion,
+    toast,
+    questionIndex,
+    endGame,
+    game.questions.length,
+  ]);
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = event.key;

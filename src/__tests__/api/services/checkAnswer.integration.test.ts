@@ -122,6 +122,15 @@ describe("/api/checkAnswer Route Handler", () => {
     expect(res.body.message).toBeDefined();
   });
 
+  it("returns 400 for non-string userInput", async () => {
+    const res = await callHandler(
+      { questionId: mcqQuestion.id, userInput: { value: "Paris" } },
+      user.email,
+    );
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBeDefined();
+  });
+
   it("saves userAnswer and isCorrect in DB", async () => {
     await callHandler({ questionId: mcqQuestion.id, userInput: "Paris" }, user.email);
     const updated = await prisma.question.findUnique({ where: { id: mcqQuestion.id } });

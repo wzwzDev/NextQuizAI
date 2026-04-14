@@ -67,7 +67,7 @@ describe("/api/game Route Handler", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 500 when questions upstream is unavailable (POST)", async () => {
+  it("creates a game even when API_URL is not usable (POST)", async () => {
     const previousApiUrl = process.env.API_URL;
     process.env.API_URL = "http://127.0.0.1:1";
 
@@ -75,9 +75,11 @@ describe("/api/game Route Handler", () => {
       { topic: "math", type: "mcq", amount: 1 },
       user.email,
     );
+    const json = await res.json();
 
     process.env.API_URL = previousApiUrl;
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+    expect(typeof json.gameId).toBe("string");
   });
 
   // GET tests

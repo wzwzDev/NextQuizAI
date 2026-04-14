@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/41</span>
+                <span class='fraction'>0/73</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -107,10 +107,28 @@
 <a name='L42'></a><a href='#L42'>42</a>
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -124,17 +142,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -154,7 +184,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { NextRequest, NextResponse } from "next/server";</span>
 <span class="cstat-no" title="statement not covered" >import { getAuthSession } from "@/server/core/auth";</span>
 <span class="cstat-no" title="statement not covered" >import { getApprovedQuizLibrary } from "@/server/admin/services/adminQuizService";</span>
-<span class="cstat-no" title="statement not covered" >import { getUserQuizAttemptStatuses } from "@/server/services/userQuizAttemptService";</span>
+<span class="cstat-no" title="statement not covered" >import {</span>
+  getAdaptiveQuizRecommendations,
+  getUserQuizAttemptStatuses,
+} from "@/server/services/userQuizAttemptService";
 &nbsp;
 <span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >GET(</span>req: NextRequest) {
   const session = <span class="cstat-no" title="statement not covered" >await getAuthSession(req);</span>
@@ -168,15 +201,23 @@
       session.user.id,
       quizzes.map(<span class="fstat-no" title="function not covered" >(q</span>uiz) =&gt; <span class="cstat-no" title="statement not covered" >quiz.id)</span>,
     );
+    const recommendations = <span class="cstat-no" title="statement not covered" >await getAdaptiveQuizRecommendations(</span>
+      session.user.id,
+      quizzes,
+    );
 &nbsp;
     const statusByQuizId = <span class="cstat-no" title="statement not covered" >new Map(</span>
       attemptStatuses.map(<span class="fstat-no" title="function not covered" >(a</span>ttempt) =&gt; <span class="cstat-no" title="statement not covered" >[attempt.quizId, attempt])</span>,
+    );
+    const recommendationByQuizId = <span class="cstat-no" title="statement not covered" >new Map(</span>
+      recommendations.map(<span class="fstat-no" title="function not covered" >(r</span>ecommendation) =&gt; <span class="cstat-no" title="statement not covered" >[recommendation.quizId, recommendation])</span>,
     );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return NextResponse.json({</span>
       quizzes: quizzes.map(<span class="fstat-no" title="function not covered" >(q</span>uiz) =&gt; {
         const userAttempt = <span class="cstat-no" title="statement not covered" >statusByQuizId.get(quiz.id);</span>
         const attemptStatus = <span class="cstat-no" title="statement not covered" >userAttempt?.status ?? "available";</span>
+        const recommendation = <span class="cstat-no" title="statement not covered" >recommendationByQuizId.get(quiz.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        return {</span>
           ...quiz,
@@ -185,6 +226,10 @@
           userScore: userAttempt?.score ?? null,
           userStartedAt: userAttempt?.startedAt ?? null,
           userCompletedAt: userAttempt?.completedAt ?? null,
+          recommendationScore: recommendation?.recommendationScore ?? null,
+          recommendationReason: recommendation?.recommendationReason ?? null,
+          categoryMastery: recommendation?.categoryMastery ?? null,
+          difficultyReadiness: recommendation?.difficultyReadiness ?? null,
         };
       }),
     });
@@ -202,7 +247,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T16:27:28.549Z
+                at 2026-04-14T17:21:48.795Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

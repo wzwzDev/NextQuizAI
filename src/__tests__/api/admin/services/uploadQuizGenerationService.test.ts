@@ -267,7 +267,9 @@ describe("uploadQuizGenerationService", () => {
       );
 
       expect(result).toEqual(
-        expect.arrayContaining([{ question: "Q1", answer: "A1" }]),
+        expect.arrayContaining([
+          expect.objectContaining({ question: "Q1", answer: "A1" }),
+        ]),
       );
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(fakeServer.getRequestCount()).toBeGreaterThanOrEqual(2);

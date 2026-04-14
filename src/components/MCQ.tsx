@@ -27,6 +27,90 @@ type CheckAnswerResponse = {
   isCorrect: boolean;
 };
 
+function splitOptionChunks(option: string): string[] {
+  return option
+    .split(/\r?\n|[,;|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeOptions(rawOptions: unknown): string[] {
+  if (Array.isArray(rawOptions)) {
+    return Array.from(
+      new Set(
+        rawOptions
+          .filter((item): item is string => typeof item === "string")
+          .flatMap(splitOptionChunks),
+      ),
+    );
+  }
+
+  if (typeof rawOptions === "string") {
+    const trimmed = rawOptions.trim();
+    if (!trimmed) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return normalizeOptions(parsed);
+    } catch {
+      return Array.from(new Set(splitOptionChunks(trimmed)));
+    }
+  }
+
+  if (rawOptions && typeof rawOptions === "object") {
+    const candidate = rawOptions as {
+      choices?: unknown;
+      options?: unknown;
+      [key: string]: unknown;
+    };
+
+    if (Array.isArray(candidate.choices)) {
+      return normalizeOptions(candidate.choices);
+    }
+
+    if (Array.isArray(candidate.options)) {
+      return normalizeOptions(candidate.options);
+    }
+
+    const optionKeys = Object.keys(candidate)
+      .filter((key) => /^option\d+$/i.test(key))
+      .sort((left, right) => {
+        const leftNumber = Number(left.replace(/\D+/g, ""));
+        const rightNumber = Number(right.replace(/\D+/g, ""));
+        return leftNumber - rightNumber;
+      });
+
+    if (optionKeys.length > 0) {
+      return normalizeOptions(optionKeys.map((key) => candidate[key]));
+    }
+  }
+
+  return [];
+}
+
+function extractErrorMessage(error: unknown, fallback: string) {
+  const axiosLikeError = error as {
+    isAxiosError?: boolean;
+    response?: { data?: { message?: unknown } };
+  };
+
+  if (axiosLikeError?.isAxiosError) {
+    const responseData = axiosLikeError.response?.data;
+    const responseMessage = responseData?.message;
+    if (typeof responseMessage === "string" && responseMessage.trim()) {
+      return responseMessage;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 const MCQ = ({ game }: Props) => {
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const [hasEnded, setHasEnded] = React.useState(false);
@@ -50,25 +134,7 @@ const MCQ = ({ game }: Props) => {
 
   const options = React.useMemo(() => {
     if (!currentQuestion) return [];
-    if (!currentQuestion.options) return [];
-    // If options is a string (JSON), parse it
-    if (typeof currentQuestion.options === "string") {
-      try {
-        const parsed = JSON.parse(currentQuestion.options);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    // If options is already an array
-    if (Array.isArray(currentQuestion.options)) {
-      return currentQuestion.options;
-    }
-    // If options is an object (rare), convert to array
-    return Object.entries(currentQuestion.options)
-      .filter(([key]) => key.startsWith("option"))
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, value]) => value);
+    return normalizeOptions(currentQuestion.options);
   }, [currentQuestion]);
   const { toast } = useToast();
   const { mutate: checkAnswer, status: checkAnswerStatus } = useMutation<
@@ -118,6 +184,10 @@ const MCQ = ({ game }: Props) => {
   }, [questionIndex]);
 
   const handleNext = React.useCallback(() => {
+    if (isChecking || hasEnded || !currentQuestion) {
+      return;
+    }
+
     if (selectedChoice === null) {
       return;
     }
@@ -152,8 +222,38 @@ const MCQ = ({ game }: Props) => {
         }
         setQuestionIndex((questionIndex) => questionIndex + 1);
       },
+      onError: (error) => {
+        setStats((currentStats) => ({
+          ...currentStats,
+          wrong_answers: currentStats.wrong_answers + 1,
+        }));
+
+        toast({
+          title: "Could not validate this answer",
+          description: `${extractErrorMessage(error, "Unexpected error")} Moving to the next question.`,
+          variant: "destructive",
+        });
+
+        if (questionIndex === game.questions.length - 1) {
+          endGame();
+          setHasEnded(true);
+          return;
+        }
+
+        setQuestionIndex((currentIndex) => currentIndex + 1);
+      },
     });
-  }, [checkAnswer, questionIndex, game.questions.length, toast, endGame]);
+  }, [
+    checkAnswer,
+    isChecking,
+    hasEnded,
+    currentQuestion,
+    selectedChoice,
+    toast,
+    questionIndex,
+    game.questions.length,
+    endGame,
+  ]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

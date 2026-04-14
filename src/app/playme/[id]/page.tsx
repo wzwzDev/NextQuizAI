@@ -6,6 +6,11 @@ type Question = {
   id: string;
   question: string;
   options: string[];
+  citation?: {
+    source: string;
+    snippet: string;
+    confidence?: number;
+  };
 };
 
 type QuizType = "mcq" | "open_ended";
@@ -17,6 +22,10 @@ type QuestionResult = {
   percentageSimilar: number;
   isAccepted: boolean;
   gradingMethod: "typo_tolerant" | "exact_match";
+  confidence?: number;
+  confidenceLevel?: "low" | "medium" | "high";
+  decisionReason?: string;
+  reviewRequired?: boolean;
 };
 
 type QuizResult = {
@@ -71,16 +80,40 @@ export default function QuizPage() {
       id?: unknown;
       question?: unknown;
       options?: unknown;
+      citation?: unknown;
     };
 
     const options = Array.isArray(candidate.options)
       ? candidate.options.filter((option): option is string => typeof option === "string")
       : [];
 
+    const citation =
+      candidate.citation && typeof candidate.citation === "object"
+        ? (candidate.citation as {
+            source?: unknown;
+            snippet?: unknown;
+            confidence?: unknown;
+          })
+        : null;
+
+    const normalizedCitation =
+      citation &&
+      typeof citation.source === "string" &&
+      typeof citation.snippet === "string"
+        ? {
+            source: citation.source,
+            snippet: citation.snippet,
+            ...(typeof citation.confidence === "number"
+              ? { confidence: citation.confidence }
+              : {}),
+          }
+        : undefined;
+
     return {
       id: typeof candidate.id === "string" ? candidate.id : `q-${index}`,
       question: typeof candidate.question === "string" ? candidate.question : "",
       options,
+      ...(normalizedCitation ? { citation: normalizedCitation } : {}),
     };
   }
 
@@ -266,6 +299,14 @@ export default function QuizPage() {
             Question {current + 1} of {quiz.questions.length}
           </div>
           <div className="mb-4">{question.question}</div>
+          {question.citation && (
+            <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Source: {question.citation.source} - {question.citation.snippet}
+              {typeof question.citation.confidence === "number" && (
+                <span className="ml-2">(Citation confidence: {Math.round(question.citation.confidence * 100)}%)</span>
+              )}
+            </div>
+          )}
           {quiz.quizType === "mcq" ? (
             <div className="mb-4 space-y-2">
               {question.options.length > 0 ? (
@@ -354,6 +395,18 @@ export default function QuizPage() {
                     <span className="ml-2 text-gray-600">
                       (Correct: <span className="underline">{questionResult.expectedAnswer}</span>)
                     </span>
+                  )}
+                  {typeof questionResult.confidence === "number" && (
+                    <div className="text-xs text-gray-600">
+                      AI confidence: {Math.round(questionResult.confidence * 100)}%
+                      {questionResult.confidenceLevel
+                        ? ` (${questionResult.confidenceLevel})`
+                        : ""}
+                      {questionResult.reviewRequired ? " - flagged for admin review" : ""}
+                    </div>
+                  )}
+                  {questionResult.decisionReason && (
+                    <div className="text-xs text-gray-500">Reason: {questionResult.decisionReason}</div>
                   )}
                 </li>
               ))}

@@ -8,6 +8,54 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+function parseQuestionMetadata(rawOptions: unknown) {
+  if (Array.isArray(rawOptions)) {
+    return {
+      options: rawOptions.filter(
+        (option): option is string => typeof option === "string",
+      ),
+    };
+  }
+
+  if (rawOptions && typeof rawOptions === "object") {
+    const options = Array.isArray((rawOptions as { choices?: unknown }).choices)
+      ? (rawOptions as { choices: unknown[] }).choices.filter(
+          (option): option is string => typeof option === "string",
+        )
+      : Array.isArray((rawOptions as { options?: unknown }).options)
+        ? (rawOptions as { options: unknown[] }).options.filter(
+            (option): option is string => typeof option === "string",
+          )
+        : [];
+
+    const citation =
+      (rawOptions as { citation?: unknown }).citation &&
+      typeof (rawOptions as { citation?: unknown }).citation === "object"
+        ? (rawOptions as {
+            citation: { source?: unknown; snippet?: unknown; confidence?: unknown };
+          }).citation
+        : null;
+
+    return {
+      options,
+      citation:
+        citation &&
+        typeof citation.source === "string" &&
+        typeof citation.snippet === "string"
+          ? {
+              source: citation.source,
+              snippet: citation.snippet,
+              ...(typeof citation.confidence === "number"
+                ? { confidence: citation.confidence }
+                : {}),
+            }
+          : undefined,
+    };
+  }
+
+  return { options: [] as string[] };
+}
+
 function normalizeFilterValue(value?: string) {
   return (value ?? "").trim().toLowerCase();
 }
@@ -54,7 +102,27 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
         }
 
         if (isMounted) {
-          setAllQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []);
+          const quizzes = Array.isArray(data.quizzes) ? data.quizzes : [];
+          const normalizedQuizzes: AdminQuizDraft[] = quizzes.map(
+            (quiz: AdminQuizDraft) => ({
+              ...quiz,
+              questions: Array.isArray(quiz.questions)
+                ? quiz.questions.map((question) => {
+                    const metadata = parseQuestionMetadata(question.options);
+
+                    return {
+                      ...question,
+                      options: metadata.options,
+                      ...(metadata.citation
+                        ? { citation: metadata.citation }
+                        : {}),
+                    };
+                  })
+                : quiz.questions,
+            }),
+          );
+
+          setAllQuizzes(normalizedQuizzes);
         }
       } catch (loadError) {
         if (isMounted) {
@@ -306,6 +374,26 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
                   </div>
                 </div>
               </div>
+
+              {Array.isArray(selectedQuiz.questions) && selectedQuiz.questions.length > 0 && (
+                <div className="mt-2 rounded-lg border p-3 text-sm">
+                  <p className="font-semibold mb-2">Question Sources</p>
+                  <div className="space-y-3">
+                    {selectedQuiz.questions.slice(0, 6).map((question, index) => (
+                      <div key={`${selectedQuiz.id}-source-${index}`} className="rounded border px-2 py-2">
+                        <div className="font-semibold">Q{index + 1}. {question.question}</div>
+                        {question.citation ? (
+                          <div className="mt-1 text-xs text-gray-600">
+                            Source: {question.citation.source} - {question.citation.snippet}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-xs text-gray-500">No citation metadata available.</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </DialogContent>

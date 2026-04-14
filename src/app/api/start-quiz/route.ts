@@ -13,59 +13,7 @@ import {
   getUserQuizAttempt,
 } from "@/server/services/userQuizAttemptService";
 import { ZodError } from "zod";
-
-function splitOptionChunks(option: string): string[] {
-  if (!option) {
-    return [];
-  }
-
-  return option
-    .split(/\r?\n|[,;|]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function extractOptions(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    const normalized = value
-      .filter((item): item is string => typeof item === "string")
-      .flatMap(splitOptionChunks);
-
-    return Array.from(new Set(normalized));
-  }
-
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) {
-        const normalized = parsed
-          .filter((item): item is string => typeof item === "string")
-          .flatMap(splitOptionChunks);
-
-        return Array.from(new Set(normalized));
-      }
-    } catch {
-      // Keep raw string fallback below.
-    }
-
-    return Array.from(new Set(splitOptionChunks(trimmed)));
-  }
-
-  if (value && typeof value === "object") {
-    const values = Object.values(value as Record<string, unknown>)
-      .filter((item): item is string => typeof item === "string")
-      .flatMap(splitOptionChunks);
-
-    return Array.from(new Set(values));
-  }
-
-  return [];
-}
+import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
 
 export async function GET(req: NextRequest) {
   const session = await getAuthSession(req);
@@ -104,12 +52,16 @@ export async function GET(req: NextRequest) {
         category: quiz.category,
         difficulty: quiz.difficulty,
         quizType: quiz.quizType,
-        questions: quiz.questions.map((question) => ({
-          id: question.id,
-          question: question.question,
-          options:
-            quiz.quizType === "mcq" ? extractOptions(question.options) : [],
-        })),
+        questions: quiz.questions.map((question) => {
+          const metadata = parseQuestionMetadata(question.options);
+
+          return {
+            id: question.id,
+            question: question.question,
+            options: quiz.quizType === "mcq" ? metadata.options : [],
+            ...(metadata.citation ? { citation: metadata.citation } : {}),
+          };
+        }),
       },
     });
   } catch (error) {

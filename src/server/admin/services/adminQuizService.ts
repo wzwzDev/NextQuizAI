@@ -41,7 +41,12 @@ export async function createApprovedAdminQuiz(input: {
   category: string;
   difficulty: string;
   quizType?: "mcq" | "open_ended";
-  questions: Array<{ question: string; answer: string; options?: string[] }>;
+  questions: Array<{
+    question: string;
+    answer: string;
+    options?: string[];
+    citation?: { source: string; snippet: string; confidence?: number };
+  }>;
 }) {
   let title = input.title?.trim() ?? "";
   if (!title && input.fileName) {
@@ -66,6 +71,7 @@ export async function createApprovedAdminQuiz(input: {
       return {
         question: normalizedQuestion,
         answer: normalizedAnswer,
+        ...(question.citation ? { citation: question.citation } : {}),
       };
     }
 
@@ -80,6 +86,7 @@ export async function createApprovedAdminQuiz(input: {
       question: normalizedQuestion,
       answer: normalizedAnswer,
       options,
+      ...(question.citation ? { citation: question.citation } : {}),
     };
   });
 

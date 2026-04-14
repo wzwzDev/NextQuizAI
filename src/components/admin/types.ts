@@ -16,10 +16,17 @@ export type AdminQuizAttemptSummary = {
   lastCompletedAt: string | Date | null;
 };
 
+export type AdminQuestionCitation = {
+  source: string;
+  snippet: string;
+  confidence?: number;
+};
+
 export type AdminQuestion = {
   question: string;
   answer: string;
   options?: string[];
+  citation?: AdminQuestionCitation;
 };
 
 export type AdminQuizDraft = {

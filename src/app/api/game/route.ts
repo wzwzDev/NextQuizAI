@@ -4,26 +4,10 @@ import {
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
 } from "@/server/services/gameService";
+import { generateQuestionsByTopic } from "@/server/services/questionGenerationService";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import axios from "axios";
-
-type QuestionsApiResponse = {
-  questions: Array<
-    | {
-        question: string;
-        answer: string;
-        option1: string;
-        option2: string;
-        option3: string;
-      }
-    | {
-        question: string;
-        answer: string;
-      }
-  >;
-};
 
 export async function POST(req: Request) {
   try {
@@ -44,34 +28,16 @@ export async function POST(req: Request) {
       type,
     });
 
-    const cookieHeader = req.headers.get("cookie");
-    const authorizationHeader = req.headers.get("authorization");
-    const testUserHeader = req.headers.get("x-test-user-email");
-
-    const { data } = await axios.post<QuestionsApiResponse>(
-      `${process.env.API_URL as string}/api/questions`,
-      {
-        amount,
-        topic,
-        type,
-      },
-      {
-        headers: {
-          ...(cookieHeader ? { cookie: cookieHeader } : {}),
-          ...(authorizationHeader
-            ? { authorization: authorizationHeader }
-            : {}),
-          ...(testUserHeader
-            ? { "x-test-user-email": testUserHeader }
-            : {}),
-        },
-      },
-    );
+    const questions = await generateQuestionsByTopic({
+      amount,
+      topic,
+      type,
+    });
 
     await saveGeneratedQuestionsForGame({
       gameId: game.id,
       type,
-      questions: data.questions,
+      questions,
     });
 
     return NextResponse.json({ gameId: game.id }, { status: 200 });

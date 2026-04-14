@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">36% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/25</span>
+                <span class='fraction'>0/25</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/24</span>
+                <span class='fraction'>0/24</span>
             </div>
         
             
@@ -118,7 +118,7 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">8x</span>
+<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,9 +127,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -143,37 +143,37 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import {</span>
   findUserIdentityById,
   findUserBanStatus,
   findUserRevokeStatus,
@@ -182,9 +182,9 @@
   updateUserBan,
   updateUserRevoke,
 } from "@/server/repositories/userRepository";
-import { isOwnerEmail } from "@/server/core/roles";
+<span class="cstat-no" title="statement not covered" >import { isOwnerEmail } from "@/server/core/roles";</span>
 &nbsp;
-export class OwnerProtectedError extends Error {
+<span class="cstat-no" title="statement not covered" >export class O</span>wnerProtectedError extends Error {
 <span class="fstat-no" title="function not covered" >  constructor() {</span>
 <span class="cstat-no" title="statement not covered" >    super("Owner account is protected.");</span>
 <span class="cstat-no" title="statement not covered" >    this.name = "OwnerProtectedError";</span>
@@ -198,7 +198,7 @@ async function <span class="fstat-no" title="function not covered" >assertTarget
   }
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >getUsersForAdmin(</span>) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getUsersForAdmin(</span>) {
   const users = <span class="cstat-no" title="statement not covered" >await listUsersForAdmin();</span>
 <span class="cstat-no" title="statement not covered" >  return users.map(<span class="fstat-no" title="function not covered" >(u</span>ser) =&gt; <span class="cstat-no" title="statement not covered" >({</span></span>
     ...user,
@@ -206,26 +206,26 @@ export async function <span class="fstat-no" title="function not covered" >getUs
   }));
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >setUserBanned(</span>userId: string, banned: boolean) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >setUserBanned(</span>userId: string, banned: boolean) {
 <span class="cstat-no" title="statement not covered" >  await assertTargetIsNotOwner(userId);</span>
 <span class="cstat-no" title="statement not covered" >  return updateUserBan(userId, banned);</span>
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >setUserRevoked(</span>userId: string, revoked: boolean) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >setUserRevoked(</span>userId: string, revoked: boolean) {
 <span class="cstat-no" title="statement not covered" >  await assertTargetIsNotOwner(userId);</span>
 <span class="cstat-no" title="statement not covered" >  return updateUserRevoke(userId, revoked);</span>
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >setUserAdmin(</span>userId: string, isAdmin: boolean) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >setUserAdmin(</span>userId: string, isAdmin: boolean) {
 <span class="cstat-no" title="statement not covered" >  await assertTargetIsNotOwner(userId);</span>
 <span class="cstat-no" title="statement not covered" >  return updateUserAdmin(userId, isAdmin);</span>
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >getUserBanStatus(</span>userId: string) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getUserBanStatus(</span>userId: string) {
 <span class="cstat-no" title="statement not covered" >  return findUserBanStatus(userId);</span>
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >getUserRevokeStatus(</span>userId: string) {
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getUserRevokeStatus(</span>userId: string) {
 <span class="cstat-no" title="statement not covered" >  return findUserRevokeStatus(userId);</span>
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -235,7 +235,7 @@ export async function <span class="fstat-no" title="function not covered" >getUs
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T16:27:28.549Z
+                at 2026-04-14T17:21:48.795Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

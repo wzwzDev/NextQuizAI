@@ -19,9 +19,39 @@ type QuizUploadProps = {
 };
 
 type UploadAndGenerateResponse = {
-  questions?: AdminQuestion[];
+  questions?: Array<Partial<AdminQuestion>>;
   error?: string;
 };
+
+function normalizeCitation(rawCitation: unknown): AdminQuestion["citation"] {
+  if (!rawCitation || typeof rawCitation !== "object") {
+    return undefined;
+  }
+
+  const source =
+    typeof (rawCitation as { source?: unknown }).source === "string"
+      ? (rawCitation as { source: string }).source.trim()
+      : "";
+  const snippet =
+    typeof (rawCitation as { snippet?: unknown }).snippet === "string"
+      ? (rawCitation as { snippet: string }).snippet.trim()
+      : "";
+  const confidence =
+    typeof (rawCitation as { confidence?: unknown }).confidence === "number" &&
+    Number.isFinite((rawCitation as { confidence: number }).confidence)
+      ? Math.max(0, Math.min(1, (rawCitation as { confidence: number }).confidence))
+      : undefined;
+
+  if (!source || !snippet) {
+    return undefined;
+  }
+
+  return {
+    source,
+    snippet,
+    ...(confidence !== undefined ? { confidence } : {}),
+  };
+}
 
 function isAcceptedUploadFile(file: File) {
   const fileName = file.name.toLowerCase();
@@ -105,13 +135,35 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       }
 
       const generatedQuestions = Array.isArray(data.questions)
-        ? data.questions.filter(
-            (q) =>
-              typeof q?.question === "string" &&
-              q.question.trim().length > 0 &&
-              typeof q?.answer === "string" &&
-              q.answer.trim().length > 0,
-          )
+        ? data.questions
+            .map((q) => {
+              const question =
+                typeof q?.question === "string" ? q.question.trim() : "";
+              const answer =
+                typeof q?.answer === "string" ? q.answer.trim() : "";
+
+              if (!question || !answer) {
+                return null;
+              }
+
+              const options = Array.isArray(q.options)
+                ? q.options.filter(
+                    (value): value is string => typeof value === "string",
+                  )
+                : undefined;
+
+              return {
+                question,
+                answer,
+                ...(Array.isArray(options) && options.length > 0
+                  ? { options }
+                  : {}),
+                ...(normalizeCitation(q.citation)
+                  ? { citation: normalizeCitation(q.citation) }
+                  : {}),
+              };
+            })
+            .filter((q): q is AdminQuestion => q !== null)
         : [];
 
       if (generatedQuestions.length > 0) {

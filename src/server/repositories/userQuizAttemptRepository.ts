@@ -139,3 +139,34 @@ export async function listUserQuizAttemptsByQuizIds(quizIds: string[]) {
     },
   });
 }
+
+export async function listCompletedUserQuizAttempts() {
+  return prisma.userQuizAttempt.findMany({
+    where: {
+      status: "completed",
+    },
+    orderBy: {
+      completedAt: "desc",
+    },
+  });
+}
+
+export async function findUserQuizAttemptById(attemptId: string) {
+  return prisma.userQuizAttempt.findUnique({
+    where: { id: attemptId },
+  });
+}
+
+export async function updateUserQuizAttemptAnswersById(params: {
+  attemptId: string;
+  answers: unknown;
+  score?: number;
+}) {
+  return prisma.userQuizAttempt.update({
+    where: { id: params.attemptId },
+    data: {
+      answers: params.answers as Prisma.InputJsonValue,
+      ...(typeof params.score === "number" ? { score: params.score } : {}),
+    },
+  });
+}

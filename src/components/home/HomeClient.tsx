@@ -37,6 +37,10 @@ type Quiz = {
   userScore?: number | null;
   userStartedAt?: string | null;
   userCompletedAt?: string | null;
+  recommendationScore?: number | null;
+  recommendationReason?: string | null;
+  categoryMastery?: number | null;
+  difficultyReadiness?: number | null;
 };
 
 function normalizeFilterValue(value?: string | null) {
@@ -128,6 +132,26 @@ export default function HomeClient() {
 
     return categoryMatch && difficultyMatch && quizTypeMatch;
   });
+
+  const rankedFilteredQuizzes = filteredQuizzes
+    .map((quiz, index) => ({ quiz, index }))
+    .sort((left, right) => {
+      const leftScore =
+        typeof left.quiz.recommendationScore === "number"
+          ? left.quiz.recommendationScore
+          : -1;
+      const rightScore =
+        typeof right.quiz.recommendationScore === "number"
+          ? right.quiz.recommendationScore
+          : -1;
+
+      if (leftScore === rightScore) {
+        return left.index - right.index;
+      }
+
+      return rightScore - leftScore;
+    })
+    .map(({ quiz }) => quiz);
 
   const formatQuizTypeLabel = (quizType?: string) => {
     if (normalizeFilterValue(quizType) === "mcq") {
@@ -225,7 +249,7 @@ export default function HomeClient() {
       {error && <div className="text-red-500">{error}</div>}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredQuizzes.map((quiz, idx) => {
+        {rankedFilteredQuizzes.map((quiz, idx) => {
           const cat = categories.find(
             (c) =>
               normalizeFilterValue(c.name) ===
@@ -281,7 +305,18 @@ export default function HomeClient() {
                 <span className="chip-pill bg-muted text-muted-foreground">
                   Questions: {quiz.questionCount ?? quiz.questions?.length ?? 0}
                 </span>
+                {typeof quiz.recommendationScore === "number" && quiz.recommendationScore >= 0.7 && (
+                  <span className="chip-pill bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200">
+                    AI Recommended ({Math.round(quiz.recommendationScore * 100)}%)
+                  </span>
+                )}
               </div>
+
+              {quiz.recommendationReason && (
+                <p className="mb-4 text-xs text-muted-foreground">
+                  {quiz.recommendationReason}
+                </p>
+              )}
 
               {quiz.isLocked ? (
                 <div className="mt-auto space-y-2">
@@ -308,7 +343,7 @@ export default function HomeClient() {
         })}
       </div>
 
-      {!loading && filteredQuizzes.length === 0 && (
+      {!loading && rankedFilteredQuizzes.length === 0 && (
         <div className="section-shell mt-8 rounded-2xl p-6 text-sm text-muted-foreground">
           No quizzes found.
         </div>

@@ -14,6 +14,9 @@ const FALLBACK_QUESTION_COUNT = 5;
 const MIN_QUESTION_COUNT = 1;
 const MAX_QUESTION_COUNT = 15;
 const MIN_FALLBACK_SENTENCE_LENGTH = 24;
+const MAX_CITATION_SENTENCES = 180;
+const MAX_CITATION_SNIPPET_LENGTH = 190;
+const MIN_TOKEN_LENGTH = 3;
 
 const COMMON_STOP_WORDS = new Set([
   "the",
@@ -67,6 +70,11 @@ const COMMON_STOP_WORDS = new Set([
 type GeneratedQuestion = {
   question: string;
   answer: string;
+  citation?: {
+    source: string;
+    snippet: string;
+    confidence?: number;
+  };
 };
 
 export type UploadQuizGenerationOptions = {
@@ -74,11 +82,13 @@ export type UploadQuizGenerationOptions = {
   difficulty?: string;
   category?: string;
   quizType?: "mcq" | "open_ended";
+  sourceName?: string;
 };
 
 type RawGeneratedQuestion = {
   question?: unknown;
   answer?: unknown;
+  citation?: unknown;
 };
 
 function escapeRegExp(value: string) {
@@ -99,6 +109,126 @@ function extractSentencesForFallback(courseContent: string) {
     .flatMap((line) => line.split(/[.!?]+/))
     .map((sentence) => sentence.replace(/\s+/g, " ").trim())
     .filter((sentence) => sentence.length >= MIN_FALLBACK_SENTENCE_LENGTH);
+}
+
+function extractSentenceCandidates(courseContent: string) {
+  return courseContent
+    .split(/\r?\n+/)
+    .flatMap((line) => line.split(/[.!?]+/))
+    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+    .filter((sentence) => sentence.length > 0)
+    .slice(0, MAX_CITATION_SENTENCES);
+}
+
+function tokenizeForOverlap(value: string) {
+  return Array.from(
+    new Set(
+      (value.match(/[A-Za-z0-9_+#.-]{3,}/g) ?? [])
+        .map((token) => token.toLowerCase())
+        .filter(
+          (token) =>
+            token.length >= MIN_TOKEN_LENGTH && !COMMON_STOP_WORDS.has(token),
+        ),
+    ),
+  );
+}
+
+function normalizeRawCitation(rawCitation: unknown) {
+  if (!rawCitation || typeof rawCitation !== "object") {
+    return undefined;
+  }
+
+  const citation = rawCitation as {
+    source?: unknown;
+    snippet?: unknown;
+    confidence?: unknown;
+  };
+
+  const source =
+    typeof citation.source === "string" ? citation.source.trim() : "";
+  const snippet =
+    typeof citation.snippet === "string" ? citation.snippet.trim() : "";
+  const confidence =
+    typeof citation.confidence === "number" && Number.isFinite(citation.confidence)
+      ? Math.max(0, Math.min(1, citation.confidence))
+      : undefined;
+
+  if (!source || !snippet) {
+    return undefined;
+  }
+
+  return {
+    source,
+    snippet,
+    ...(confidence !== undefined ? { confidence } : {}),
+  };
+}
+
+function buildCitationForQuestion(params: {
+  courseContent: string;
+  sourceName?: string;
+  question: string;
+  answer: string;
+}) {
+  const source = params.sourceName?.trim() || "Uploaded document";
+  const candidates = extractSentenceCandidates(params.courseContent);
+
+  if (candidates.length === 0) {
+    const fallbackSnippet = params.courseContent
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, MAX_CITATION_SNIPPET_LENGTH);
+
+    return {
+      source,
+      snippet: fallbackSnippet || "No citation snippet available.",
+      confidence: 0.35,
+    };
+  }
+
+  const answerNormalized = params.answer.trim().toLowerCase();
+  const questionTokens = tokenizeForOverlap(params.question);
+  let bestSentence = candidates[0];
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let bestContainsAnswer = false;
+
+  for (const sentence of candidates) {
+    const sentenceNormalized = sentence.toLowerCase();
+    const sentenceTokens = tokenizeForOverlap(sentence);
+    const containsAnswer =
+      answerNormalized.length > 0 && sentenceNormalized.includes(answerNormalized);
+
+    let overlapScore = 0;
+    if (questionTokens.length > 0 && sentenceTokens.length > 0) {
+      const sentenceTokenSet = new Set(sentenceTokens);
+      const overlapCount = questionTokens.filter((token) =>
+        sentenceTokenSet.has(token),
+      ).length;
+      overlapScore = overlapCount / questionTokens.length;
+    }
+
+    const score = (containsAnswer ? 3 : 0) + overlapScore;
+    if (score > bestScore) {
+      bestScore = score;
+      bestSentence = sentence;
+      bestContainsAnswer = containsAnswer;
+    }
+  }
+
+  const snippet =
+    bestSentence.length > MAX_CITATION_SNIPPET_LENGTH
+      ? `${bestSentence.slice(0, MAX_CITATION_SNIPPET_LENGTH - 3)}...`
+      : bestSentence;
+
+  const confidence = bestContainsAnswer
+    ? 0.95
+    : Math.max(0.45, Math.min(0.85, 0.45 + Math.max(bestScore, 0) * 0.1));
+
+  return {
+    source,
+    snippet,
+    confidence: Math.round(confidence * 100) / 100,
+  };
 }
 
 function normalizeQuestionCount(value?: number) {
@@ -383,12 +513,17 @@ function normalizeGeneratedQuestions(rawOutput: unknown): GeneratedQuestion[] {
         typeof rawQuestion?.question === "string" ? rawQuestion.question.trim() : "";
       const answer =
         typeof rawQuestion?.answer === "string" ? rawQuestion.answer.trim() : "";
+      const citation = normalizeRawCitation(rawQuestion?.citation);
 
       if (!question || !answer) {
         return null;
       }
 
-      return { question, answer };
+      return {
+        question,
+        answer,
+        ...(citation ? { citation } : {}),
+      };
     })
     .filter((item): item is GeneratedQuestion => item !== null);
 }
@@ -513,7 +648,17 @@ Do not include markdown or extra commentary.
     }
   }
 
-  return normalizedQuestions;
+  return normalizedQuestions.map((question) => ({
+    ...question,
+    citation:
+      question.citation ??
+      buildCitationForQuestion({
+        courseContent,
+        sourceName: options.sourceName,
+        question: question.question,
+        answer: question.answer,
+      }),
+  }));
 }
 
 export async function generateQuestionsFromUploadedFile(
@@ -525,6 +670,9 @@ export async function generateQuestionsFromUploadedFile(
   ensureMinimumContentLength(courseContent);
   return generateQuestionsFromCourseContent(
     prepareCourseContentForGeneration(courseContent),
-    options,
+    {
+      ...options,
+      sourceName: options.sourceName || file.name || "Uploaded document",
+    },
   );
 }

@@ -238,12 +238,14 @@ export default function QuizReview({
           question: normalizedQuestion,
           answer: normalizedAnswer,
           options: normalizedOptions,
+          ...(question.citation ? { citation: question.citation } : {}),
         };
       }
 
       return {
         question: normalizedQuestion,
         answer: normalizedAnswer,
+        ...(question.citation ? { citation: question.citation } : {}),
       };
     });
 
@@ -338,7 +340,14 @@ export default function QuizReview({
                       onChange={(e) => setEditQ(e.target.value)}
                     />
                   ) : (
-                    q.question
+                    <div className="space-y-1">
+                      <div>{q.question}</div>
+                      {q.citation && (
+                        <div className="text-xs text-slate-600">
+                          Source: {q.citation.source} - {q.citation.snippet}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td className="p-2 border">

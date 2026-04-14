@@ -31,10 +31,27 @@ export async function POST(req: NextRequest) {
       difficulty,
       quizType,
       questions: questions.map(
-        (q: { question: string; answer: string; options?: string[] }) => ({
+        (q: {
+          question: string;
+          answer: string;
+          options?: string[];
+          citation?: { source: string; snippet: string; confidence?: number };
+        }) => ({
           question: q.question,
           answer: q.answer,
           options: Array.isArray(q.options) ? q.options : undefined,
+          citation:
+            q.citation &&
+            typeof q.citation.source === "string" &&
+            typeof q.citation.snippet === "string"
+              ? {
+                  source: q.citation.source,
+                  snippet: q.citation.snippet,
+                  ...(typeof q.citation.confidence === "number"
+                    ? { confidence: q.citation.confidence }
+                    : {}),
+                }
+              : undefined,
         }),
       ),
     });

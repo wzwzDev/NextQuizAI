@@ -45,16 +45,11 @@ describe("/api/questions Route Handler", () => {
     );
     const json = await res.json();
 
-    if (process.env.OPENAI_API_KEY) {
-      expect(res.status).toBe(200);
-      expect(Array.isArray(json.questions)).toBe(true);
-      expect(json.questions[0].question).toBeDefined();
-      expect(json.questions[0].answer).toBeDefined();
-      return;
-    }
-
-    expect(res.status).toBe(500);
-    expect(json.error).toBe("An unexpected error occurred.");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(json.questions)).toBe(true);
+    expect(json.questions.length).toBe(1);
+    expect(json.questions[0].question).toBeDefined();
+    expect(json.questions[0].answer).toBeDefined();
   });
 
   it("returns 400 for invalid body (fails zod validation)", async () => {
