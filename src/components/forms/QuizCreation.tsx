@@ -48,8 +48,6 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
     Input
   >({
     mutationFn: async ({ amount, topic, type }: Input) => {
-      console.log({ amount, topic, type }); // Add this line
-
       const response = await axios.post<CreateGameResponse>("/api/game", {
         amount,
         topic,

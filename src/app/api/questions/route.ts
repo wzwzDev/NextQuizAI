@@ -1,4 +1,5 @@
 import { generateQuestionsByTopic } from "@/lib/services/questionGenerationService";
+import { getAuthSession } from "@/server/core/auth";
 import { getQuestionsSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
@@ -7,8 +8,29 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
+  const session = await getAuthSession(req);
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      {
+        status: 401,
+      },
+    );
+  }
+
+  let body;
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON" },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  try {
     const { amount, topic, type } = getQuestionsSchema.parse(body);
     const questions = await generateQuestionsByTopic({ amount, topic, type });
 
@@ -28,14 +50,13 @@ export async function POST(req: Request) {
           status: 400,
         },
       );
-    } else {
-      console.error("elle gpt error", error);
-      return NextResponse.json(
-        { error: "An unexpected error occurred." },
-        {
-          status: 500,
-        },
-      );
     }
+
+    return NextResponse.json(
+      { error: "An unexpected error occurred." },
+      {
+        status: 500,
+      },
+    );
   }
 }

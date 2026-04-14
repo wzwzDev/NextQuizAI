@@ -54,7 +54,9 @@ const OpenEnded = ({ game }: Props) => {
   >({
     mutationFn: async () => {
       let filledAnswer = blankAnswer;
-      document.querySelectorAll("#user-blank-input").forEach((input) => {
+      document
+        .querySelectorAll('[data-blank-answer-input="true"]')
+        .forEach((input) => {
         filledAnswer = filledAnswer.replace(
           "_____",
           (input as HTMLInputElement).value,
@@ -94,7 +96,11 @@ const OpenEnded = ({ game }: Props) => {
           variant: isCorrect ? "success" : "destructive",
         });
         setAveragePercentage((prev) => {
-          return (prev + percentageSimilar) / (questionIndex + 1);
+          const answeredBeforeCurrent = questionIndex;
+          return (
+            (prev * answeredBeforeCurrent + percentageSimilar) /
+            (answeredBeforeCurrent + 1)
+          );
         });
         if (questionIndex === game.questions.length - 1) {
           endGame();
@@ -104,7 +110,6 @@ const OpenEnded = ({ game }: Props) => {
         setQuestionIndex((prev) => prev + 1);
       },
       onError: (error) => {
-        console.error(error);
         toast({
           title: "Something went wrong",
           variant: "destructive",

@@ -6,11 +6,17 @@ jest.setTimeout(30000);
 
 describe("/api/game Route Handler", () => {
   let user: User;
+  let otherUser: User;
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({ where: { email: "testuser2@example.com" } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ["testuser2@example.com", "testuser3@example.com"] } },
+    });
     user = await prisma.user.create({
       data: { email: "testuser2@example.com", isAdmin: false },
+    });
+    otherUser = await prisma.user.create({
+      data: { email: "testuser3@example.com", isAdmin: false },
     });
   });
 
@@ -22,6 +28,9 @@ describe("/api/game Route Handler", () => {
   afterAll(async () => {
     if (user?.id) {
       await prisma.user.delete({ where: { id: user.id } });
+    }
+    if (otherUser?.id) {
+      await prisma.user.delete({ where: { id: otherUser.id } });
     }
     await prisma.$disconnect();
   });
@@ -113,5 +122,19 @@ describe("/api/game Route Handler", () => {
     expect(json.game).toBeDefined();
     expect(json.game.questions).toBeDefined();
     expect(json.game.id).toBe(game.id);
+  });
+
+  it("returns 403 when user tries to access another user's game", async () => {
+    const game: Game = await prisma.game.create({
+      data: {
+        userId: user.id,
+        topic: "biology",
+        gameType: "mcq",
+        timeStarted: new Date(),
+      },
+    });
+
+    const res = await callGet(game.id, otherUser.email);
+    expect(res.status).toBe(403);
   });
 });

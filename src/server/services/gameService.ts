@@ -79,10 +79,17 @@ export async function getGameWithQuestions(gameId: string) {
   return findGameWithQuestionsById(gameId);
 }
 
-export async function endGame(gameId: string) {
+export async function endGame(
+  gameId: string,
+  requester?: { userId: string; isAdmin?: boolean },
+) {
   const game = await findGameById(gameId);
   if (!game) {
     return { status: 404 as const, body: { message: "Game not found" } };
+  }
+
+  if (requester && !requester.isAdmin && game.userId !== requester.userId) {
+    return { status: 403 as const, body: { message: "Forbidden" } };
   }
 
   await markGameEnded(gameId);

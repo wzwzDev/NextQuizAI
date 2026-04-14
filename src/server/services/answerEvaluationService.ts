@@ -1,6 +1,6 @@
 import stringSimilarity from "string-similarity";
 import {
-  findQuestionById,
+  findQuestionWithGameOwnerById,
   saveMcqResult,
   saveOpenEndedResult,
   saveUserAnswer,
@@ -125,10 +125,22 @@ export async function evaluateOpenEndedSimilarity(
   };
 }
 
-export async function gradeAndSaveAnswer(questionId: string, userInput: string) {
-  const question = await findQuestionById(questionId);
+export async function gradeAndSaveAnswer(
+  questionId: string,
+  userInput: string,
+  requester?: { userId: string; isAdmin?: boolean },
+) {
+  const question = await findQuestionWithGameOwnerById(questionId);
   if (!question) {
     return { status: 404 as const, body: { message: "Question not found" } };
+  }
+
+  if (
+    requester &&
+    !requester.isAdmin &&
+    question.game.userId !== requester.userId
+  ) {
+    return { status: 403 as const, body: { message: "Forbidden" } };
   }
 
   await saveUserAnswer(questionId, userInput);

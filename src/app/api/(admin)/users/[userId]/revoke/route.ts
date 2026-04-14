@@ -31,6 +31,11 @@ export async function GET(
   req: NextRequest,
   context: { params: Promise<{ userId: string }> },
 ) {
+  const session = await getAuthSession(req);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const params = await context.params;
   try {
     const user = await getUserRevokeStatus(params.userId);

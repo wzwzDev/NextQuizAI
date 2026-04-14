@@ -23,8 +23,11 @@ const Statistics = async (props: Props) => {
   if (!session?.user && !isAdmin) {
     redirect("/");
   }
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
+  const game = await prisma.game.findFirst({
+    where: {
+      id: gameId,
+      ...(isAdmin ? {} : { userId: session.user.id }),
+    },
     include: { questions: true },
   });
   if (!game) {

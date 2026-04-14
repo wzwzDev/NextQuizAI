@@ -64,8 +64,22 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   });
 
   // GET tests
+  it("returns 401 if not admin (GET)", async () => {
+    const req = new Request("http://localhost/api/users/[userId]/ban", {
+      method: "GET",
+      headers: { "x-test-user-email": normalUser.email },
+    });
+    const res = await GET(req as any, {
+      params: Promise.resolve({ userId: targetUser.id }),
+    });
+    expect(res.status).toBe(401);
+  });
+
   it("returns banned status for user (GET)", async () => {
-    const req = new Request("http://localhost/api/users/[userId]/ban", { method: "GET" });
+    const req = new Request("http://localhost/api/users/[userId]/ban", {
+      method: "GET",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await GET(req as any, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
@@ -75,7 +89,10 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   });
 
   it("returns 404 if user not found (GET)", async () => {
-    const req = new Request("http://localhost/api/users/[userId]/ban", { method: "GET" });
+    const req = new Request("http://localhost/api/users/[userId]/ban", {
+      method: "GET",
+      headers: { "x-test-user-email": adminUser.email },
+    });
     const res = await GET(req as any, {
       params: Promise.resolve({ userId: "nonexistentid" }),
     });

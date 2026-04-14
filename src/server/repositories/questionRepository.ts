@@ -6,6 +6,19 @@ export async function findQuestionById(questionId: string) {
   });
 }
 
+export async function findQuestionWithGameOwnerById(questionId: string) {
+  return prisma.question.findUnique({
+    where: { id: questionId },
+    include: {
+      game: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+}
+
 export async function saveUserAnswer(questionId: string, userInput: string) {
   return prisma.question.update({
     where: { id: questionId },

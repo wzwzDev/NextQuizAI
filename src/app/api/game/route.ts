@@ -3,7 +3,7 @@ import {
   createGameWithTopicCount,
   getGameWithQuestions,
   saveGeneratedQuestionsForGame,
-} from "@/lib/services/gameService";
+} from "@/server/services/gameService";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -44,12 +44,27 @@ export async function POST(req: Request) {
       type,
     });
 
+    const cookieHeader = req.headers.get("cookie");
+    const authorizationHeader = req.headers.get("authorization");
+    const testUserHeader = req.headers.get("x-test-user-email");
+
     const { data } = await axios.post<QuestionsApiResponse>(
       `${process.env.API_URL as string}/api/questions`,
       {
         amount,
         topic,
         type,
+      },
+      {
+        headers: {
+          ...(cookieHeader ? { cookie: cookieHeader } : {}),
+          ...(authorizationHeader
+            ? { authorization: authorizationHeader }
+            : {}),
+          ...(testUserHeader
+            ? { "x-test-user-email": testUserHeader }
+            : {}),
+        },
       },
     );
 
@@ -106,6 +121,15 @@ export async function GET(req: Request) {
         { error: "Game not found." },
         {
           status: 404,
+        },
+      );
+    }
+
+    if (!session.user.isAdmin && game.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        {
+          status: 403,
         },
       );
     }

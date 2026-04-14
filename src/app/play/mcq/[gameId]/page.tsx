@@ -20,9 +20,10 @@ const MCQPage = async (props: Props) => {
     redirect("/");
   }
 
-  const game = await prisma.game.findUnique({
+  const game = await prisma.game.findFirst({
     where: {
       id: gameId,
+      ...(isAdmin ? {} : { userId: session.user.id }),
     },
     include: {
       questions: {

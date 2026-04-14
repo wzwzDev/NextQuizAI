@@ -50,10 +50,10 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user }) {
       const db_user = await prisma.user.findUnique({
         where: { email: user.email ?? undefined },
-        select: { banned: true },
+        select: { banned: true, revoked: true },
       });
-      if (db_user?.banned) {
-        // Block sign in for banned users
+      if (db_user?.banned || db_user?.revoked) {
+        // Block sign in for banned/revoked users.
         return false;
       }
       return true;

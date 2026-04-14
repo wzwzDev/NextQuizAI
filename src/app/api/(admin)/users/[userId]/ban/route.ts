@@ -25,6 +25,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
+  const session = await getAuthSession(req);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { userId } = await params;
     const user = await getUserBanStatus(userId);

@@ -34,7 +34,9 @@ const MCQ = ({ game }: Props) => {
     correct_answers: 0,
     wrong_answers: 0,
   });
-  const [selectedChoice, setSelectedChoice] = React.useState<number>(0);
+  const [selectedChoice, setSelectedChoice] = React.useState<number | null>(
+    null,
+  );
   const [now, setNow] = React.useState(new Date());
   const [mounted, setMounted] = React.useState(false); // Add this line
 
@@ -75,6 +77,10 @@ const MCQ = ({ game }: Props) => {
     void
   >({
     mutationFn: async () => {
+      if (selectedChoice === null || !options[selectedChoice]) {
+        throw new Error("Please select an answer before continuing.");
+      }
+
       const payload: z.infer<typeof checkAnswerSchema> = {
         questionId: currentQuestion.id,
         userInput: options[selectedChoice],
@@ -107,7 +113,15 @@ const MCQ = ({ game }: Props) => {
     return () => clearInterval(interval);
   }, [hasEnded]);
 
+  React.useEffect(() => {
+    setSelectedChoice(null);
+  }, [questionIndex]);
+
   const handleNext = React.useCallback(() => {
+    if (selectedChoice === null) {
+      return;
+    }
+
     checkAnswer(undefined, {
       onSuccess: ({ isCorrect }) => {
         if (isCorrect) {
@@ -243,7 +257,7 @@ const MCQ = ({ game }: Props) => {
           variant="default"
           className="mt-2"
           size="lg"
-          disabled={isChecking || hasEnded}
+          disabled={isChecking || hasEnded || selectedChoice === null}
           onClick={() => {
             handleNext();
           }}
