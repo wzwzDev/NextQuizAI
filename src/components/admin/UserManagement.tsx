@@ -13,7 +13,11 @@ type User = {
 
 const DEVELOPER_EMAIL = "waelwzwz@gmail.com";
 
-const UserManagement = () => {
+type UserManagementProps = {
+  compact?: boolean;
+};
+
+const UserManagement = ({ compact = false }: UserManagementProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +89,8 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="p-8 bg-white dark:bg-black rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-4">User Management</h2>
+    <div className={compact ? "h-full" : "rounded-xl bg-white p-8 shadow dark:bg-black"}>
+      {!compact && <h2 className="mb-4 text-2xl font-bold">User Management</h2>}
       <button
         onClick={fetchUsers}
         className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

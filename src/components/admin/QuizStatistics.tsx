@@ -9,7 +9,11 @@ type QuizStatistic = {
   completionRate?: number; // Optional
 };
 
-const QuizStatistics = () => {
+type QuizStatisticsProps = {
+  compact?: boolean;
+};
+
+const QuizStatistics = ({ compact = false }: QuizStatisticsProps) => {
   const [statistics, setStatistics] = useState<QuizStatistic[]>([]);
 
   useEffect(() => {
@@ -27,40 +31,42 @@ const QuizStatistics = () => {
   }, []);
 
   return (
-    <div className="p-8 bg-white dark:bg-black rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-4">Quiz Statistics</h2>
-      <table className="min-w-full bg-white dark:bg-black border border-gray-300">
-        <thead>
-          <tr>
-            <th className="border border-gray-300 px-4 py-2">Quiz Title</th>
-            <th className="border border-gray-300 px-4 py-2">Attempts</th>
-            <th className="border border-gray-300 px-4 py-2">Average Score</th>
-            <th className="border border-gray-300 px-4 py-2">
-              Completion Rate
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {statistics.map((stat) => (
-            <tr key={`${stat.quizId}-${stat.quizTitle}`}>
-              <td className="border border-gray-300 px-4 py-2">
-                {stat.quizTitle}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {stat.attempts}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {stat.averageScore}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {stat.completionRate !== undefined
-                  ? `${stat.completionRate}%`
-                  : "N/A"}
-              </td>
+    <div className={compact ? "h-full" : "rounded-xl bg-white p-8 shadow dark:bg-black"}>
+      {!compact && <h2 className="mb-4 text-2xl font-bold">Quiz Statistics</h2>}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300 bg-white dark:bg-black">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 px-4 py-2">Quiz Title</th>
+              <th className="border border-gray-300 px-4 py-2">Attempts</th>
+              <th className="border border-gray-300 px-4 py-2">Average Score</th>
+              <th className="border border-gray-300 px-4 py-2">
+                Completion Rate
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {statistics.map((stat) => (
+              <tr key={`${stat.quizId}-${stat.quizTitle}`}>
+                <td className="border border-gray-300 px-4 py-2">
+                  {stat.quizTitle}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {stat.attempts}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {stat.averageScore}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {stat.completionRate !== undefined
+                    ? `${stat.completionRate}%`
+                    : "N/A"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
