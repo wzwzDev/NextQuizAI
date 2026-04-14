@@ -29,7 +29,7 @@ function buildOutputFormatPrompt(
 ) {
   let prompt = `\nYou are to output the following in json format: ${JSON.stringify(
     output_format,
-  )}. \nDo not put quotation marks or escape character \\ in the output fields.`;
+  )}. \nRespond with valid JSON only.`;
 
   if (list_output) {
     prompt += `\nIf output field is a list, classify output into the best element of the list.`;
@@ -106,26 +106,72 @@ function validateAndNormalizeOutput(
   return list_input ? outputArr : outputArr[0];
 }
 
-function escapeInnerQuotes(jsonStr: string): string {
-  let inString = false;
-  let prevChar = "";
-  let result = "";
-  for (let i = 0; i < jsonStr.length; i++) {
-    const char = jsonStr[i];
-    if (char === '"' && prevChar !== "\\") {
-      inString = !inString;
-      result += char;
-    } else {
-      result += char;
-    }
-    prevChar = char;
+function stripCodeFences(value: string) {
+  const match = value.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (match?.[1]) {
+    return match[1].trim();
   }
-  return result;
+
+  return value.trim();
 }
 
-// Quotes property names that are not already quoted
-function quotePropertyNames(jsonStr: string): string {
-  return jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
+function extractFirstJsonSegment(value: string) {
+  const firstBrace = value.indexOf("{");
+  const firstBracket = value.indexOf("[");
+
+  let start = -1;
+  if (firstBrace === -1 && firstBracket === -1) {
+    return value;
+  }
+
+  if (firstBrace === -1) {
+    start = firstBracket;
+  } else if (firstBracket === -1) {
+    start = firstBrace;
+  } else {
+    start = Math.min(firstBrace, firstBracket);
+  }
+
+  const startChar = value[start];
+  const endChar = startChar === "{" ? "}" : "]";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < value.length; i++) {
+    const char = value[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === startChar) {
+      depth += 1;
+      continue;
+    }
+
+    if (char === endChar) {
+      depth -= 1;
+      if (depth === 0) {
+        return value.slice(start, i + 1);
+      }
+    }
+  }
+
+  return value.slice(start).trim();
 }
 
 export async function strict_output(
@@ -169,25 +215,9 @@ export async function strict_output(
       ],
     });
 
-    let res: string =
-      response.choices[0].message?.content?.replace(/'/g, '"') ?? "";
-    res = res.replace(/(\w)"(\w)/g, "$1'$2").trim();
-
-    // Try to extract JSON if extra text is present
-    const firstBracket = res.indexOf("[");
-    const firstBrace = res.indexOf("{");
-    if (
-      firstBracket !== -1 &&
-      (firstBracket < firstBrace || firstBrace === -1)
-    ) {
-      res = res.slice(firstBracket);
-    } else if (firstBrace !== -1) {
-      res = res.slice(firstBrace);
-    }
-
-    // Fix property names and escape inner quotes
-    res = quotePropertyNames(res);
-    res = escapeInnerQuotes(res);
+    const rawResponse = response.choices[0].message?.content ?? "";
+    const withoutFences = stripCodeFences(rawResponse);
+    const res = extractFirstJsonSegment(withoutFences);
 
     if (verbose) {
       console.log(
