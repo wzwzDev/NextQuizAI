@@ -16,6 +16,13 @@ export const submitAdminQuizAttemptSchema = z.object({
   answers: z.array(z.string()),
 });
 
+export const saveUserQuizAttemptSchema = z.object({
+  quizId: z.string().min(1),
+  quizTitle: z.string().min(1),
+  answers: z.unknown(),
+  score: z.number().min(0).max(100),
+});
+
 export const endGameSchema = z.object({
   gameId: z.string(),
 });

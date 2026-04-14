@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
+import { saveUserQuizAttemptSchema } from "@/schemas/questions";
 import {
   getUserQuizStats,
   saveUserQuizAttempt,
 } from "@/server/services/userQuizAttemptService";
+import { ZodError } from "zod";
 
 export async function POST(req: NextRequest) {
-  try {
-    const session = await getAuthSession(req);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const session = await getAuthSession(req);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const { quizId, quizTitle, answers, score } = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  try {
+    const { quizId, quizTitle, answers, score } = saveUserQuizAttemptSchema.parse(
+      body,
+    );
     const attempt = await saveUserQuizAttempt({
       userId: session.user.id,
       quizId,
@@ -22,8 +33,12 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ attempt }, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: error.issues }, { status: 400 });
+    }
+
     return NextResponse.json(
-      { error: "Failed to save attempt", details: error },
+      { error: "Failed to save attempt" },
       { status: 500 },
     );
   }

@@ -6,6 +6,7 @@ describe("/api/quiz-review Route Handler", () => {
   let adminUser: any;
   let normalUser: any;
   let quizId: string;
+  const createdQuizIds = new Set<string>();
 
   beforeAll(async () => {
     // Use unique emails for this test file and clean up before creating
@@ -21,7 +22,11 @@ describe("/api/quiz-review Route Handler", () => {
   },30000);
 
   afterAll(async () => {
-    await prisma.adminQuiz.deleteMany({});
+    if (createdQuizIds.size > 0) {
+      await prisma.adminQuiz.deleteMany({
+        where: { id: { in: Array.from(createdQuizIds) } },
+      });
+    }
     await prisma.user.deleteMany({
       where: { email: { in: ["admin-quizreview@example.com", "user-quizreview@example.com"] } },
     });
@@ -66,6 +71,7 @@ describe("/api/quiz-review Route Handler", () => {
     expect(json.quiz.title).toBe("myquiz");
     expect(json.quiz.questions.length).toBe(1);
     quizId = json.quiz.id;
+    createdQuizIds.add(json.quiz.id);
   });
 
   it("creates a quiz with fallback title (POST)", async () => {
@@ -85,6 +91,7 @@ describe("/api/quiz-review Route Handler", () => {
     expect(res.status).toBe(201);
     const json = await res.json();
     expect(json.quiz.title).toBe("Untitled Quiz");
+    createdQuizIds.add(json.quiz.id);
   });
 
   it("returns 400 when question payload is invalid (POST)", async () => {
@@ -152,6 +159,7 @@ describe("/api/quiz-review Route Handler", () => {
         questions: { create: [{ question: "Q", answer: "A" }] },
       },
     });
+    createdQuizIds.add(quiz.id);
     const req = new Request("http://localhost/api/quiz-review?id=" + quiz.id, {
       method: "DELETE",
       headers: { "x-test-user-email": adminUser.email },
@@ -160,5 +168,6 @@ describe("/api/quiz-review Route Handler", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
+    createdQuizIds.delete(quiz.id);
   });
 });

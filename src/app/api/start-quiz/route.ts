@@ -111,8 +111,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let body;
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  try {
     const { quizId, answers } = submitAdminQuizAttemptSchema.parse(body);
 
     const result = await submitAndGradeAdminQuizAttempt({
