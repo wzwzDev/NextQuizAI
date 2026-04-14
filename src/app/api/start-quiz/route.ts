@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { getApprovedQuiz } from "@/server/admin/services/adminQuizService";
-import { authOptions } from "@/server/core/auth";
+import { getAuthSession } from "@/server/core/auth";
 import { submitAdminQuizAttemptSchema } from "@/schemas/questions";
 import {
   AdminQuizNotFoundError,
@@ -63,6 +62,11 @@ function extractOptions(value: unknown): string[] {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getAuthSession(req);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const quizId = searchParams.get("id");
 
@@ -102,7 +106,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
