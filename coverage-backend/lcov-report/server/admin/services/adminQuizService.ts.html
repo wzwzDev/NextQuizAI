@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">12.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/72</span>
+                <span class='fraction'>9/72</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">13.04% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/69</span>
+                <span class='fraction'>9/69</span>
             </div>
         
             
@@ -299,7 +299,7 @@
 <a name='L234'></a><a href='#L234'>234</a>
 <a name='L235'></a><a href='#L235'>235</a>
 <a name='L236'></a><a href='#L236'>236</a>
-<a name='L237'></a><a href='#L237'>237</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L237'></a><a href='#L237'>237</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -307,9 +307,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -336,7 +336,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -394,7 +394,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -465,16 +465,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -489,7 +489,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -535,7 +535,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import {</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
   createAdminQuiz,
   deleteAdminQuizById,
   findAdminQuizzes,
@@ -543,9 +543,9 @@
   findApprovedQuizzesForLibrary,
   findApprovedQuizById,
 } from "@/server/admin/repositories/adminQuizRepository";
-<span class="cstat-no" title="statement not covered" >import { listUserQuizAttemptsByQuizIds } from "@/server/repositories/userQuizAttemptRepository";</span>
+import { listUserQuizAttemptsByQuizIds } from "@/server/repositories/userQuizAttemptRepository";
 &nbsp;
-const MIN_MCQ_OPTIONS = <span class="cstat-no" title="statement not covered" >2;</span>
+const MIN_MCQ_OPTIONS = 2;
 &nbsp;
 function <span class="fstat-no" title="function not covered" >splitOptionChunks(</span>option: string): string[] {
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!option) {</span>
@@ -572,7 +572,7 @@ function <span class="fstat-no" title="function not covered" >normalizeOptions(<
   );
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >createApprovedAdminQuiz(</span>input: {
+export async function <span class="fstat-no" title="function not covered" >createApprovedAdminQuiz(</span>input: {
   title?: string;
   fileName?: string;
   category: string;
@@ -630,7 +630,7 @@ function <span class="fstat-no" title="function not covered" >normalizeOptions(<
   });
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getAdminQuizzes(</span>filter?: {
+export async function <span class="fstat-no" title="function not covered" >getAdminQuizzes(</span>filter?: {
   category?: string;
   difficulty?: string;
 }) {
@@ -701,15 +701,15 @@ function <span class="fstat-no" title="function not covered" >normalizeOptions(<
   });
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >removeAdminQuiz(</span>id: string) {
+export async function <span class="fstat-no" title="function not covered" >removeAdminQuiz(</span>id: string) {
 <span class="cstat-no" title="statement not covered" >  return deleteAdminQuizById(id);</span>
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getApprovedQuiz(</span>id: string) {
+export async function <span class="fstat-no" title="function not covered" >getApprovedQuiz(</span>id: string) {
 <span class="cstat-no" title="statement not covered" >  return findApprovedQuizById(id);</span>
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getApprovedQuizLibrary(</span>) {
+export async function <span class="fstat-no" title="function not covered" >getApprovedQuizLibrary(</span>) {
   const quizzes = <span class="cstat-no" title="statement not covered" >await findApprovedQuizzesForLibrary();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return quizzes.map(<span class="fstat-no" title="function not covered" >(q</span>uiz) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
@@ -725,7 +725,7 @@ function <span class="fstat-no" title="function not covered" >normalizeOptions(<
   }));
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >getQuizStatisticsSummary(</span>) {
+export async function <span class="fstat-no" title="function not covered" >getQuizStatisticsSummary(</span>) {
   const attempts = <span class="cstat-no" title="statement not covered" >await findAllUserQuizAttempts();</span>
 &nbsp;
   const statsMap: Record&lt;
@@ -778,7 +778,7 @@ function <span class="fstat-no" title="function not covered" >normalizeOptions(<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T13:02:04.904Z
+                at 2026-04-14T16:27:28.549Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>6/7</span>
             </div>
         
             
@@ -131,7 +131,17 @@
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -175,7 +185,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -210,7 +222,11 @@ type QuizStatistic = {
   completionRate?: number; // Optional
 };
 &nbsp;
-const QuizStatistics = () =&gt; {
+type QuizStatisticsProps = {
+  compact?: boolean;
+};
+&nbsp;
+const QuizStatistics = ({ compact = false }: QuizStatisticsProps) =&gt; {
   const [statistics, setStatistics] = useState&lt;QuizStatistic[]&gt;([]);
 &nbsp;
   useEffect(() =&gt; {
@@ -228,40 +244,42 @@ const QuizStatistics = () =&gt; {
   }, []);
 &nbsp;
   return (
-    &lt;div className="p-8 bg-white dark:bg-black rounded-xl shadow"&gt;
-      &lt;h2 className="text-2xl font-bold mb-4"&gt;Quiz Statistics&lt;/h2&gt;
-      &lt;table className="min-w-full bg-white dark:bg-black border border-gray-300"&gt;
-        &lt;thead&gt;
-          &lt;tr&gt;
-            &lt;th className="border border-gray-300 px-4 py-2"&gt;Quiz Title&lt;/th&gt;
-            &lt;th className="border border-gray-300 px-4 py-2"&gt;Attempts&lt;/th&gt;
-            &lt;th className="border border-gray-300 px-4 py-2"&gt;Average Score&lt;/th&gt;
-            &lt;th className="border border-gray-300 px-4 py-2"&gt;
-              Completion Rate
-            &lt;/th&gt;
-          &lt;/tr&gt;
-        &lt;/thead&gt;
-        &lt;tbody&gt;
-          {statistics.map((stat) =&gt; (
-            &lt;tr key={`${stat.quizId}-${stat.quizTitle}`}&gt;
-              &lt;td className="border border-gray-300 px-4 py-2"&gt;
-                {stat.quizTitle}
-              &lt;/td&gt;
-              &lt;td className="border border-gray-300 px-4 py-2"&gt;
-                {stat.attempts}
-              &lt;/td&gt;
-              &lt;td className="border border-gray-300 px-4 py-2"&gt;
-                {stat.averageScore}
-              &lt;/td&gt;
-              &lt;td className="border border-gray-300 px-4 py-2"&gt;
-                {stat.completionRate !== undefined
-                  ? `${stat.completionRate}%`
-                  : "N/A"}
-              &lt;/td&gt;
+    &lt;div className={compact ? <span class="branch-0 cbranch-no" title="branch not covered" >"h-full" </span>: "rounded-xl bg-white p-8 shadow dark:bg-black"}&gt;
+      {!compact &amp;&amp; &lt;h2 className="mb-4 text-2xl font-bold"&gt;Quiz Statistics&lt;/h2&gt;}
+      &lt;div className="overflow-x-auto"&gt;
+        &lt;table className="min-w-full border border-gray-300 bg-white dark:bg-black"&gt;
+          &lt;thead&gt;
+            &lt;tr&gt;
+              &lt;th className="border border-gray-300 px-4 py-2"&gt;Quiz Title&lt;/th&gt;
+              &lt;th className="border border-gray-300 px-4 py-2"&gt;Attempts&lt;/th&gt;
+              &lt;th className="border border-gray-300 px-4 py-2"&gt;Average Score&lt;/th&gt;
+              &lt;th className="border border-gray-300 px-4 py-2"&gt;
+                Completion Rate
+              &lt;/th&gt;
             &lt;/tr&gt;
-          ))}
-        &lt;/tbody&gt;
-      &lt;/table&gt;
+          &lt;/thead&gt;
+          &lt;tbody&gt;
+            {statistics.map((stat) =&gt; (
+              &lt;tr key={`${stat.quizId}-${stat.quizTitle}`}&gt;
+                &lt;td className="border border-gray-300 px-4 py-2"&gt;
+                  {stat.quizTitle}
+                &lt;/td&gt;
+                &lt;td className="border border-gray-300 px-4 py-2"&gt;
+                  {stat.attempts}
+                &lt;/td&gt;
+                &lt;td className="border border-gray-300 px-4 py-2"&gt;
+                  {stat.averageScore}
+                &lt;/td&gt;
+                &lt;td className="border border-gray-300 px-4 py-2"&gt;
+                  {stat.completionRate !== undefined
+                    ? `${stat.completionRate}%`
+                    : "N/A"}
+                &lt;/td&gt;
+              &lt;/tr&gt;
+            ))}
+          &lt;/tbody&gt;
+        &lt;/table&gt;
+      &lt;/div&gt;
     &lt;/div&gt;
   );
 };
@@ -274,7 +292,7 @@ export default QuizStatistics;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T07:54:05.094Z
+                at 2026-04-14T16:28:37.488Z
             </div>
         <script src="../prettify.js"></script>
         <script>

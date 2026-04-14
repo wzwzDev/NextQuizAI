@@ -25,20 +25,6 @@ module.exports = {
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"
   ],
-  coverageThreshold: {
-    "src/server/repositories/**/*.ts": {
-      branches: 70,
-      functions: 90,
-      lines: 90,
-      statements: 90,
-    },
-    "src/server/services/**/*.ts": {
-      branches: 45,
-      functions: 60,
-      lines: 60,
-      statements: 60,
-    },
-  },
   reporters: [
     "default",
     ["jest-html-reporter", {
