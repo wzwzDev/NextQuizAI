@@ -7,9 +7,11 @@ describe("/api/user-quiz-stats Route Handler", () => {
   let user: User;
 
  beforeAll(async () => {
-  // Clean up quiz attempts first, then users, in a transaction
+  // Clean up scoped test data first, then create test user
   await prisma.$transaction([
-    prisma.userQuizAttempt.deleteMany({}),
+    prisma.userQuizAttempt.deleteMany({
+      where: { quizId: { in: ["quiz1", "quiz2"] } },
+    }),
     prisma.user.deleteMany({
       where: { email: "user-quizstats@example.com" },
     }),
@@ -21,7 +23,9 @@ describe("/api/user-quiz-stats Route Handler", () => {
 
 afterAll(async () => {
   await prisma.$transaction([
-    prisma.userQuizAttempt.deleteMany({}),
+    prisma.userQuizAttempt.deleteMany({
+      where: { userId: user.id },
+    }),
     prisma.user.deleteMany({
       where: { email: "user-quizstats@example.com" },
     }),
@@ -119,11 +123,18 @@ afterAll(async () => {
   });
 
   it("GET returns aggregated stats for user", async () => {
-    // Add more attempts for aggregation
+    // Add additional completed quiz for aggregation
     await prisma.userQuizAttempt.createMany({
       data: [
-        { userId: user.id, quizId: "quiz1", quizTitle: "Quiz 1", answers: [], score: 90 },
-        { userId: user.id, quizId: "quiz2", quizTitle: "Quiz 2", answers: [], score: 70 },
+        {
+          userId: user.id,
+          quizId: "quiz2",
+          quizTitle: "Quiz 2",
+          answers: [],
+          score: 70,
+          status: "completed",
+          completedAt: new Date(),
+        },
       ],
     });
     const req = new Request("http://localhost/api/user-quiz-stats", {
@@ -137,8 +148,8 @@ afterAll(async () => {
 
     const quiz1 = json.quizStats.find((q: { id: string }) => q.id === "quiz1");
     expect(quiz1).toBeDefined();
-    expect(quiz1.attempts).toBeGreaterThanOrEqual(2);
-    expect(quiz1.averageScore).toBeGreaterThan(0);
+    expect(quiz1.attempts).toBe(1);
+    expect(quiz1.averageScore).toBe(80);
 
     const quiz2 = json.quizStats.find((q: { id: string }) => q.id === "quiz2");
     expect(quiz2).toBeDefined();

@@ -1,6 +1,18 @@
 "use client";
 import React, { useRef, useState } from "react";
-import { AdminQuestion, AdminQuizDraft } from "@/components/admin/types";
+import {
+  AdminQuestion,
+  AdminQuizDraft,
+  AdminQuizType,
+} from "@/components/admin/types";
+
+const categories = ["Math", "Science", "History", "Programming"];
+const difficulties = ["easy", "medium", "hard"];
+
+const quizTypes: Array<{ value: AdminQuizType; label: string }> = [
+  { value: "open_ended", label: "Open Ended" },
+  { value: "mcq", label: "Multiple Choice" },
+];
 
 type QuizUploadProps = {
   onQuizReady: (quiz: AdminQuizDraft) => void;
@@ -27,6 +39,10 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState(categories[0]);
+  const [difficulty, setDifficulty] = useState(difficulties[0]);
+  const [quizType, setQuizType] = useState<AdminQuizType>("open_ended");
+  const [questionCount, setQuestionCount] = useState(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +88,10 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("category", category);
+      formData.append("difficulty", difficulty);
+      formData.append("quizType", quizType);
+      formData.append("questionCount", String(questionCount));
 
       const res = await fetch("/api/upload-and-generate", {
         method: "POST",
@@ -97,7 +117,15 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       if (generatedQuestions.length > 0) {
         onQuizReady({
           title: file.name,
-          quizType: "open_ended",
+          category,
+          difficulty,
+          quizType,
+          generationOptions: {
+            category,
+            difficulty,
+            quizType,
+            questionCount,
+          },
           questions: generatedQuestions,
         });
         setFile(null);
@@ -156,6 +184,76 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       >
         {uploading ? "Uploading..." : "Upload & Generate"}
       </button>
+      <div className="w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Category</label>
+          <select
+            className="border rounded px-2 py-2 bg-white text-gray-900"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            disabled={uploading}
+          >
+            {categories.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Difficulty</label>
+          <select
+            className="border rounded px-2 py-2 bg-white text-gray-900"
+            value={difficulty}
+            onChange={(event) => setDifficulty(event.target.value)}
+            disabled={uploading}
+          >
+            {difficulties.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Quiz Type</label>
+          <select
+            className="border rounded px-2 py-2 bg-white text-gray-900"
+            value={quizType}
+            onChange={(event) => setQuizType(event.target.value as AdminQuizType)}
+            disabled={uploading}
+          >
+            {quizTypes.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Question Count</label>
+          <input
+            type="number"
+            min={1}
+            max={15}
+            className="border rounded px-2 py-2 bg-white text-gray-900"
+            value={questionCount}
+            onChange={(event) => {
+              const parsedValue = Number(event.target.value);
+              if (Number.isNaN(parsedValue)) {
+                setQuestionCount(1);
+                return;
+              }
+
+              setQuestionCount(Math.max(1, Math.min(15, parsedValue)));
+            }}
+            disabled={uploading}
+          />
+        </div>
+      </div>
       {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   );

@@ -86,9 +86,33 @@ describe("adminQuizService", () => {
   it("builds quiz statistics summary by quiz title", async () => {
     await prisma.userQuizAttempt.createMany({
       data: [
-        { quizId: "service-q1", quizTitle: "service-admin-quiz-a", score: 80, userId: "u1", answers: [] },
-        { quizId: "service-q1", quizTitle: "service-admin-quiz-a", score: 60, userId: "u2", answers: [] },
-        { quizId: "service-q2", quizTitle: "service-admin-quiz-b", score: 90, userId: "u3", answers: [] },
+        {
+          quizId: "service-q1",
+          quizTitle: "service-admin-quiz-a",
+          score: 80,
+          userId: "u1",
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
+        {
+          quizId: "service-q1",
+          quizTitle: "service-admin-quiz-a",
+          score: 60,
+          userId: "u2",
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
+        {
+          quizId: "service-q2",
+          quizTitle: "service-admin-quiz-b",
+          score: 90,
+          userId: "u3",
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
       ],
     });
 

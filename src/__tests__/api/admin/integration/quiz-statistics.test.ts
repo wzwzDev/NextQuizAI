@@ -73,9 +73,33 @@ describe("/api/quiz-statistics Route Handler", () => {
     // Seed some quiz attempts (answers must be valid JSON, e.g. [])
     await prisma.userQuizAttempt.createMany({
       data: [
-        { quizId: quizId1, quizTitle: quizTitle1, score: 80, userId: adminUser.id, answers: [] },
-        { quizId: quizId1, quizTitle: quizTitle1, score: 90, userId: normalUser.id, answers: [] },
-        { quizId: quizId2, quizTitle: quizTitle2, score: 70, userId: adminUser.id, answers: [] },
+        {
+          quizId: quizId1,
+          quizTitle: quizTitle1,
+          score: 80,
+          userId: adminUser.id,
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
+        {
+          quizId: quizId1,
+          quizTitle: quizTitle1,
+          score: 90,
+          userId: normalUser.id,
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
+        {
+          quizId: quizId2,
+          quizTitle: quizTitle2,
+          score: 70,
+          userId: adminUser.id,
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
       ],
     });
 

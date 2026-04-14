@@ -70,6 +70,8 @@ describe("adminQuizRepository", () => {
         quizTitle: "repo-admin-quiz-attempt",
         answers: [],
         score: 77,
+        status: "completed",
+        completedAt: new Date(),
       },
     });
 

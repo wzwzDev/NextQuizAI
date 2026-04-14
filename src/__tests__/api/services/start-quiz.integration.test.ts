@@ -32,6 +32,11 @@ describe("/api/start-quiz Route Handler", () => {
   },30000);
 
   afterAll(async () => {
+    await prisma.userQuizAttempt.deleteMany({
+      where: {
+        OR: [{ quizId: quiz.id }, { userId: user.id }],
+      },
+    });
     await prisma.adminQuiz.deleteMany({ where: { title: quizTitle } });
     await prisma.user.deleteMany({ where: { id: user.id } });
     await prisma.$disconnect();
@@ -108,5 +113,51 @@ describe("/api/start-quiz Route Handler", () => {
     const json = await res.json();
     expect(res.status).toBe(400);
     expect(json.error).toBe("Invalid JSON");
+  });
+
+  it("completes an attempt then blocks retake on POST", async () => {
+    const firstReq = new Request("http://localhost/api/start-quiz", {
+      method: "POST",
+      body: JSON.stringify({
+        quizId: quiz.id,
+        answers: ["A1", "A2"],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": user.email,
+      },
+    });
+
+    const firstRes = await POST(firstReq as any);
+    expect(firstRes.status).toBe(200);
+
+    const secondReq = new Request("http://localhost/api/start-quiz", {
+      method: "POST",
+      body: JSON.stringify({
+        quizId: quiz.id,
+        answers: ["A1", "A2"],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": user.email,
+      },
+    });
+
+    const secondRes = await POST(secondReq as any);
+    expect(secondRes.status).toBe(409);
+    const secondJson = await secondRes.json();
+    expect(secondJson.error).toMatch(/already completed/i);
+  });
+
+  it("returns completed status on GET after quiz completion", async () => {
+    const req = new Request(`http://localhost/api/start-quiz?id=${quiz.id}`, {
+      method: "GET",
+      headers: { "x-test-user-email": user.email },
+    });
+
+    const res = await GET(req as any);
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.attemptStatus).toBe("completed");
   });
 });

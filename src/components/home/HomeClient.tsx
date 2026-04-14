@@ -30,7 +30,13 @@ type Quiz = {
   category: string;
   difficulty: string;
   quizType?: "mcq" | "open_ended";
+  questionCount?: number;
   questions?: unknown[];
+  attemptStatus?: "available" | "pending" | "completed";
+  isLocked?: boolean;
+  userScore?: number | null;
+  userStartedAt?: string | null;
+  userCompletedAt?: string | null;
 };
 
 function normalizeFilterValue(value?: string | null) {
@@ -61,6 +67,19 @@ function getDifficultyChipClass(value?: string) {
   return "bg-muted text-muted-foreground";
 }
 
+function getAttemptStatusChipClass(status?: string) {
+  const normalized = normalizeFilterValue(status);
+  if (normalized === "completed") {
+    return "bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900";
+  }
+
+  if (normalized === "pending") {
+    return "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200";
+  }
+
+  return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200";
+}
+
 export default function HomeClient() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +94,7 @@ export default function HomeClient() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("/api/quiz-review")
+    fetch("/api/quizzes")
       .then((res) => res.json())
       .then((data: { quizzes?: Quiz[] }) => {
         setQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []);
@@ -253,21 +272,37 @@ export default function HomeClient() {
                   <Flame className="h-3.5 w-3.5" />
                   Difficulty: {quiz.difficulty}
                 </span>
+                <span className={`chip-pill ${getAttemptStatusChipClass(quiz.attemptStatus)}`}>
+                  Status: {quiz.attemptStatus === "completed" ? "Completed" : quiz.attemptStatus === "pending" ? "Pending" : "Available"}
+                </span>
                 <span className="chip-pill bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
                   Type: {formatQuizTypeLabel(quiz.quizType)}
                 </span>
                 <span className="chip-pill bg-muted text-muted-foreground">
-                  Questions: {quiz.questions?.length || 0}
+                  Questions: {quiz.questionCount ?? quiz.questions?.length ?? 0}
                 </span>
               </div>
 
-              <Link
-                href={`/playme/${quiz.id}`}
-                className="pulse-focus mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
-              >
-                Start Quiz
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {quiz.isLocked ? (
+                <div className="mt-auto space-y-2">
+                  <div className="rounded-xl border border-border/70 bg-muted/60 px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+                    Completed
+                  </div>
+                  {typeof quiz.userScore === "number" && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Your score: {quiz.userScore}%
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={`/playme/${quiz.id}`}
+                  className="pulse-focus mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                >
+                  {quiz.attemptStatus === "pending" ? "Resume Quiz" : "Start Quiz"}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
             </motion.article>
           );
         })}

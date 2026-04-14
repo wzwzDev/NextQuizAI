@@ -43,6 +43,29 @@ export async function findAdminQuizzes(filter?: {
   return prisma.adminQuiz.findMany({
     where,
     include: { questions: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function findApprovedQuizzesForLibrary() {
+  return prisma.adminQuiz.findMany({
+    where: { status: "approved" },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      difficulty: true,
+      quizType: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          questions: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 

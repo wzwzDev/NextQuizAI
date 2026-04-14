@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
 import { saveUserQuizAttemptSchema } from "@/schemas/questions";
 import {
+  UserQuizAttemptAlreadyCompletedError,
+  UserQuizAttemptNotStartedError,
   getUserQuizStats,
   saveUserQuizAttempt,
 } from "@/server/services/userQuizAttemptService";
@@ -35,6 +37,14 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
+    }
+
+    if (error instanceof UserQuizAttemptAlreadyCompletedError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+
+    if (error instanceof UserQuizAttemptNotStartedError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json(

@@ -11,6 +11,8 @@ const MIN_OCR_WORD_COUNT = 6;
 const MIN_OCR_ALPHA_WORD_RATIO = 0.45;
 const MAX_CONTENT_CHARS = 16_000;
 const FALLBACK_QUESTION_COUNT = 5;
+const MIN_QUESTION_COUNT = 1;
+const MAX_QUESTION_COUNT = 15;
 const MIN_FALLBACK_SENTENCE_LENGTH = 24;
 
 const COMMON_STOP_WORDS = new Set([
@@ -67,6 +69,13 @@ type GeneratedQuestion = {
   answer: string;
 };
 
+export type UploadQuizGenerationOptions = {
+  questionCount?: number;
+  difficulty?: string;
+  category?: string;
+  quizType?: "mcq" | "open_ended";
+};
+
 type RawGeneratedQuestion = {
   question?: unknown;
   answer?: unknown;
@@ -90,6 +99,15 @@ function extractSentencesForFallback(courseContent: string) {
     .flatMap((line) => line.split(/[.!?]+/))
     .map((sentence) => sentence.replace(/\s+/g, " ").trim())
     .filter((sentence) => sentence.length >= MIN_FALLBACK_SENTENCE_LENGTH);
+}
+
+function normalizeQuestionCount(value?: number) {
+  if (!Number.isFinite(value)) {
+    return FALLBACK_QUESTION_COUNT;
+  }
+
+  const roundedValue = Math.round(Number(value));
+  return Math.max(MIN_QUESTION_COUNT, Math.min(MAX_QUESTION_COUNT, roundedValue));
 }
 
 function pickFallbackAnswerToken(sentence: string) {
@@ -134,7 +152,10 @@ function buildFallbackQuestion(sentence: string, answer: string) {
   return `From this statement, what key term is being referenced: "${shortenedSentence}"`;
 }
 
-function generateFallbackQuestionsFromContent(courseContent: string): GeneratedQuestion[] {
+function generateFallbackQuestionsFromContent(
+  courseContent: string,
+  questionCount: number = FALLBACK_QUESTION_COUNT,
+): GeneratedQuestion[] {
   const sentences = extractSentencesForFallback(courseContent);
   const usedAnswers = new Set<string>();
   const usedQuestions = new Set<string>();
@@ -161,7 +182,7 @@ function generateFallbackQuestionsFromContent(courseContent: string): GeneratedQ
     usedAnswers.add(answerKey);
     usedQuestions.add(questionKey);
 
-    if (generated.length >= FALLBACK_QUESTION_COUNT) {
+    if (generated.length >= questionCount) {
       return generated;
     }
   }
@@ -174,7 +195,7 @@ function generateFallbackQuestionsFromContent(courseContent: string): GeneratedQ
     .map((token) => token.toLowerCase())
     .filter((token) => /[a-zA-Z]/.test(token) && !COMMON_STOP_WORDS.has(token));
 
-  const uniqueBackupTokens = Array.from(new Set(backupTokens)).slice(0, 3);
+  const uniqueBackupTokens = Array.from(new Set(backupTokens)).slice(0, questionCount);
   return uniqueBackupTokens.map((token, index) => ({
     question: `Identify key term #${index + 1} from the provided content.`,
     answer: token,
@@ -374,14 +395,23 @@ function normalizeGeneratedQuestions(rawOutput: unknown): GeneratedQuestion[] {
 
 export async function generateQuestionsFromCourseContent(
   courseContent: string,
+  options: UploadQuizGenerationOptions = {},
 ): Promise<GeneratedQuestion[]> {
+  const questionCount = normalizeQuestionCount(options.questionCount);
+  const difficultyHint = options.difficulty?.trim() || "mixed";
+  const categoryHint = options.category?.trim() || "content-derived";
+  const quizTypeHint = options.quizType === "mcq" ? "mcq-ready" : "open-ended";
+
   const systemPrompt = `
-You are a quiz generator. Given the following course content, generate exactly 5 short-answer questions and answers.
+You are a quiz generator. Given the following course content, generate exactly ${questionCount} short-answer questions and answers.
+Difficulty target: ${difficultyHint}
+Category focus: ${categoryHint}
+Target style: ${quizTypeHint}
 Each answer must be an exact, concise target (for example: code output, exact syntax, keyword, identifier, number, or short phrase), 1 to 6 words max.
 Do not generate definition/explanation questions that require writing a paragraph.
 Course content:
 ${courseContent}
-Respond ONLY with a JSON array of 5 objects, each with BOTH "question" and "answer" fields, like this:
+Respond ONLY with a JSON array of ${questionCount} objects, each with BOTH "question" and "answer" fields, like this:
 [
   {"question": "What is the output of console.log(2 + 2)?", "answer": "4"},
   ...
@@ -392,7 +422,10 @@ Every object must include a non-empty "question" and a non-empty concise "answer
 `;
 
   const fallbackSystemPrompt = `
-You are a quiz generator. Create exactly 3 high-confidence short-answer question/answer pairs from the course content below.
+You are a quiz generator. Create exactly ${questionCount} high-confidence short-answer question/answer pairs from the course content below.
+Difficulty target: ${difficultyHint}
+Category focus: ${categoryHint}
+Target style: ${quizTypeHint}
 Use only facts that are explicitly present in the content.
 Each answer must be 1 to 6 words and non-empty.
 Course content:
@@ -437,7 +470,10 @@ Do not include markdown or extra commentary.
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown OpenAI error";
     if (isRateLimitMessage(message)) {
-      const fallbackQuestions = generateFallbackQuestionsFromContent(courseContent);
+      const fallbackQuestions = generateFallbackQuestionsFromContent(
+        courseContent,
+        questionCount,
+      );
       if (fallbackQuestions.length > 0) {
         return fallbackQuestions;
       }
@@ -450,14 +486,45 @@ Do not include markdown or extra commentary.
     throw new Error("No valid questions could be generated from the uploaded file.");
   }
 
+  if (normalizedQuestions.length > questionCount) {
+    normalizedQuestions = normalizedQuestions.slice(0, questionCount);
+  }
+
+  if (normalizedQuestions.length < questionCount) {
+    const fallbackQuestions = generateFallbackQuestionsFromContent(
+      courseContent,
+      questionCount,
+    );
+    const usedQuestionKeys = new Set(
+      normalizedQuestions.map((item) => item.question.trim().toLowerCase()),
+    );
+
+    for (const fallbackQuestion of fallbackQuestions) {
+      const key = fallbackQuestion.question.trim().toLowerCase();
+      if (usedQuestionKeys.has(key)) {
+        continue;
+      }
+
+      normalizedQuestions.push(fallbackQuestion);
+      usedQuestionKeys.add(key);
+      if (normalizedQuestions.length >= questionCount) {
+        break;
+      }
+    }
+  }
+
   return normalizedQuestions;
 }
 
-export async function generateQuestionsFromUploadedFile(file: File) {
+export async function generateQuestionsFromUploadedFile(
+  file: File,
+  options: UploadQuizGenerationOptions = {},
+) {
   ensureAcceptedFile(file);
   const courseContent = await extractCourseContent(file);
   ensureMinimumContentLength(courseContent);
   return generateQuestionsFromCourseContent(
     prepareCourseContentForGeneration(courseContent),
+    options,
   );
 }

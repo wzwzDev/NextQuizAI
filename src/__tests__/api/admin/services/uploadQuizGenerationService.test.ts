@@ -266,7 +266,10 @@ describe("uploadQuizGenerationService", () => {
         "This content is sufficiently long and includes enough material for deterministic question generation.",
       );
 
-      expect(result).toEqual([{ question: "Q1", answer: "A1" }]);
+      expect(result).toEqual(
+        expect.arrayContaining([{ question: "Q1", answer: "A1" }]),
+      );
+      expect(result.length).toBeGreaterThanOrEqual(1);
       expect(fakeServer.getRequestCount()).toBeGreaterThanOrEqual(2);
     } finally {
       if (typeof previousApiKey === "string") {

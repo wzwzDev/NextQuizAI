@@ -6,6 +6,12 @@ import {
   AdminQuizNotFoundError,
   submitAndGradeAdminQuizAttempt,
 } from "@/server/admin/services/adminQuizAttemptService";
+import {
+  UserQuizAttemptAlreadyCompletedError,
+  UserQuizAttemptNotStartedError,
+  ensurePendingQuizAttempt,
+  getUserQuizAttempt,
+} from "@/server/services/userQuizAttemptService";
 import { ZodError } from "zod";
 
 function splitOptionChunks(option: string): string[] {
@@ -82,7 +88,16 @@ export async function GET(req: NextRequest) {
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found." }, { status: 404 });
     }
+
+    const pendingAttempt = await ensurePendingQuizAttempt({
+      userId: session.user.id,
+      quizId: quiz.id,
+      quizTitle: quiz.title,
+    });
+
     return NextResponse.json({
+      attemptStatus: pendingAttempt.status,
+      startedAt: pendingAttempt.startedAt,
       quiz: {
         id: quiz.id,
         title: quiz.title,
@@ -97,7 +112,20 @@ export async function GET(req: NextRequest) {
         })),
       },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof UserQuizAttemptAlreadyCompletedError) {
+      const existingAttempt = await getUserQuizAttempt(session.user.id, quizId);
+      return NextResponse.json(
+        {
+          error: error.message,
+          attemptStatus: "completed",
+          score: existingAttempt?.score ?? null,
+          completedAt: existingAttempt?.completedAt ?? null,
+        },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to load quiz." },
       { status: 500 },
@@ -138,6 +166,14 @@ export async function POST(req: NextRequest) {
 
     if (error instanceof AdminQuizNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
+    if (error instanceof UserQuizAttemptAlreadyCompletedError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+
+    if (error instanceof UserQuizAttemptNotStartedError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json(

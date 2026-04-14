@@ -49,6 +49,10 @@ export default function QuizPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<QuizResult | null>(null);
+  const [attemptStatus, setAttemptStatus] = useState<
+    "available" | "pending" | "completed"
+  >("available");
+  const [completedScore, setCompletedScore] = useState<number | null>(null);
 
   function parseQuizType(value: unknown): QuizType {
     return value === "mcq" ? "mcq" : "open_ended";
@@ -87,6 +91,8 @@ export default function QuizPage() {
     setResult(null);
     setShowFinish(false);
     setCurrent(0);
+    setAttemptStatus("available");
+    setCompletedScore(null);
 
     fetch(`/api/start-quiz?id=${encodeURIComponent(quizId)}`)
       .then(async (res) => {
@@ -94,6 +100,15 @@ export default function QuizPage() {
         return { ok: res.ok, data };
       })
       .then(({ ok, data }) => {
+        if (!ok && data?.attemptStatus === "completed") {
+          setAttemptStatus("completed");
+          setCompletedScore(
+            typeof data?.score === "number" ? data.score : null,
+          );
+          setError(data?.error || "You already completed this quiz.");
+          return;
+        }
+
         if (ok && data?.quiz) {
           const rawQuiz = data.quiz as {
             id?: unknown;
@@ -119,6 +134,7 @@ export default function QuizPage() {
             questions,
           };
 
+          setAttemptStatus(data?.attemptStatus === "pending" ? "pending" : "available");
           setQuiz(parsedQuiz);
           setUserAnswers(Array(questions.length).fill(""));
         } else {
@@ -154,6 +170,7 @@ export default function QuizPage() {
 
     const parsedResult = payload as QuizResult;
     setResult(parsedResult);
+    setAttemptStatus("completed");
   }
 
   const handleInput = (val: string) => {
@@ -210,6 +227,19 @@ export default function QuizPage() {
     return (
       <main className="p-8 mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold mb-4 text-red-600">{error}</h1>
+        {attemptStatus === "completed" && (
+          <>
+            {typeof completedScore === "number" && (
+              <p className="mb-3 text-gray-700">Your score: {completedScore}%</p>
+            )}
+            <button
+              className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              onClick={handleGoHome}
+            >
+              Go to Home
+            </button>
+          </>
+        )}
       </main>
     );
   }
@@ -226,6 +256,9 @@ export default function QuizPage() {
       <h1 className="text-2xl font-bold mb-4">{quiz.title}</h1>
       <div className="mb-2 text-gray-600">
         Category: {quiz.category} | Difficulty: {quiz.difficulty} | Type: {quiz.quizType === "mcq" ? "Multiple Choice" : "Open Ended"}
+      </div>
+      <div className="mb-4 text-sm text-gray-500">
+        Attempt Status: {attemptStatus === "pending" ? "Pending" : "In Progress"}
       </div>
       {!showFinish ? (
         <div className="mb-6">

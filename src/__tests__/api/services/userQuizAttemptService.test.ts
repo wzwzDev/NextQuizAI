@@ -1,6 +1,7 @@
 import {
   getUserQuizStats,
   saveUserQuizAttempt,
+  UserQuizAttemptAlreadyCompletedError,
 } from "@/server/services/userQuizAttemptService";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
@@ -38,21 +39,19 @@ describe("userQuizAttemptService", () => {
     expect(attempt.quizId).toBe("service-q1");
   });
 
-  it("aggregates attempts by quiz", async () => {
-    await saveUserQuizAttempt({
-      userId: user.id,
-      quizId: "service-q1",
-      quizTitle: "Quiz 1",
-      answers: [],
-      score: 80,
-    });
-    await saveUserQuizAttempt({
-      userId: user.id,
-      quizId: "service-q1",
-      quizTitle: "Quiz 1",
-      answers: [],
-      score: 100,
-    });
+  it("blocks retake attempts for the same quiz", async () => {
+    await expect(
+      saveUserQuizAttempt({
+        userId: user.id,
+        quizId: "service-q1",
+        quizTitle: "Quiz 1",
+        answers: [],
+        score: 80,
+      }),
+    ).rejects.toBeInstanceOf(UserQuizAttemptAlreadyCompletedError);
+  });
+
+  it("aggregates completed attempts by quiz", async () => {
     await saveUserQuizAttempt({
       userId: user.id,
       quizId: "service-q2",
@@ -67,7 +66,7 @@ describe("userQuizAttemptService", () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: "service-q1",
-          attempts: 3,
+          attempts: 1,
           averageScore: 90,
         }),
         expect.objectContaining({

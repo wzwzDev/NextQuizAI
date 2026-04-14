@@ -1,9 +1,28 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { AdminQuizDraft } from "@/components/admin/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function normalizeFilterValue(value?: string) {
   return (value ?? "").trim().toLowerCase();
+}
+
+function formatDate(value?: string | Date | null) {
+  if (!value) {
+    return "N/A";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  return date.toLocaleString();
 }
 
 type QuizListProps = {
@@ -15,6 +34,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [quizType, setQuizType] = useState("");
+  const [selectedQuiz, setSelectedQuiz] = useState<AdminQuizDraft | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -201,6 +221,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
                 <th className="p-2 border text-left">Category</th>
                 <th className="p-2 border text-left">Difficulty</th>
                 <th className="p-2 border text-left">Type</th>
+                <th className="p-2 border text-left">Status</th>
                 <th className="p-2 border text-center">Questions</th>
                 <th className="p-2 border text-center">Actions</th>
               </tr>
@@ -213,12 +234,20 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
                   <td className="p-2 border">{quiz.category}</td>
                   <td className="p-2 border">{quiz.difficulty}</td>
                   <td className="p-2 border">{formatQuizTypeLabel(quiz.quizType)}</td>
+                  <td className="p-2 border">{quiz.status || "approved"}</td>
                   <td className="p-2 border text-center">
-                    {quiz.questions && Array.isArray(quiz.questions)
-                      ? quiz.questions.length
-                      : 0}
+                    {quiz.questionCount ??
+                      (quiz.questions && Array.isArray(quiz.questions)
+                        ? quiz.questions.length
+                        : 0)}
                   </td>
                   <td className="p-2 border text-center space-x-2">
+                    <button
+                      className="bg-slate-600 text-white px-2 py-1 rounded hover:bg-slate-700"
+                      onClick={() => setSelectedQuiz(quiz)}
+                    >
+                      Details
+                    </button>
                     <button
                       className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                       onClick={() => handleDelete(quiz)}
@@ -232,6 +261,55 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           </table>
         </div>
       )}
+
+      <Dialog
+        open={selectedQuiz !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedQuiz(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          {selectedQuiz && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Approved Quiz Details</DialogTitle>
+              </DialogHeader>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div><span className="font-semibold">Title:</span> {selectedQuiz.title}</div>
+                <div><span className="font-semibold">Status:</span> {selectedQuiz.status || "approved"}</div>
+                <div><span className="font-semibold">Category:</span> {selectedQuiz.category || "N/A"}</div>
+                <div><span className="font-semibold">Difficulty:</span> {selectedQuiz.difficulty || "N/A"}</div>
+                <div><span className="font-semibold">Type:</span> {formatQuizTypeLabel(selectedQuiz.quizType)}</div>
+                <div>
+                  <span className="font-semibold">Questions:</span>{" "}
+                  {selectedQuiz.questionCount ?? selectedQuiz.questions?.length ?? 0}
+                </div>
+                <div><span className="font-semibold">Created:</span> {formatDate(selectedQuiz.createdAt)}</div>
+                <div><span className="font-semibold">Updated:</span> {formatDate(selectedQuiz.updatedAt)}</div>
+              </div>
+
+              <div className="mt-2 rounded-lg border p-3 text-sm">
+                <p className="font-semibold mb-2">Attempt Summary</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>Total Attempts: {selectedQuiz.attemptSummary?.totalAttempts ?? 0}</div>
+                  <div>Completed Attempts: {selectedQuiz.attemptSummary?.completedAttempts ?? 0}</div>
+                  <div>Pending Attempts: {selectedQuiz.attemptSummary?.pendingAttempts ?? 0}</div>
+                  <div>
+                    Average Score: {selectedQuiz.attemptSummary?.averageScore ?? "N/A"}
+                  </div>
+                  <div>Last Attempt: {formatDate(selectedQuiz.attemptSummary?.lastAttemptAt)}</div>
+                  <div>
+                    Last Completed: {formatDate(selectedQuiz.attemptSummary?.lastCompletedAt)}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

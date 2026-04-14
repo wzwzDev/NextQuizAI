@@ -3,8 +3,10 @@ import {
   deleteAdminQuizById,
   findAdminQuizzes,
   findAllUserQuizAttempts,
+  findApprovedQuizzesForLibrary,
   findApprovedQuizById,
 } from "@/server/admin/repositories/adminQuizRepository";
+import { listUserQuizAttemptsByQuizIds } from "@/server/repositories/userQuizAttemptRepository";
 
 const MIN_MCQ_OPTIONS = 2;
 
@@ -95,7 +97,71 @@ export async function getAdminQuizzes(filter?: {
   category?: string;
   difficulty?: string;
 }) {
-  return findAdminQuizzes(filter);
+  const quizzes = await findAdminQuizzes(filter);
+  const attempts = await listUserQuizAttemptsByQuizIds(quizzes.map((quiz) => quiz.id));
+
+  const attemptsByQuizId: Record<
+    string,
+    {
+      totalAttempts: number;
+      completedAttempts: number;
+      pendingAttempts: number;
+      totalCompletedScore: number;
+      lastAttemptAt: Date | null;
+      lastCompletedAt: Date | null;
+    }
+  > = {};
+
+  for (const attempt of attempts) {
+    if (!attemptsByQuizId[attempt.quizId]) {
+      attemptsByQuizId[attempt.quizId] = {
+        totalAttempts: 0,
+        completedAttempts: 0,
+        pendingAttempts: 0,
+        totalCompletedScore: 0,
+        lastAttemptAt: null,
+        lastCompletedAt: null,
+      };
+    }
+
+    const stats = attemptsByQuizId[attempt.quizId];
+    stats.totalAttempts += 1;
+
+    if (attempt.status === "completed") {
+      stats.completedAttempts += 1;
+      stats.totalCompletedScore += attempt.score || 0;
+      if (!stats.lastCompletedAt || (attempt.completedAt && attempt.completedAt > stats.lastCompletedAt)) {
+        stats.lastCompletedAt = attempt.completedAt;
+      }
+    } else {
+      stats.pendingAttempts += 1;
+    }
+
+    if (!stats.lastAttemptAt || attempt.createdAt > stats.lastAttemptAt) {
+      stats.lastAttemptAt = attempt.createdAt;
+    }
+  }
+
+  return quizzes.map((quiz) => {
+    const stats = attemptsByQuizId[quiz.id];
+    const averageScore =
+      stats && stats.completedAttempts > 0
+        ? Math.round((stats.totalCompletedScore / stats.completedAttempts) * 100) / 100
+        : null;
+
+    return {
+      ...quiz,
+      questionCount: quiz.questions.length,
+      attemptSummary: {
+        totalAttempts: stats?.totalAttempts ?? 0,
+        completedAttempts: stats?.completedAttempts ?? 0,
+        pendingAttempts: stats?.pendingAttempts ?? 0,
+        averageScore,
+        lastAttemptAt: stats?.lastAttemptAt ?? null,
+        lastCompletedAt: stats?.lastCompletedAt ?? null,
+      },
+    };
+  });
 }
 
 export async function removeAdminQuiz(id: string) {
@@ -106,34 +172,65 @@ export async function getApprovedQuiz(id: string) {
   return findApprovedQuizById(id);
 }
 
+export async function getApprovedQuizLibrary() {
+  const quizzes = await findApprovedQuizzesForLibrary();
+
+  return quizzes.map((quiz) => ({
+    id: quiz.id,
+    title: quiz.title,
+    category: quiz.category,
+    difficulty: quiz.difficulty,
+    quizType: quiz.quizType,
+    status: quiz.status,
+    createdAt: quiz.createdAt,
+    updatedAt: quiz.updatedAt,
+    questionCount: quiz._count.questions,
+  }));
+}
+
 export async function getQuizStatisticsSummary() {
   const attempts = await findAllUserQuizAttempts();
 
   const statsMap: Record<
     string,
-    { quizId: string; attempts: number; totalScore: number }
+    {
+      quizId: string;
+      quizTitle: string;
+      attempts: number;
+      completedAttempts: number;
+      totalScore: number;
+    }
   > = {};
 
   for (const attempt of attempts) {
-    if (!statsMap[attempt.quizTitle]) {
-      statsMap[attempt.quizTitle] = {
+    if (!statsMap[attempt.quizId]) {
+      statsMap[attempt.quizId] = {
         quizId: attempt.quizId,
+        quizTitle: attempt.quizTitle,
         attempts: 0,
+        completedAttempts: 0,
         totalScore: 0,
       };
     }
-    statsMap[attempt.quizTitle].attempts += 1;
-    statsMap[attempt.quizTitle].totalScore += attempt.score || 0;
+
+    statsMap[attempt.quizId].attempts += 1;
+    if (attempt.status === "completed") {
+      statsMap[attempt.quizId].completedAttempts += 1;
+      statsMap[attempt.quizId].totalScore += attempt.score || 0;
+    }
   }
 
-  return Object.entries(statsMap).map(([quizTitle, data]) => ({
+  return Object.values(statsMap).map((data) => ({
     quizId: data.quizId,
-    quizTitle,
-    attempts: data.attempts,
+    quizTitle: data.quizTitle,
+    attempts: data.completedAttempts,
     averageScore:
-      data.attempts > 0
-        ? Math.round((data.totalScore / data.attempts) * 100) / 100
+      data.completedAttempts > 0
+        ? Math.round((data.totalScore / data.completedAttempts) * 100) / 100
         : 0,
-    completionRate: 100,
+    completionRate:
+      data.attempts > 0
+        ? Math.round((data.completedAttempts / data.attempts) * 100)
+        : 0,
   }));
 }

@@ -27,13 +27,37 @@ export async function POST(req: NextRequest) {
   }
   const formData = await req.formData();
   const file = formData.get("file") as File;
+  const category = String(formData.get("category") ?? "").trim();
+  const difficulty = String(formData.get("difficulty") ?? "").trim();
+  const rawQuizType = String(formData.get("quizType") ?? "").trim();
+  const rawQuestionCount = Number(formData.get("questionCount") ?? 5);
+
+  const quizType = rawQuizType === "mcq" ? "mcq" : "open_ended";
+  const questionCount =
+    Number.isFinite(rawQuestionCount) && rawQuestionCount > 0
+      ? Math.max(1, Math.min(15, Math.round(rawQuestionCount)))
+      : 5;
 
   if (!file) {
     return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   }
   try {
-    const questions = await generateQuestionsFromUploadedFile(file);
-    return NextResponse.json({ questions });
+    const questions = await generateQuestionsFromUploadedFile(file, {
+      category: category || undefined,
+      difficulty: difficulty || undefined,
+      quizType,
+      questionCount,
+    });
+
+    return NextResponse.json({
+      questions,
+      generationOptions: {
+        category: category || null,
+        difficulty: difficulty || null,
+        quizType,
+        questionCount,
+      },
+    });
   } catch (error) {
     if (error instanceof Error) {
       const knownClientErrors = new Set([

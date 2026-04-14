@@ -60,11 +60,21 @@ describe("QuizUpload", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Upload & Generate/i }));
     await waitFor(() => {
-      expect(onQuizReady).toHaveBeenCalledWith({
-        title: "quiz.json",
-        quizType: "open_ended",
-        questions: mockQuestions,
-      });
+      expect(onQuizReady).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "quiz.json",
+          category: "Math",
+          difficulty: "easy",
+          quizType: "open_ended",
+          generationOptions: {
+            category: "Math",
+            difficulty: "easy",
+            quizType: "open_ended",
+            questionCount: 5,
+          },
+          questions: mockQuestions,
+        }),
+      );
     });
   });
 

@@ -1,6 +1,9 @@
 import stringSimilarity from "string-similarity";
 import { getApprovedQuiz } from "@/server/admin/services/adminQuizService";
-import { saveUserQuizAttempt } from "@/server/services/userQuizAttemptService";
+import {
+  completePendingQuizAttempt,
+  ensurePendingQuizAttempt,
+} from "@/server/services/userQuizAttemptService";
 
 const TYPO_TOLERANCE_THRESHOLD = 0.8;
 
@@ -167,10 +170,15 @@ export async function submitAndGradeAdminQuizAttempt(input: {
 
   const roundedScore = Math.round(score * 100) / 100;
 
-  await saveUserQuizAttempt({
+  await ensurePendingQuizAttempt({
     userId: input.userId,
     quizId: quiz.id,
     quizTitle: quiz.title,
+  });
+
+  await completePendingQuizAttempt({
+    userId: input.userId,
+    quizId: quiz.id,
     answers: {
       submittedAnswers,
       questionResults,
