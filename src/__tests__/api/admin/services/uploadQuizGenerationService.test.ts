@@ -90,6 +90,54 @@ async function startFakeOpenAiServer(outputs: string[]) {
   };
 }
 
+async function startRateLimitedOpenAiServer() {
+  let requestCount = 0;
+
+  const server = createServer(async (req, res) => {
+    for await (const _chunk of req) {
+      // Drain request stream.
+    }
+
+    requestCount += 1;
+
+    res.statusCode = 429;
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        error: {
+          message: "Rate limit reached. Please try again in 200ms.",
+          type: "rate_limit_error",
+        },
+      }),
+    );
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", () => resolve());
+  });
+
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Failed to resolve fake OpenAI server address.");
+  }
+
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    getRequestCount: () => requestCount,
+    close: async () => {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    },
+  };
+}
+
 describe("uploadQuizGenerationService", () => {
   it("throws for unsupported file types", async () => {
     const file = makeFile("course.png", "image/png", "content");
@@ -220,6 +268,49 @@ describe("uploadQuizGenerationService", () => {
 
       expect(result).toEqual([{ question: "Q1", answer: "A1" }]);
       expect(fakeServer.getRequestCount()).toBeGreaterThanOrEqual(2);
+    } finally {
+      if (typeof previousApiKey === "string") {
+        process.env.OPENAI_API_KEY = previousApiKey;
+      } else {
+        delete process.env.OPENAI_API_KEY;
+      }
+
+      if (typeof previousBaseUrl === "string") {
+        process.env.OPENAI_BASE_URL = previousBaseUrl;
+      } else {
+        delete process.env.OPENAI_BASE_URL;
+      }
+
+      await fakeServer.close();
+    }
+  });
+
+  it("returns local fallback questions when OpenAI is rate limited", async () => {
+    const fakeServer = await startRateLimitedOpenAiServer();
+
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    const previousBaseUrl = process.env.OPENAI_BASE_URL;
+
+    process.env.OPENAI_API_KEY = "test-key";
+    process.env.OPENAI_BASE_URL = `${fakeServer.baseUrl}/v1`;
+
+    try {
+      const result = await generateQuestionsFromCourseContent(
+        "JavaScript functions can return values. Arrays are iterated with forEach and map. Constants are declared using const in modern JavaScript.",
+      );
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(
+        result.every(
+          (item) =>
+            typeof item.question === "string" &&
+            item.question.trim().length > 0 &&
+            typeof item.answer === "string" &&
+            item.answer.trim().length > 0,
+        ),
+      ).toBe(true);
+      expect(fakeServer.getRequestCount()).toBeGreaterThan(0);
     } finally {
       if (typeof previousApiKey === "string") {
         process.env.OPENAI_API_KEY = previousApiKey;

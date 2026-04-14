@@ -10,6 +10,57 @@ const PDF_MIME = "application/pdf";
 const MIN_OCR_WORD_COUNT = 6;
 const MIN_OCR_ALPHA_WORD_RATIO = 0.45;
 const MAX_CONTENT_CHARS = 16_000;
+const FALLBACK_QUESTION_COUNT = 5;
+const MIN_FALLBACK_SENTENCE_LENGTH = 24;
+
+const COMMON_STOP_WORDS = new Set([
+  "the",
+  "and",
+  "that",
+  "this",
+  "with",
+  "from",
+  "your",
+  "have",
+  "into",
+  "about",
+  "what",
+  "when",
+  "where",
+  "while",
+  "will",
+  "would",
+  "should",
+  "could",
+  "there",
+  "their",
+  "then",
+  "than",
+  "because",
+  "which",
+  "using",
+  "used",
+  "each",
+  "only",
+  "also",
+  "been",
+  "being",
+  "through",
+  "between",
+  "under",
+  "over",
+  "before",
+  "after",
+  "into",
+  "they",
+  "them",
+  "are",
+  "was",
+  "were",
+  "for",
+  "you",
+  "our",
+]);
 
 type GeneratedQuestion = {
   question: string;
@@ -20,6 +71,115 @@ type RawGeneratedQuestion = {
   question?: unknown;
   answer?: unknown;
 };
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isRateLimitMessage(message: string) {
+  const normalizedMessage = message.toLowerCase();
+  return (
+    normalizedMessage.includes("rate limit") ||
+    normalizedMessage.includes("429")
+  );
+}
+
+function extractSentencesForFallback(courseContent: string) {
+  return courseContent
+    .split(/\r?\n+/)
+    .flatMap((line) => line.split(/[.!?]+/))
+    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+    .filter((sentence) => sentence.length >= MIN_FALLBACK_SENTENCE_LENGTH);
+}
+
+function pickFallbackAnswerToken(sentence: string) {
+  const rawTokens = sentence.match(/[A-Za-z0-9_+#.-]+/g) ?? [];
+  const cleanedTokens = rawTokens
+    .map((token) => token.replace(/^[_#.-]+|[_#.-]+$/g, ""))
+    .filter(Boolean);
+
+  const preferred = cleanedTokens.find((token) => {
+    const normalizedToken = token.toLowerCase();
+    return (
+      token.length >= 3 &&
+      /[a-zA-Z]/.test(token) &&
+      !COMMON_STOP_WORDS.has(normalizedToken)
+    );
+  });
+
+  if (preferred) {
+    return preferred;
+  }
+
+  const sortedByLength = [...cleanedTokens].sort((left, right) => right.length - left.length);
+  return sortedByLength.find((token) => token.length >= 3) ?? null;
+}
+
+function buildFallbackQuestion(sentence: string, answer: string) {
+  const normalizedSentence = sentence.replace(/\s+/g, " ").trim();
+  const shortenedSentence =
+    normalizedSentence.length > 140
+      ? `${normalizedSentence.slice(0, 137)}...`
+      : normalizedSentence;
+
+  const clozeSentence = shortenedSentence.replace(
+    new RegExp(`\\b${escapeRegExp(answer)}\\b`, "i"),
+    "_____",
+  );
+
+  if (clozeSentence !== shortenedSentence) {
+    return `Fill in the blank from the course content: "${clozeSentence}"`;
+  }
+
+  return `From this statement, what key term is being referenced: "${shortenedSentence}"`;
+}
+
+function generateFallbackQuestionsFromContent(courseContent: string): GeneratedQuestion[] {
+  const sentences = extractSentencesForFallback(courseContent);
+  const usedAnswers = new Set<string>();
+  const usedQuestions = new Set<string>();
+  const generated: GeneratedQuestion[] = [];
+
+  for (const sentence of sentences) {
+    const answer = pickFallbackAnswerToken(sentence);
+    if (!answer) {
+      continue;
+    }
+
+    const answerKey = answer.toLowerCase();
+    if (usedAnswers.has(answerKey)) {
+      continue;
+    }
+
+    const question = buildFallbackQuestion(sentence, answer);
+    const questionKey = question.toLowerCase();
+    if (usedQuestions.has(questionKey)) {
+      continue;
+    }
+
+    generated.push({ question, answer });
+    usedAnswers.add(answerKey);
+    usedQuestions.add(questionKey);
+
+    if (generated.length >= FALLBACK_QUESTION_COUNT) {
+      return generated;
+    }
+  }
+
+  if (generated.length > 0) {
+    return generated;
+  }
+
+  const backupTokens = (courseContent.match(/[A-Za-z0-9_+#.-]{3,}/g) ?? [])
+    .map((token) => token.toLowerCase())
+    .filter((token) => /[a-zA-Z]/.test(token) && !COMMON_STOP_WORDS.has(token));
+
+  const uniqueBackupTokens = Array.from(new Set(backupTokens)).slice(0, 3);
+  return uniqueBackupTokens.map((token, index) => ({
+    question: `Identify key term #${index + 1} from the provided content.`,
+    answer: token,
+  }));
+}
 
 function isJsonFile(file: File) {
   return file.type === JSON_MIME || file.name.toLowerCase().endsWith(".json");
@@ -268,9 +428,22 @@ Do not include markdown or extra commentary.
     return normalizeGeneratedQuestions(generated);
   }
 
-  let normalizedQuestions = await requestNormalizedQuestions(systemPrompt);
-  if (normalizedQuestions.length === 0) {
-    normalizedQuestions = await requestNormalizedQuestions(fallbackSystemPrompt);
+  let normalizedQuestions: GeneratedQuestion[] = [];
+  try {
+    normalizedQuestions = await requestNormalizedQuestions(systemPrompt);
+    if (normalizedQuestions.length === 0) {
+      normalizedQuestions = await requestNormalizedQuestions(fallbackSystemPrompt);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown OpenAI error";
+    if (isRateLimitMessage(message)) {
+      const fallbackQuestions = generateFallbackQuestionsFromContent(courseContent);
+      if (fallbackQuestions.length > 0) {
+        return fallbackQuestions;
+      }
+    }
+
+    throw error;
   }
 
   if (normalizedQuestions.length === 0) {

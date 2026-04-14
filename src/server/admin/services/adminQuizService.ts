@@ -7,7 +7,6 @@ import {
 } from "@/server/admin/repositories/adminQuizRepository";
 
 const MIN_MCQ_OPTIONS = 2;
-const MAX_OPEN_ENDED_ANSWER_WORDS = 6;
 
 function splitOptionChunks(option: string): string[] {
   if (!option) {
@@ -62,16 +61,6 @@ export async function createApprovedAdminQuiz(input: {
     }
 
     if (normalizedQuizType !== "mcq") {
-      const answerWordCount = normalizedAnswer
-        .split(/\s+/)
-        .filter(Boolean).length;
-
-      if (answerWordCount > MAX_OPEN_ENDED_ANSWER_WORDS) {
-        throw new Error(
-          `Question ${index + 1} has an open-ended answer that is too long. Use a short exact answer (max ${MAX_OPEN_ENDED_ANSWER_WORDS} words).`,
-        );
-      }
-
       return {
         question: normalizedQuestion,
         answer: normalizedAnswer,

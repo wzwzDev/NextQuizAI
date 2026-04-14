@@ -66,7 +66,7 @@ const AdminDashboardClient = () => {
           <CardHeader>
             <CardTitle>Upload New Quiz</CardTitle>
             <CardDescription>
-              Upload or create a new quiz for review.
+              Upload a file to generate a draft, then use Approve & Save in Quiz Review to persist it.
             </CardDescription>
           </CardHeader>
           <CardContent>

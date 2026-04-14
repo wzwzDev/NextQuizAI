@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 
 let openaiClient: OpenAI | null = null;
+let cachedApiKey: string | null = null;
+let cachedBaseUrl: string | null = null;
 
 function getOpenAIClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -10,14 +12,20 @@ function getOpenAIClient(): OpenAI {
     );
   }
 
-  const baseURL = process.env.OPENAI_BASE_URL?.trim();
+  const baseURL = process.env.OPENAI_BASE_URL?.trim() || null;
 
-  if (!openaiClient) {
+  if (
+    !openaiClient ||
+    cachedApiKey !== apiKey ||
+    cachedBaseUrl !== baseURL
+  ) {
     openaiClient = new OpenAI(
       baseURL
         ? { apiKey, baseURL }
         : { apiKey },
     );
+    cachedApiKey = apiKey;
+    cachedBaseUrl = baseURL;
   }
 
   return openaiClient;
