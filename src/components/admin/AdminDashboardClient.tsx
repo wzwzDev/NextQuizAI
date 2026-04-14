@@ -20,7 +20,14 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Maximize2, Minimize2 } from "lucide-react";
+import {
+  BarChart3,
+  ClipboardList,
+  Maximize2,
+  Minimize2,
+  UploadCloud,
+  Users2,
+} from "lucide-react";
 import { AdminQuizDraft } from "@/components/admin/types";
 
 type ExpandedSection = "statistics" | "review" | "users" | null;
@@ -141,17 +148,26 @@ const AdminDashboardClient = () => {
           : "";
 
   return (
-    <main className="p-8 mx-auto max-w-7xl">
-      <h2 className="mb-6 text-3xl font-bold tracking-tight">
-        Admin Dashboard
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
+    <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-8">
+      <div className="absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_0%_20%,var(--glow-primary),transparent_62%),radial-gradient(circle_at_85%_0%,var(--glow-secondary),transparent_60%)]" />
+
+      <div className="mb-6 space-y-2">
+        <span className="chip-pill text-primary">Control Center</span>
+        <h2 className="font-display text-4xl font-semibold tracking-tight text-foreground">
+          Admin Dashboard
+        </h2>
+      </div>
+
+      <p className="mb-5 text-sm text-muted-foreground">
         Shortcuts: Alt+1 Statistics, Alt+2 Quiz Review, Alt+3 Users, Alt+0 Close.
       </p>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-white dark:bg-black">
+        <Card className="section-shell border-0 bg-card/80">
           <CardHeader>
-            <CardTitle>Upload New Quiz</CardTitle>
+            <CardTitle className="inline-flex items-center gap-2 text-xl">
+              <UploadCloud className="h-5 w-5 text-primary" />
+              Upload New Quiz
+            </CardTitle>
             <CardDescription>
               Upload a file to generate a draft, then use Approve & Save in Quiz Review to persist it.
             </CardDescription>
@@ -160,10 +176,13 @@ const AdminDashboardClient = () => {
             <QuizUpload onQuizReady={handleQuizReady} />
           </CardContent>
         </Card>
-        <Card className="flex min-h-[32rem] flex-col bg-white dark:bg-black">
+        <Card className="section-shell lift-hover flex min-h-[32rem] flex-col border-0 bg-card/80">
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="space-y-1.5">
-              <CardTitle>Quiz Statistics</CardTitle>
+              <CardTitle className="inline-flex items-center gap-2 text-xl">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Quiz Statistics
+              </CardTitle>
               <CardDescription>
                 Overview of quiz performance and stats.
               </CardDescription>
@@ -186,11 +205,14 @@ const AdminDashboardClient = () => {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 flex min-h-[34rem] flex-col bg-white dark:bg-black">
+      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="section-shell lift-hover col-span-4 flex min-h-[34rem] flex-col border-0 bg-card/80">
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="space-y-1.5">
-              <CardTitle>Quiz Review / List</CardTitle>
+              <CardTitle className="inline-flex items-center gap-2 text-xl">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                Quiz Review / List
+              </CardTitle>
               <CardDescription>
                 Review quizzes awaiting approval or see all quizzes.
               </CardDescription>
@@ -212,10 +234,13 @@ const AdminDashboardClient = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 flex min-h-[34rem] flex-col bg-white dark:bg-black">
+        <Card className="section-shell lift-hover col-span-3 flex min-h-[34rem] flex-col border-0 bg-card/80">
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="space-y-1.5">
-              <CardTitle>User Management</CardTitle>
+              <CardTitle className="inline-flex items-center gap-2 text-xl">
+                <Users2 className="h-5 w-5 text-primary" />
+                User Management
+              </CardTitle>
               <CardDescription>
                 Manage users and their permissions.
               </CardDescription>
@@ -249,7 +274,7 @@ const AdminDashboardClient = () => {
       >
         <DialogContent className="h-[88vh] w-[96vw] max-w-6xl p-0">
           {expandedSection && (
-            <div className="flex h-full flex-col bg-white dark:bg-black">
+            <div className="flex h-full flex-col bg-card">
               <DialogHeader className="border-b px-6 py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>

@@ -1,8 +1,21 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import LoadingQuizzes from "@/components/LoadingQuizzes";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Atom,
+  BookOpen,
+  Code2,
+  Flame,
+  Landmark,
+  Sigma,
+  Sparkles,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const categories = [
   { name: "Math", img: "/math.png" },
@@ -22,6 +35,30 @@ type Quiz = {
 
 function normalizeFilterValue(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
+}
+
+const categoryIcons: Record<string, LucideIcon> = {
+  math: Sigma,
+  science: Atom,
+  history: Landmark,
+  programming: Code2,
+};
+
+function getDifficultyChipClass(value?: string) {
+  const normalized = normalizeFilterValue(value);
+  if (normalized === "easy") {
+    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200";
+  }
+
+  if (normalized === "medium") {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200";
+  }
+
+  if (normalized === "hard") {
+    return "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200";
+  }
+
+  return "bg-muted text-muted-foreground";
 }
 
 export default function HomeClient() {
@@ -86,114 +123,160 @@ export default function HomeClient() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Available Quizzes</h1>
-      {/* Category and Difficulty Filters */}
-      <div className="mb-6 flex gap-4">
-        <label htmlFor="category" className="font-semibold">
-          Category:
-        </label>
-        <select
-          id="category"
-          value={selectedCategory || ""}
-          onChange={(e) => setSelectedCategory(e.target.value || null)}
-          className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
-        >
-          <option value="">All</option>
-          {categories.map((cat) => (
-            <option key={cat.name} value={cat.name}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+    <div className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-8">
+      <div className="absolute inset-x-0 top-2 -z-10 h-52 bg-[radial-gradient(circle_at_20%_35%,var(--glow-primary),transparent_65%),radial-gradient(circle_at_90%_15%,var(--glow-secondary),transparent_70%)]" />
 
-        <label htmlFor="difficulty" className="font-semibold">
-          Difficulty:
-        </label>
-        <select
-          id="difficulty"
-          value={selectedDifficulty || ""}
-          onChange={(e) => setSelectedDifficulty(e.target.value || null)}
-          className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
-        >
-          <option value="">All</option>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
+      <motion.section
+        className="animated-fade-up"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8">
+          <span className="chip-pill w-fit text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            Quiz Library
+          </span>
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Available Quizzes
+          </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Filter by category, difficulty, and quiz type to jump directly into the right challenge.
+          </p>
+        </div>
 
-        <label htmlFor="quizType" className="font-semibold">
-          Quiz Type:
-        </label>
-        <select
-          id="quizType"
-          value={selectedQuizType || ""}
-          onChange={(e) => setSelectedQuizType(e.target.value || null)}
-          className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
-        >
-          <option value="">All</option>
-          <option value="mcq">MCQ</option>
-          <option value="open_ended">Open Ended</option>
-        </select>
-      </div>
+        <div className="section-shell mb-6 rounded-2xl p-4 sm:p-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="category" className="text-sm font-semibold text-foreground">
+                Category:
+              </label>
+              <select
+                id="category"
+                value={selectedCategory || ""}
+                onChange={(e) => setSelectedCategory(e.target.value || null)}
+                className="h-11 rounded-xl border border-border/70 bg-card/85 px-3 text-sm text-foreground backdrop-blur-md focus:border-primary focus:outline-none"
+              >
+                <option value="">All</option>
+                {categories.map((cat) => (
+                  <option key={cat.name} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      {/* Loading and Error Messages */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="difficulty" className="text-sm font-semibold text-foreground">
+                Difficulty:
+              </label>
+              <select
+                id="difficulty"
+                value={selectedDifficulty || ""}
+                onChange={(e) => setSelectedDifficulty(e.target.value || null)}
+                className="h-11 rounded-xl border border-border/70 bg-card/85 px-3 text-sm text-foreground backdrop-blur-md focus:border-primary focus:outline-none"
+              >
+                <option value="">All</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="quizType" className="text-sm font-semibold text-foreground">
+                Quiz Type:
+              </label>
+              <select
+                id="quizType"
+                value={selectedQuizType || ""}
+                onChange={(e) => setSelectedQuizType(e.target.value || null)}
+                className="h-11 rounded-xl border border-border/70 bg-card/85 px-3 text-sm text-foreground backdrop-blur-md focus:border-primary focus:outline-none"
+              >
+                <option value="">All</option>
+                <option value="mcq">MCQ</option>
+                <option value="open_ended">Open Ended</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
       {loading && <LoadingQuizzes />}
       {error && <div className="text-red-500">{error}</div>}
 
-      {/* Quiz List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filteredQuizzes.map((quiz) => {
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredQuizzes.map((quiz, idx) => {
           const cat = categories.find(
             (c) =>
               normalizeFilterValue(c.name) ===
               normalizeFilterValue(quiz.category),
           );
+          const CategoryIcon = categoryIcons[normalizeFilterValue(quiz.category)] || BookOpen;
+
           return (
-            <div
+            <motion.article
               key={quiz.id}
-              className="border rounded-lg p-4 flex flex-col items-center shadow hover:shadow-lg transition"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.45,
+                delay: idx * 0.045,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="section-shell lift-hover flex h-full flex-col rounded-2xl p-4 sm:p-5"
             >
-              {cat && cat.img ? (
-                <Image
-                  src={cat.img}
-                  alt={cat.name}
-                  width={80}
-                  height={80}
-                  className="mb-2 rounded"
-                />
-              ) : null}
-              <h2 className="text-2xl font-bold mb-2 text-blue-700 text-center">
-                {quiz.title}
-              </h2>
-              <div className="flex flex-wrap gap-2 mb-2 justify-center">
-                <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-xs font-semibold">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="animated-float flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-card/80 p-2">
+                  {cat && cat.img ? (
+                    <Image
+                      src={cat.img}
+                      alt={cat.name}
+                      width={48}
+                      height={48}
+                      className="rounded-lg"
+                    />
+                  ) : (
+                    <CategoryIcon className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+                <h2 className="font-display text-2xl font-semibold leading-tight text-foreground">
+                  {quiz.title}
+                </h2>
+              </div>
+
+              <div className="mb-4 flex flex-wrap gap-2">
+                <span className="chip-pill bg-primary/10 text-primary">
                   Category: {quiz.category}
                 </span>
-                <span className="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs font-semibold">
+                <span className={`chip-pill ${getDifficultyChipClass(quiz.difficulty)}`}>
+                  <Flame className="h-3.5 w-3.5" />
                   Difficulty: {quiz.difficulty}
                 </span>
-                <span className="inline-block bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-xs font-semibold">
+                <span className="chip-pill bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
                   Type: {formatQuizTypeLabel(quiz.quizType)}
                 </span>
-                <span className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-full text-xs font-semibold">
+                <span className="chip-pill bg-muted text-muted-foreground">
                   Questions: {quiz.questions?.length || 0}
                 </span>
               </div>
-              <a
+
+              <Link
                 href={`/playme/${quiz.id}`}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-semibold mt-2"
+                className="pulse-focus mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
               >
                 Start Quiz
-              </a>
-            </div>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.article>
           );
         })}
       </div>
 
-      {/* No quizzes found */}
       {!loading && filteredQuizzes.length === 0 && (
-        <div className="mt-8 text-gray-500">No quizzes found.</div>
+        <div className="section-shell mt-8 rounded-2xl p-6 text-sm text-muted-foreground">
+          No quizzes found.
+        </div>
       )}
     </div>
   );
