@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
 import {
   getUserRevokeStatus,
+  OwnerProtectedError,
   setUserRevoked,
 } from "@/server/admin/services/adminUserManagementService";
 
@@ -20,7 +21,11 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof OwnerProtectedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
     return NextResponse.json(
       { error: "Failed to revoke user" },
       { status: 500 },

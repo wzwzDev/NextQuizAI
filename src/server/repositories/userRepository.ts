@@ -35,6 +35,17 @@ export async function updateUserAdmin(userId: string, isAdmin: boolean) {
   });
 }
 
+export async function findUserIdentityById(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      isAdmin: true,
+    },
+  });
+}
+
 export async function findUserBanStatus(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },

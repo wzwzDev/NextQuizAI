@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
-import { setUserAdmin } from "@/server/admin/services/adminUserManagementService";
+import {
+  OwnerProtectedError,
+  setUserAdmin,
+} from "@/server/admin/services/adminUserManagementService";
 
 export async function POST(
   req: NextRequest,
@@ -20,7 +23,11 @@ export async function POST(
   try {
     const user = await setUserAdmin(userId, true);
     return NextResponse.json({ success: true, user }, { status: 200 });
-  } catch {
+  } catch (error) {
+    if (error instanceof OwnerProtectedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
     return NextResponse.json(
       { error: "Failed to assign admin role." },
       { status: 500 },

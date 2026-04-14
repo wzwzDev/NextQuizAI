@@ -10,6 +10,7 @@ const mockUsers = [
     banned: false,
     revoked: false,
     isAdmin: false,
+    isOwner: false,
   },
   {
     id: "2",
@@ -18,6 +19,7 @@ const mockUsers = [
     banned: true,
     revoked: true,
     isAdmin: false,
+    isOwner: false,
   },
   {
     id: "3",
@@ -26,14 +28,16 @@ const mockUsers = [
     banned: false,
     revoked: false,
     isAdmin: true,
+    isOwner: false,
   },
   {
     id: "4",
-    email: "waelwzwz@gmail.com", // Developer email
+    email: "waelwzwz@gmail.com",
     lastSeen: new Date(Date.now()).toISOString(),
     banned: false,
     revoked: false,
     isAdmin: true,
+    isOwner: true,
   },
 ];
 
@@ -79,6 +83,7 @@ describe("UserManagement", () => {
       expect(screen.getAllByText("Revoked").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Admin").length).toBeGreaterThan(0);
       expect(screen.getAllByText("User").length).toBeGreaterThan(0);
+      expect(screen.getByText("Owner")).toBeInTheDocument();
       expect(screen.getAllByText("Ban").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Unban").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Revoke").length).toBeGreaterThan(0);

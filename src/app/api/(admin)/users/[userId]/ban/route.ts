@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
 import {
   getUserBanStatus,
+  OwnerProtectedError,
   setUserBanned,
 } from "@/server/admin/services/adminUserManagementService";
 
@@ -17,7 +18,11 @@ export async function POST(
   try {
     await setUserBanned(userId, true);
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof OwnerProtectedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
     return NextResponse.json({ error: "Failed to ban user" }, { status: 500 });
   }
 }

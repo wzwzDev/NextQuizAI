@@ -49,7 +49,7 @@ export default async function Home() {
               <Trophy className="h-4 w-4 text-secondary-foreground" />
               Build, play, and track progress in one place.
             </div>
-            <SignInButton text="Sign In with Google" />
+            <SignInButton text="Sign In" />
           </CardContent>
         </div>
       </Card>

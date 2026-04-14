@@ -6,14 +6,19 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
   let adminUser: any;
   let normalUser: any;
   let targetUser: any;
+  let ownerUser: any;
   const unique = Date.now();
   const adminEmail = `admin-revoke-${unique}@example.com`;
   const userEmail = `user-revoke-${unique}@example.com`;
   const targetEmail = `target-revoke-${unique}@example.com`;
+  const ownerEmail = `owner-revoke-${unique}@example.com`;
+  const previousOwnerEmail = process.env.OWNER_EMAIL;
 
   beforeAll(async () => {
+    process.env.OWNER_EMAIL = ownerEmail;
+
     await prisma.user.deleteMany({
-      where: { email: { in: [adminEmail, userEmail, targetEmail] } },
+      where: { email: { in: [adminEmail, userEmail, targetEmail, ownerEmail] } },
     });
     adminUser = await prisma.user.create({
       data: { email: adminEmail, isAdmin: true },
@@ -24,12 +29,23 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
     targetUser = await prisma.user.create({
       data: { email: targetEmail, revoked: false },
     });
+
+    ownerUser = await prisma.user.create({
+      data: { email: ownerEmail, isAdmin: true, revoked: false },
+    });
   });
 
   afterAll(async () => {
     await prisma.user.deleteMany({
-      where: { email: { in: [adminEmail, userEmail, targetEmail] } },
+      where: { email: { in: [adminEmail, userEmail, targetEmail, ownerEmail] } },
     });
+
+    if (typeof previousOwnerEmail === "string") {
+      process.env.OWNER_EMAIL = previousOwnerEmail;
+    } else {
+      delete process.env.OWNER_EMAIL;
+    }
+
     await prisma.$disconnect();
   });
 
@@ -63,6 +79,21 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
     expect(json.success).toBe(true);
     const updated = await prisma.user.findUnique({ where: { id: targetUser.id } });
     expect(updated?.revoked).toBe(true);
+  });
+
+  it("returns 403 when trying to revoke owner", async () => {
+    const req = new Request("http://localhost/api/users/[userId]/revoke", {
+      method: "POST",
+      headers: { "x-test-user-email": adminUser.email },
+    });
+
+    const res = await POST(req as any, {
+      params: Promise.resolve({ userId: ownerUser.id }),
+    });
+
+    expect(res.status).toBe(403);
+    const json = await res.json();
+    expect(json.error).toMatch(/owner account is protected/i);
   });
 
   it("returns 401 if not admin (GET)", async () => {

@@ -9,9 +9,8 @@ type User = {
   banned?: boolean;
   revoked?: boolean;
   isAdmin?: boolean;
+  isOwner?: boolean;
 };
-
-const DEVELOPER_EMAIL = "waelwzwz@gmail.com";
 
 type UserManagementProps = {
   compact?: boolean;
@@ -69,8 +68,20 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   };
 
   const handleAssignAdmin = async (userId: string) => {
-    await fetch(`/api/users/${userId}/assign-admin`, { method: "POST" });
-    // Optimistically update UI
+    const response = await fetch(`/api/users/${userId}/assign-admin`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Failed to assign admin role.",
+      );
+      return;
+    }
+
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, isAdmin: true } : u)),
     );
@@ -138,7 +149,14 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
                   )}
                 </td>
                 <td className="py-4 px-4">
-                  {user.isAdmin ? (
+                  {user.isOwner ? (
+                    <span className="text-amber-700 font-bold flex items-center gap-1">
+                      Owner
+                      <span title="Owner" role="img" aria-label="owner">
+                        👑
+                      </span>
+                    </span>
+                  ) : user.isAdmin ? (
                     <span className="text-blue-600 font-bold flex items-center gap-1">
                       Admin{" "}
                       <span title="Admin" role="img" aria-label="admin">
@@ -150,8 +168,7 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
                   )}
                 </td>
                 <td className="py-4 px-4 space-x-2">
-                  {/* Hide actions for developer email */}
-                  {user.email !== DEVELOPER_EMAIL && (
+                  {user.isOwner !== true && (
                     <>
                       {!user.isAdmin && (
                         <button

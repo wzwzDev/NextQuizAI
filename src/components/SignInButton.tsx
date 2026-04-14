@@ -2,16 +2,33 @@
 import React from "react";
 import { Button } from "./ui/button";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-type Props = { text: string };
+type Props = {
+  text: string;
+  mode?: "portal" | "google";
+  callbackUrl?: string;
+};
 
-const SignInButton = ({ text }: Props) => {
+const SignInButton = ({ text, mode = "portal", callbackUrl }: Props) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (mode === "google") {
+      signIn("google", {
+        prompt: "select_account",
+        ...(callbackUrl ? { callbackUrl } : {}),
+      }).catch(console.error);
+      return;
+    }
+
+    router.push("/auth/signin");
+  };
+
   return (
     <Button
       type="button"
-      onClick={() => {
-        signIn("google", { prompt: "select_account" }).catch(console.error);
-      }}
+      onClick={handleClick}
     >
       {text}
     </Button>

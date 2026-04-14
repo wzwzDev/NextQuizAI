@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for server/services/questionGenerationService.ts</title>
+    <title>Code coverage report for server/core/roles.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">server/services</a> questionGenerationService.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">server/core</a> roles.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>18/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -90,35 +90,25 @@
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a>
-<a name='L32'></a><a href='#L32'>32</a>
-<a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,42 +117,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { strict_output } from "@/server/ai/gpt";</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const DEFAULT_OWNER_EMAIL = "waelwzwz@gmail.com";
+const DEFAULT_ADMIN_LOGIN_EMAIL = "admin@nextquizai.local";
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "admin";
 &nbsp;
-export type TopicQuestionInput = {
-  amount: number;
-  topic: string;
-  type: "open_ended" | "mcq";
-};
+function normalizeEmail(email?: string | null) {
+  return (email ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>.trim().toLowerCase();
+}
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >generateQuestionsByTopic(</span>input: TopicQuestionInput) {
-<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (input.type === "open_ended") {</span>
-<span class="cstat-no" title="statement not covered" >    return strict_output(</span>
-      "You are a helpful AI that generates short-answer quiz pairs. Every answer must be an exact, objective target (code output, keyword, syntax token, function name, number, or short phrase). Avoid definition/explanation style questions. Answers must be 1-6 words and never a paragraph.",
-      new Array(input.amount).fill(
-        `Generate a random hard short-answer question about ${input.topic}. Require an exact concise answer (1-6 words), not a definition.`,
-      ),
-      {
-        question: "question",
-        answer: "exact answer with max length of 6 words",
-      },
-    );
-  }
+export function getOwnerEmail() {
+  return normalizeEmail(process.env.OWNER_EMAIL ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_OWNER_EMAIL)</span>;
+}
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return strict_output(</span>
-    `You are a helpful AI that is able to generate ${input.amount} mcq questions and answers about ${input.topic}. The length of each answer should not be more than 15 words. Store all answers and questions and options in a JSON array. IMPORTANT: If any answer, question, or option contains double quotes, you MUST escape them with a backslash (\\") so the JSON is valid.`,
-    [`Generate ${input.amount} random hard mcq questions about ${input.topic}.`],
-    {
-      question: "question",
-      answer: "answer with max length of 15 words",
-      option1: "option1 with max length of 15 words",
-      option2: "option2 with max length of 15 words",
-      option3: "option3 with max length of 15 words",
-    },
-  );
-}</pre></td></tr></table></pre>
+export function isOwnerEmail(email?: string | null) {
+  return normalizeEmail(email) === getOwnerEmail();
+}
+&nbsp;
+export function getAdminCredentialsConfig() {
+  return {
+    username: (process.env.ADMIN_USERNAME ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_USERNAME)</span>.trim(),
+    password: process.env.ADMIN_PASSWORD ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_PASSWORD,</span>
+    loginEmail: normalizeEmail(
+      process.env.ADMIN_LOGIN_EMAIL ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_LOGIN_EMAIL,</span>
+    ),
+    displayName: (process.env.ADMIN_DISPLAY_NAME<span class="branch-0 cbranch-no" title="branch not covered" > ?? "</span>Admin Account").trim(),
+  };
+}
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
