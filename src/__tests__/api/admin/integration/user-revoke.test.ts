@@ -1,4 +1,4 @@
-import { POST, GET } from "@/app/api/users/[userId]/revoke/route";
+import { POST, GET } from "@/app/api/(admin)/users/[userId]/revoke/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 

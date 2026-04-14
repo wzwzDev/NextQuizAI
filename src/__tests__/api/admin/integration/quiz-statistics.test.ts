@@ -1,4 +1,4 @@
-import { GET } from "@/app/api/quiz-statistics/route";
+import { GET } from "@/app/api/(admin)/quiz-statistics/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 

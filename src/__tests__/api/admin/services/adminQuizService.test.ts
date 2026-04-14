@@ -4,7 +4,7 @@ import {
   getApprovedQuiz,
   getQuizStatisticsSummary,
   removeAdminQuiz,
-} from "@/server/services/adminQuizService";
+} from "@/server/admin/services/adminQuizService";
 import { prisma } from "@/server/core/db";
 
 jest.setTimeout(30000);

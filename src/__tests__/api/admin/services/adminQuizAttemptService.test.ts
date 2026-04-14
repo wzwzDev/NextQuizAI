@@ -1,8 +1,8 @@
 import {
   AdminQuizNotFoundError,
   submitAndGradeAdminQuizAttempt,
-} from "@/server/services/adminQuizAttemptService";
-import { createApprovedAdminQuiz } from "@/server/services/adminQuizService";
+} from "@/server/admin/services/adminQuizAttemptService";
+import { createApprovedAdminQuiz } from "@/server/admin/services/adminQuizService";
 import { prisma } from "@/server/core/db";
 
 jest.setTimeout(30000);

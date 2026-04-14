@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAuthSession } from "@/lib/nextauth";
-import { getQuizStatisticsSummary } from "@/lib/services/adminQuizService";
+import { getAuthSession } from "@/server/core/auth";
+import { getQuizStatisticsSummary } from "@/server/admin/services/adminQuizService";
 export async function GET(req: Request) {
   const session = await getAuthSession(req);
   if (!session?.user?.isAdmin) {

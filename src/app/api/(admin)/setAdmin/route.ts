@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAuthSession } from "@/lib/nextauth";
-import { setUserAdmin } from "@/lib/services/userService";
+import { getAuthSession } from "@/server/core/auth";
+import { setUserAdmin } from "@/server/admin/services/adminUserManagementService";
 
 export async function POST(
   req: Request,

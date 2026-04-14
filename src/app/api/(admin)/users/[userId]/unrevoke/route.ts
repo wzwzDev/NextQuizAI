@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
-import { setUserRevoked } from "@/server/services/userService";
+import { setUserRevoked } from "@/server/admin/services/adminUserManagementService";
 
 export async function POST(
   req: NextRequest,

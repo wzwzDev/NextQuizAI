@@ -4,7 +4,7 @@ import {
   createApprovedAdminQuiz,
   getAdminQuizzes,
   removeAdminQuiz,
-} from "@/server/services/adminQuizService";
+} from "@/server/admin/services/adminQuizService";
 
 export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);

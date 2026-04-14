@@ -4,7 +4,7 @@ import {
   findAdminQuizzes,
   findAllUserQuizAttempts,
   findApprovedQuizById,
-} from "@/server/repositories/adminQuizRepository";
+} from "@/server/admin/repositories/adminQuizRepository";
 import { prisma } from "@/server/core/db";
 
 jest.setTimeout(30000);

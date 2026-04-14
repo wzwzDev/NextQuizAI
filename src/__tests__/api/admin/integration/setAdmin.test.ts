@@ -1,4 +1,4 @@
-import { POST } from "@/app/api/setAdmin/route";
+import { POST } from "@/app/api/(admin)/setAdmin/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
 

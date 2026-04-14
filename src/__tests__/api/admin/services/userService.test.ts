@@ -2,11 +2,11 @@ import {
   getUserBanStatus,
   getUserRevokeStatus,
   getUsersForAdmin,
-  markUserOfflineByEmail,
   setUserAdmin,
   setUserBanned,
   setUserRevoked,
-} from "@/server/services/userService";
+} from "@/server/admin/services/adminUserManagementService";
+import { markUserOfflineByEmail } from "@/server/services/userService";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
 

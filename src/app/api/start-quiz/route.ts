@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getApprovedQuiz } from "@/server/services/adminQuizService";
+import { getApprovedQuiz } from "@/server/admin/services/adminQuizService";
 import { authOptions } from "@/server/core/auth";
 import { submitAdminQuizAttemptSchema } from "@/schemas/questions";
 import {
   AdminQuizNotFoundError,
   submitAndGradeAdminQuizAttempt,
-} from "@/server/services/adminQuizAttemptService";
+} from "@/server/admin/services/adminQuizAttemptService";
 import { ZodError } from "zod";
 
 function splitOptionChunks(option: string): string[] {

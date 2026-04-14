@@ -1,4 +1,4 @@
-import { POST, GET } from "@/app/api/users/[userId]/ban/route";
+import { POST, GET } from "@/app/api/(admin)/users/[userId]/ban/route";
 import { prisma } from "@/server/core/db";
 jest.setTimeout(30000);
 

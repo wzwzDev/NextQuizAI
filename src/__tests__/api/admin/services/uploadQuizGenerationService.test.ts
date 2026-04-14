@@ -4,7 +4,7 @@ import path from "path";
 import {
   generateQuestionsFromCourseContent,
   generateQuestionsFromUploadedFile,
-} from "@/server/services/uploadQuizGenerationService";
+} from "@/server/admin/services/uploadQuizGenerationService";
 
 jest.setTimeout(45000);
 
