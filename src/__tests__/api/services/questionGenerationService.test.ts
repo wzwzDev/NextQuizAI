@@ -1,8 +1,14 @@
 import { generateQuestionsByTopic } from "@/server/services/questionGenerationService";
+import * as gpt from "@/server/ai/gpt";
 
 jest.setTimeout(45000);
 
 describe("questionGenerationService", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete process.env.OPENAI_QUESTION_MODELS;
+  });
+
   it("returns open-ended questions even when AI dependency fails", async () => {
     const result = await generateQuestionsByTopic({
       amount: 1,
@@ -41,5 +47,42 @@ describe("questionGenerationService", () => {
         process.env.OPENAI_API_KEY = previousApiKey;
       }
     }
+  });
+
+  it("accumulates open-ended AI questions across model attempts before fallback", async () => {
+    process.env.OPENAI_QUESTION_MODELS = "model-a,model-b";
+
+    const strictOutputSpy = jest
+      .spyOn(gpt, "strict_output")
+      .mockResolvedValueOnce([
+        {
+          question: "What does JSX compile to in React?",
+          answer: "JavaScript function calls",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          question: "Which hook stores local component state?",
+          answer: "useState",
+        },
+      ]);
+
+    const result = await generateQuestionsByTopic({
+      amount: 2,
+      topic: "react",
+      type: "open_ended",
+    });
+
+    expect(strictOutputSpy).toHaveBeenCalledTimes(2);
+    expect(result).toEqual([
+      {
+        question: "What does JSX compile to in React?",
+        answer: "JavaScript function calls",
+      },
+      {
+        question: "Which hook stores local component state?",
+        answer: "useState",
+      },
+    ]);
   });
 });

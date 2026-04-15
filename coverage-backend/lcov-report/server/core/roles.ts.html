@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">79.16% </span>
+                <span class="strong">25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>19/24</span>
+                <span class='fraction'>6/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
@@ -90,25 +90,25 @@
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">17x</span>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">255x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">128x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">122x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,21 +127,21 @@ function normalizeEmail(email?: string | null) {
 }
 &nbsp;
 export function getOwnerEmail() {
-  return normalizeEmail(process.env.OWNER_EMAIL ?? DEFAULT_OWNER_EMAIL);
+  return normalizeEmail(process.env.OWNER_EMAIL<span class="branch-0 cbranch-no" title="branch not covered" > ?? D</span>EFAULT_OWNER_EMAIL);
 }
 &nbsp;
 export function isOwnerEmail(email?: string | null) {
   return normalizeEmail(email) === getOwnerEmail();
 }
 &nbsp;
-export function getAdminCredentialsConfig() {
-  return {
-    username: (process.env.ADMIN_USERNAME ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_USERNAME)</span>.trim(),
-    password: process.env.ADMIN_PASSWORD ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_PASSWORD,</span>
+export function <span class="fstat-no" title="function not covered" >getAdminCredentialsConfig(</span>) {
+<span class="cstat-no" title="statement not covered" >  return {</span>
+    username: (process.env.ADMIN_USERNAME ?? DEFAULT_ADMIN_USERNAME).trim(),
+    password: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
     loginEmail: normalizeEmail(
-      process.env.ADMIN_LOGIN_EMAIL ?? <span class="branch-1 cbranch-no" title="branch not covered" >DEFAULT_ADMIN_LOGIN_EMAIL,</span>
+      process.env.ADMIN_LOGIN_EMAIL ?? DEFAULT_ADMIN_LOGIN_EMAIL,
     ),
-    displayName: (process.env.ADMIN_DISPLAY_NAME<span class="branch-0 cbranch-no" title="branch not covered" > ?? "</span>Admin Account").trim(),
+    displayName: (process.env.ADMIN_DISPLAY_NAME ?? "Admin Account").trim(),
   };
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -151,7 +151,7 @@ export function getAdminCredentialsConfig() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T17:39:43.934Z
+                at 2026-04-15T06:50:10.524Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

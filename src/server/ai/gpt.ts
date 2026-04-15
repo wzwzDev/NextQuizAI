@@ -184,7 +184,7 @@ export async function strict_output(
   temperature: number = 1,
   num_tries: number = 3,
   verbose: boolean = false,
-): Promise<any> {
+): Promise<unknown> {
   const openai = getOpenAIClient();
   const list_input = Array.isArray(user_prompt);
   // SAFE: Avoid regex, just check for both chars
@@ -239,7 +239,7 @@ export async function strict_output(
         default_category,
         output_value_only,
         list_input,
-      ) as any;
+      );
     } catch (e) {
       error_msg = `\n\nResult: ${res}\n\nError message: ${e}`;
       console.log("An exception occurred:", e);
