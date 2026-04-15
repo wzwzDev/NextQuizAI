@@ -261,6 +261,20 @@ export default function QuizReview({
     });
   };
 
+  const handleCancel = () => {
+    if (!onCancel) {
+      return;
+    }
+
+    const shouldDiscard = window.confirm(
+      "Discard this generated quiz draft? Your unsaved review changes will be lost.",
+    );
+
+    if (shouldDiscard) {
+      onCancel();
+    }
+  };
+
   return (
     <div className="p-6 border rounded-xl bg-white dark:bg-black shadow-md">
       <h2 className="text-2xl font-bold mb-4">Review Quiz</h2>
@@ -439,7 +453,7 @@ export default function QuizReview({
         {onCancel && (
           <button
             className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
-            onClick={onCancel}
+            onClick={handleCancel}
           >
             Cancel
           </button>

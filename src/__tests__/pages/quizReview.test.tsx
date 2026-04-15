@@ -51,11 +51,32 @@ describe("QuizReview", () => {
     expect(screen.queryByText("What is 2+2?")).not.toBeInTheDocument();
   });
 
-  it("calls onCancel when Cancel is clicked", () => {
+  it("calls onCancel when Cancel is confirmed", () => {
     const onCancel = jest.fn();
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
+
     render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={onCancel} />);
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "Discard this generated quiz draft? Your unsaved review changes will be lost.",
+    );
     expect(onCancel).toHaveBeenCalledTimes(1);
+
+    confirmSpy.mockRestore();
+  });
+
+  it("does not call onCancel when cancel is dismissed", () => {
+    const onCancel = jest.fn();
+    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(onCancel).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
   });
 
   it("calls onApprove with updated quiz", () => {
