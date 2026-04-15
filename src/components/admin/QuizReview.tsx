@@ -90,9 +90,11 @@ function optionsToEditorText(options?: string[]) {
 export default function QuizReview({
   quiz,
   onApprove,
+  onCancel,
 }: {
   quiz: AdminQuizDraft;
   onApprove: (quiz: AdminQuizDraft) => void;
+  onCancel?: () => void;
 }) {
   const initialQuizType = quiz.quizType ?? "open_ended";
   const [editedQuiz, setEditedQuiz] = useState<AdminQuizDraft>({
@@ -427,12 +429,22 @@ export default function QuizReview({
           </tbody>
         </table>
       </div>
-      <button
-        className="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
-        onClick={handleApprove}
-      >
-        Approve & Save
-      </button>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+          onClick={handleApprove}
+        >
+          Approve & Save
+        </button>
+        {onCancel && (
+          <button
+            className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </div>
   );
 }

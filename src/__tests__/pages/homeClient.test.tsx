@@ -43,27 +43,42 @@ describe("HomeClient", () => {
   it("renders loading state and then quizzes", async () => {
     render(<HomeClient />);
     expect(screen.getByTestId("loading-quizzes")).toBeInTheDocument();
-    expect(await screen.findByText("Algebra Basics")).toBeInTheDocument();
-    expect(screen.getByText("Physics 101")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("loading-quizzes")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getAllByText("Algebra Basics").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Physics 101").length).toBeGreaterThan(0);
   });
 
   it("filters quizzes by category", async () => {
     render(<HomeClient />);
-    await screen.findByText("Algebra Basics");
+    await waitFor(() => {
+      expect(screen.queryByTestId("loading-quizzes")).not.toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText("Category:"), { target: { value: "Math" } });
-    expect(screen.getByText("Algebra Basics")).toBeInTheDocument();
-    expect(screen.queryByText("Physics 101")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.querySelector('a[href="/playme/1"]')).toBeInTheDocument();
+      expect(document.querySelector('a[href="/playme/2"]')).not.toBeInTheDocument();
+    });
   });
 
   it("filters quizzes by difficulty", async () => {
     render(<HomeClient />);
-    await screen.findByText("Algebra Basics");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("loading-quizzes")).not.toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText("Category:"), { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("Difficulty:"), { target: { value: "medium" } });
 
     await waitFor(() => {
-      expect(screen.getByText("Physics 101")).toBeInTheDocument();
-      expect(screen.queryByText("Algebra Basics")).not.toBeInTheDocument();
+      expect(document.querySelector('a[href="/playme/2"]')).toBeInTheDocument();
+      expect(document.querySelector('a[href="/playme/1"]')).not.toBeInTheDocument();
     });
   });
 
@@ -75,7 +90,11 @@ describe("HomeClient", () => {
 
   it("shows 'No quizzes found.' if filter returns nothing", async () => {
     render(<HomeClient />);
-    await screen.findByText("Algebra Basics");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("loading-quizzes")).not.toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText("Category:"), { target: { value: "Programming" } });
     expect(screen.getByText("No quizzes found.")).toBeInTheDocument();
   });

@@ -32,6 +32,8 @@ type Quiz = {
   quizType?: "mcq" | "open_ended";
   questionCount?: number;
   questions?: unknown[];
+  createdAt?: string | null;
+  updatedAt?: string | null;
   attemptStatus?: "available" | "pending" | "completed";
   isLocked?: boolean;
   userScore?: number | null;
@@ -82,6 +84,32 @@ function getAttemptStatusChipClass(status?: string) {
   }
 
   return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200";
+}
+
+function toTimestamp(value?: string | null) {
+  if (!value) {
+    return 0;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatShortDate(value?: string | null) {
+  const timestamp = toTimestamp(value);
+  if (!timestamp) {
+    return "Unknown date";
+  }
+
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function isCompletedAttempt(status?: string) {
+  return normalizeFilterValue(status) === "completed";
 }
 
 export default function HomeClient() {
@@ -153,6 +181,69 @@ export default function HomeClient() {
     })
     .map(({ quiz }) => quiz);
 
+  const filterCategoryOptions = Array.from(
+    new Set([
+      ...categories.map((category) => category.name),
+      ...quizzes
+        .map((quiz) => quiz.category)
+        .filter((category): category is string => Boolean(category?.trim())),
+    ]),
+  ).sort((left, right) => left.localeCompare(right));
+
+  const categoryProgress = quizzes.reduce<
+    Map<
+      string,
+      {
+        category: string;
+        available: number;
+        completed: number;
+      }
+    >
+  >((accumulator, quiz) => {
+    const category = quiz.category?.trim() || "Uncategorized";
+    const existing = accumulator.get(category) ?? {
+      category,
+      available: 0,
+      completed: 0,
+    };
+
+    if (isCompletedAttempt(quiz.attemptStatus)) {
+      existing.completed += 1;
+    } else {
+      existing.available += 1;
+    }
+
+    accumulator.set(category, existing);
+    return accumulator;
+  }, new Map());
+
+  const availableCategorySummaries = Array.from(categoryProgress.values())
+    .filter((category) => category.available > 0)
+    .sort((left, right) => left.category.localeCompare(right.category));
+
+  const completedCategorySummaries = Array.from(categoryProgress.values())
+    .filter((category) => category.completed > 0)
+    .sort((left, right) => left.category.localeCompare(right.category));
+
+  const recentlyAddedQuizzes = [...quizzes]
+    .sort((left, right) => {
+      const leftTimestamp = Math.max(
+        toTimestamp(left.createdAt),
+        toTimestamp(left.updatedAt),
+      );
+      const rightTimestamp = Math.max(
+        toTimestamp(right.createdAt),
+        toTimestamp(right.updatedAt),
+      );
+
+      if (leftTimestamp === rightTimestamp) {
+        return left.title.localeCompare(right.title);
+      }
+
+      return rightTimestamp - leftTimestamp;
+    })
+    .slice(0, 6);
+
   const formatQuizTypeLabel = (quizType?: string) => {
     if (normalizeFilterValue(quizType) === "mcq") {
       return "MCQ";
@@ -188,6 +279,79 @@ export default function HomeClient() {
           </p>
         </div>
 
+        <div className="mb-6 grid gap-4 lg:grid-cols-3">
+          <div className="section-shell rounded-2xl p-4 sm:p-5">
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Available Categories
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {availableCategorySummaries.length > 0 ? (
+                availableCategorySummaries.map((category) => (
+                  <span
+                    key={`available-category-${category.category}`}
+                    className="chip-pill bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+                  >
+                    {category.category} ({category.available})
+                  </span>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No available categories.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="section-shell rounded-2xl p-4 sm:p-5">
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Completed Categories
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {completedCategorySummaries.length > 0 ? (
+                completedCategorySummaries.map((category) => (
+                  <span
+                    key={`completed-category-${category.category}`}
+                    className="chip-pill bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                  >
+                    {category.category} ({category.completed})
+                  </span>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No completed categories yet.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="section-shell rounded-2xl p-4 sm:p-5">
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Recently Added Quizzes
+            </h2>
+            <div className="mt-3 space-y-2">
+              {recentlyAddedQuizzes.length > 0 ? (
+                recentlyAddedQuizzes.map((quiz) => (
+                  <div
+                    key={`recently-added-${quiz.id}`}
+                    className="rounded-xl border border-border/70 bg-card/70 px-3 py-2"
+                  >
+                    <p className="text-sm font-semibold text-foreground">
+                      {quiz.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {quiz.category} - Added {formatShortDate(quiz.createdAt ?? quiz.updatedAt ?? null)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No quizzes available yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="section-shell mb-6 rounded-2xl p-4 sm:p-5">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col gap-2">
@@ -201,9 +365,9 @@ export default function HomeClient() {
                 className="h-11 rounded-xl border border-border/70 bg-card/85 px-3 text-sm text-foreground backdrop-blur-md focus:border-primary focus:outline-none"
               >
                 <option value="">All</option>
-                {categories.map((cat) => (
-                  <option key={cat.name} value={cat.name}>
-                    {cat.name}
+                {filterCategoryOptions.map((categoryName) => (
+                  <option key={categoryName} value={categoryName}>
+                    {categoryName}
                   </option>
                 ))}
               </select>

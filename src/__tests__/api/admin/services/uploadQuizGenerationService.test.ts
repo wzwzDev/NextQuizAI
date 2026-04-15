@@ -301,11 +301,12 @@ describe("uploadQuizGenerationService", () => {
 
     try {
       const result = await generateQuestionsFromCourseContent(
-        "JavaScript functions can return values. Arrays are iterated with forEach and map. Constants are declared using const in modern JavaScript.",
+        "I'm unable to assist with that. JavaScript functions can return values to callers after computation. Arrays are often transformed using map and filtered based on conditions. Constants are declared using const in modern JavaScript runtimes. Objects store related key value pairs and are used to model structured data. Loops repeat instructions while termination conditions remain true.",
+        { questionCount: 5 },
       );
 
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBe(5);
       expect(
         result.every(
           (item) =>
@@ -315,6 +316,48 @@ describe("uploadQuizGenerationService", () => {
             item.answer.trim().length > 0,
         ),
       ).toBe(true);
+      expect(
+        result.every(
+          (item) =>
+            !/unable to assist|cannot assist|can't assist|cannot help|can't help/i.test(
+              `${item.question} ${item.answer}`,
+            ),
+        ),
+      ).toBe(true);
+      expect(fakeServer.getRequestCount()).toBeGreaterThan(0);
+    } finally {
+      if (typeof previousApiKey === "string") {
+        process.env.OPENAI_API_KEY = previousApiKey;
+      } else {
+        delete process.env.OPENAI_API_KEY;
+      }
+
+      if (typeof previousBaseUrl === "string") {
+        process.env.OPENAI_BASE_URL = previousBaseUrl;
+      } else {
+        delete process.env.OPENAI_BASE_URL;
+      }
+
+      await fakeServer.close();
+    }
+  });
+
+  it("fails instead of returning partial fallback output", async () => {
+    const fakeServer = await startRateLimitedOpenAiServer();
+
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    const previousBaseUrl = process.env.OPENAI_BASE_URL;
+
+    process.env.OPENAI_API_KEY = "test-key";
+    process.env.OPENAI_BASE_URL = `${fakeServer.baseUrl}/v1`;
+
+    try {
+      await expect(
+        generateQuestionsFromCourseContent(
+          "I'm unable to assist with that.",
+          { questionCount: 5 },
+        ),
+      ).rejects.toThrow("No valid questions could be generated from the uploaded file.");
       expect(fakeServer.getRequestCount()).toBeGreaterThan(0);
     } finally {
       if (typeof previousApiKey === "string") {

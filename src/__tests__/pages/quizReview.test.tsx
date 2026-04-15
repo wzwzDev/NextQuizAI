@@ -14,7 +14,9 @@ const mockQuiz = {
 
 describe("QuizReview", () => {
   it("renders quiz info and questions", () => {
-    render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} />);
+    render(
+      <QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={jest.fn()} />,
+    );
     expect(screen.getByText("Review Quiz")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Sample Quiz")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Math")).toBeInTheDocument();
@@ -26,7 +28,9 @@ describe("QuizReview", () => {
   });
 
   it("edits a question and saves", () => {
-    render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} />);
+    render(
+      <QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={jest.fn()} />,
+    );
     fireEvent.click(screen.getAllByText("Edit")[0]);
     const inputQ = screen.getAllByDisplayValue("What is 2+2?")[0];
     const inputA = screen.getAllByDisplayValue("4")[0];
@@ -40,14 +44,23 @@ describe("QuizReview", () => {
   
 
   it("deletes a question", () => {
-    render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} />);
+    render(
+      <QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={jest.fn()} />,
+    );
     fireEvent.click(screen.getAllByText("Delete")[0]);
     expect(screen.queryByText("What is 2+2?")).not.toBeInTheDocument();
   });
 
+  it("calls onCancel when Cancel is clicked", () => {
+    const onCancel = jest.fn();
+    render(<QuizReview quiz={mockQuiz} onApprove={jest.fn()} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   it("calls onApprove with updated quiz", () => {
     const onApprove = jest.fn();
-    render(<QuizReview quiz={mockQuiz} onApprove={onApprove} />);
+    render(<QuizReview quiz={mockQuiz} onApprove={onApprove} onCancel={jest.fn()} />);
     fireEvent.change(screen.getByDisplayValue("Sample Quiz"), { target: { value: "New Title" } });
     fireEvent.change(screen.getByDisplayValue("Math"), { target: { value: "Science" } });
     fireEvent.change(screen.getByDisplayValue("easy"), { target: { value: "hard" } });
@@ -62,7 +75,13 @@ describe("QuizReview", () => {
   });
 
   it("shows 'No questions available.' if no questions", () => {
-    render(<QuizReview quiz={{ ...mockQuiz, questions: [] }} onApprove={jest.fn()} />);
+    render(
+      <QuizReview
+        quiz={{ ...mockQuiz, questions: [] }}
+        onApprove={jest.fn()}
+        onCancel={jest.fn()}
+      />,
+    );
     expect(screen.getByText(/No questions available/i)).toBeInTheDocument();
   });
 });

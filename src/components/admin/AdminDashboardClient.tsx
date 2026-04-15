@@ -117,6 +117,15 @@ const AdminDashboardClient = () => {
     }
   };
 
+  const handleCancelReview = () => {
+    if (isApproving) {
+      return;
+    }
+
+    setApproveError(null);
+    setQuizToReview(null);
+  };
+
   const renderQuizReviewContent = () => {
     if (quizToReview) {
       return (
@@ -126,7 +135,11 @@ const AdminDashboardClient = () => {
               {approveError}
             </div>
           )}
-          <QuizReview quiz={quizToReview} onApprove={handleApprove} />
+          <QuizReview
+            quiz={quizToReview}
+            onApprove={handleApprove}
+            onCancel={handleCancelReview}
+          />
           {isApproving && (
             <div className="mt-3 text-sm text-blue-700">Saving quiz...</div>
           )}

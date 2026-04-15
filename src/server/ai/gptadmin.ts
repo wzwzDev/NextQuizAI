@@ -92,6 +92,74 @@ function getErrorMessage(error: unknown): string {
   return "Unknown error";
 }
 
+function stripCodeFences(value: string) {
+  const match = value.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (match?.[1]) {
+    return match[1].trim();
+  }
+
+  return value.trim();
+}
+
+function extractFirstJsonSegment(value: string) {
+  const firstBrace = value.indexOf("{");
+  const firstBracket = value.indexOf("[");
+
+  let start = -1;
+  if (firstBrace === -1 && firstBracket === -1) {
+    return value;
+  }
+
+  if (firstBrace === -1) {
+    start = firstBracket;
+  } else if (firstBracket === -1) {
+    start = firstBrace;
+  } else {
+    start = Math.min(firstBrace, firstBracket);
+  }
+
+  const startChar = value[start];
+  const endChar = startChar === "{" ? "}" : "]";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < value.length; i++) {
+    const char = value[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === startChar) {
+      depth += 1;
+      continue;
+    }
+
+    if (char === endChar) {
+      depth -= 1;
+      if (depth === 0) {
+        return value.slice(start, i + 1);
+      }
+    }
+  }
+
+  return value.slice(start).trim();
+}
+
 export async function strict_output(
   system_prompt: string,
   user_prompt: string | string[],
@@ -102,7 +170,7 @@ export async function strict_output(
   temperature: number = 1,
   num_tries: number = 3,
   verbose: boolean = false,
-): Promise<any> {
+): Promise<unknown> {
   const openai = getOpenAIClient();
   const list_input: boolean = Array.isArray(user_prompt);
   const dynamic_elements: boolean = /<.*?>/.test(JSON.stringify(output_format));
@@ -113,7 +181,7 @@ export async function strict_output(
   for (let i = 0; i < num_tries; i++) {
     let output_format_prompt: string = `\nYou are to output the following in json format: ${JSON.stringify(
       output_format,
-    )}. \nDo not put quotation marks or escape character \\ in the output fields.`;
+    )}. \nRespond with valid JSON only.`;
 
     if (list_output) {
       output_format_prompt += `\nIf output field is a list, classify output into the best element of the list.`;
@@ -126,6 +194,8 @@ export async function strict_output(
     if (list_input) {
       output_format_prompt += `\nGenerate a list of json, one json for each input element.`;
     }
+
+    output_format_prompt += `\nAlways escape double quotes inside string values using a backslash (e.g., \\\"). Respond ONLY with valid JSON. All property names and string values must be wrapped in double quotes.`;
 
     let response;
     try {
@@ -155,10 +225,9 @@ export async function strict_output(
       continue;
     }
 
-    let res: string =
-      response.choices[0].message?.content?.replace(/'/g, '"') ?? "";
-
-    res = res.replace(/(\w)"(\w)/g, "$1'$2");
+    const rawResponse = response.choices[0].message?.content ?? "";
+    const withoutFences = stripCodeFences(rawResponse);
+    const res = extractFirstJsonSegment(withoutFences);
 
     if (verbose) {
       console.log(
@@ -215,7 +284,7 @@ export async function strict_output(
         }
       }
 
-      return output as any;
+      return output;
     } catch (error) {
       lastErrorMessage = getErrorMessage(error);
       error_msg = `\n\nResult: ${res}\n\nError message: ${lastErrorMessage}`;

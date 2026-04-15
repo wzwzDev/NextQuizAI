@@ -9,6 +9,8 @@ const TEXT_MIME = "text/plain";
 const PDF_MIME = "application/pdf";
 const MIN_OCR_WORD_COUNT = 6;
 const MIN_OCR_ALPHA_WORD_RATIO = 0.45;
+const MIN_OCR_CHAR_COUNT = 80;
+const MIN_OCR_UNIQUE_ALPHA_WORDS = 8;
 const MAX_CONTENT_CHARS = 16_000;
 const FALLBACK_QUESTION_COUNT = 5;
 const MIN_QUESTION_COUNT = 1;
@@ -67,6 +69,21 @@ const COMMON_STOP_WORDS = new Set([
   "our",
 ]);
 
+const REFUSAL_PHRASES = [
+  "i'm unable to assist",
+  "i am unable to assist",
+  "unable to assist with that",
+  "i can't assist with that",
+  "i cannot assist with that",
+  "i can't help with that",
+  "i cannot help with that",
+  "sorry, i can't assist",
+  "sorry, i cannot assist",
+  "i'm sorry, but i can't",
+  "i am sorry, but i cannot",
+  "cannot comply with this request",
+];
+
 type GeneratedQuestion = {
   question: string;
   answer: string;
@@ -103,12 +120,25 @@ function isRateLimitMessage(message: string) {
   );
 }
 
+function isRefusalLikeText(text: string) {
+  const normalized = text.toLowerCase().replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return false;
+  }
+
+  return REFUSAL_PHRASES.some((phrase) => normalized.includes(phrase));
+}
+
 function extractSentencesForFallback(courseContent: string) {
   return courseContent
     .split(/\r?\n+/)
     .flatMap((line) => line.split(/[.!?]+/))
     .map((sentence) => sentence.replace(/\s+/g, " ").trim())
-    .filter((sentence) => sentence.length >= MIN_FALLBACK_SENTENCE_LENGTH);
+    .filter(
+      (sentence) =>
+        sentence.length >= MIN_FALLBACK_SENTENCE_LENGTH &&
+        !isRefusalLikeText(sentence),
+    );
 }
 
 function extractSentenceCandidates(courseContent: string) {
@@ -317,19 +347,40 @@ function generateFallbackQuestionsFromContent(
     }
   }
 
-  if (generated.length > 0) {
-    return generated;
-  }
+  const backupSource = courseContent
+    .split(/\r?\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 0 && !isRefusalLikeText(line))
+    .join(" ");
 
-  const backupTokens = (courseContent.match(/[A-Za-z0-9_+#.-]{3,}/g) ?? [])
+  const backupTokens = (backupSource.match(/[A-Za-z0-9_+#.-]{3,}/g) ?? [])
     .map((token) => token.toLowerCase())
     .filter((token) => /[a-zA-Z]/.test(token) && !COMMON_STOP_WORDS.has(token));
 
   const uniqueBackupTokens = Array.from(new Set(backupTokens)).slice(0, questionCount);
-  return uniqueBackupTokens.map((token, index) => ({
-    question: `Identify key term #${index + 1} from the provided content.`,
-    answer: token,
-  }));
+
+  for (const token of uniqueBackupTokens) {
+    if (generated.length >= questionCount) {
+      break;
+    }
+
+    const answerKey = token.toLowerCase();
+    if (usedAnswers.has(answerKey)) {
+      continue;
+    }
+
+    const question = `Identify key term #${generated.length + 1} from the provided content.`;
+    const questionKey = question.toLowerCase();
+    if (usedQuestions.has(questionKey)) {
+      continue;
+    }
+
+    generated.push({ question, answer: token });
+    usedAnswers.add(answerKey);
+    usedQuestions.add(questionKey);
+  }
+
+  return generated.slice(0, questionCount);
 }
 
 function isJsonFile(file: File) {
@@ -350,12 +401,25 @@ function isLikelyReadableOcrText(text: string) {
     return false;
   }
 
+  if (normalized.length < MIN_OCR_CHAR_COUNT) {
+    return false;
+  }
+
+  if (isRefusalLikeText(normalized)) {
+    return false;
+  }
+
   const words = normalized.split(" ").filter(Boolean);
   if (words.length < MIN_OCR_WORD_COUNT) {
     return false;
   }
 
   const alphaWords = words.filter((word) => /[A-Za-zÀ-ÖØ-öø-ÿ]{2,}/.test(word));
+  const uniqueAlphaWords = new Set(alphaWords.map((word) => word.toLowerCase()));
+  if (uniqueAlphaWords.size < MIN_OCR_UNIQUE_ALPHA_WORDS) {
+    return false;
+  }
+
   const alphaWordRatio = alphaWords.length / words.length;
   return alphaWordRatio >= MIN_OCR_ALPHA_WORD_RATIO;
 }
@@ -609,9 +673,11 @@ Do not include markdown or extra commentary.
         courseContent,
         questionCount,
       );
-      if (fallbackQuestions.length > 0) {
+      if (fallbackQuestions.length >= questionCount) {
         return fallbackQuestions;
       }
+
+      throw new Error("No valid questions could be generated from the uploaded file.");
     }
 
     throw error;
@@ -645,6 +711,10 @@ Do not include markdown or extra commentary.
       if (normalizedQuestions.length >= questionCount) {
         break;
       }
+    }
+
+    if (normalizedQuestions.length < questionCount) {
+      throw new Error("No valid questions could be generated from the uploaded file.");
     }
   }
 
