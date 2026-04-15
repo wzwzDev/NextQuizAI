@@ -1,11 +1,13 @@
 import { POST } from "@/app/api/(admin)/users/[userId]/unban/route";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+import type { NextRequest } from "next/server";
 jest.setTimeout(30000);
 
 describe("/api/users/[userId]/unban Route Handler", () => {
-  let adminUser: any;
-  let normalUser: any;
-  let targetUser: any;
+  let adminUser: User;
+  let normalUser: User;
+  let targetUser: User;
 
   beforeAll(async () => {
     // Use unique emails for this test file and clean up before creating
@@ -39,7 +41,7 @@ describe("/api/users/[userId]/unban Route Handler", () => {
       method: "POST",
       headers: { "x-test-user-email": normalUser.email },
     });
-    const res = await POST(req as any, {
+    const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(401);
@@ -52,7 +54,7 @@ describe("/api/users/[userId]/unban Route Handler", () => {
       method: "POST",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await POST(req as any, {
+    const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(200);

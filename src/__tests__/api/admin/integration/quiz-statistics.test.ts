@@ -1,10 +1,20 @@
 import { GET } from "@/app/api/(admin)/quiz-statistics/route";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+
+type QuizStatisticsEntry = {
+  quizId: string;
+  quizTitle: string;
+  attempts: number;
+  averageScore: number;
+  completionRate: number;
+};
+
 jest.setTimeout(30000);
 
 describe("/api/quiz-statistics Route Handler", () => {
-  let adminUser: any;
-  let normalUser: any;
+  let adminUser: User;
+  let normalUser: User;
   // Use a unique suffix for this test run
   const unique = Date.now();
   const adminEmail = `admin-quizstats-${unique}@example.com`;
@@ -109,19 +119,25 @@ describe("/api/quiz-statistics Route Handler", () => {
     });
     const res = await GET(req);
     expect(res.status).toBe(200);
-    const stats = await res.json();
+    const stats = (await res.json()) as QuizStatisticsEntry[];
 
     expect(Array.isArray(stats)).toBe(true);
 
     // Check Quiz 1 stats
-    const quiz1 = stats.find((s: any) => s.quizTitle === quizTitle1);
+    const quiz1 = stats.find((s) => s.quizTitle === quizTitle1);
     expect(quiz1).toBeDefined();
+    if (!quiz1) {
+      throw new Error("Expected quiz statistics for quizTitle1");
+    }
     expect(quiz1.attempts).toBe(2);
     expect(quiz1.averageScore).toBe(85);
 
     // Check Quiz 2 stats
-    const quiz2 = stats.find((s: any) => s.quizTitle === quizTitle2);
+    const quiz2 = stats.find((s) => s.quizTitle === quizTitle2);
     expect(quiz2).toBeDefined();
+    if (!quiz2) {
+      throw new Error("Expected quiz statistics for quizTitle2");
+    }
     expect(quiz2.attempts).toBe(1);
     expect(quiz2.averageScore).toBe(70);
 

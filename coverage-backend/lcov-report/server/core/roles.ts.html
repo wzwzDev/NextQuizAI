@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>7/11</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>7/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -90,24 +90,24 @@
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -117,24 +117,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const DEFAULT_OWNER_EMAIL = <span class="cstat-no" title="statement not covered" >"waelwzwz@gmail.com";</span>
-const DEFAULT_ADMIN_LOGIN_EMAIL = <span class="cstat-no" title="statement not covered" >"admin@nextquizai.local";</span>
-const DEFAULT_ADMIN_USERNAME = <span class="cstat-no" title="statement not covered" >"admin";</span>
-const DEFAULT_ADMIN_PASSWORD = <span class="cstat-no" title="statement not covered" >"admin";</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const DEFAULT_OWNER_EMAIL = "waelwzwz@gmail.com";
+const DEFAULT_ADMIN_LOGIN_EMAIL = "admin@nextquizai.local";
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "admin";
 &nbsp;
 function <span class="fstat-no" title="function not covered" >normalizeEmail(</span>email?: string | null) {
 <span class="cstat-no" title="statement not covered" >  return (email ?? "").trim().toLowerCase();</span>
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etOwnerEmail(</span>) {
+export function <span class="fstat-no" title="function not covered" >getOwnerEmail(</span>) {
 <span class="cstat-no" title="statement not covered" >  return normalizeEmail(process.env.OWNER_EMAIL ?? DEFAULT_OWNER_EMAIL);</span>
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >i</span>sOwnerEmail(</span>email?: string | null) {
+export function <span class="fstat-no" title="function not covered" >isOwnerEmail(</span>email?: string | null) {
 <span class="cstat-no" title="statement not covered" >  return normalizeEmail(email) === getOwnerEmail();</span>
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etAdminCredentialsConfig(</span>) {
+export function <span class="fstat-no" title="function not covered" >getAdminCredentialsConfig(</span>) {
 <span class="cstat-no" title="statement not covered" >  return {</span>
     username: (process.env.ADMIN_USERNAME ?? DEFAULT_ADMIN_USERNAME).trim(),
     password: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
@@ -151,7 +151,7 @@ function <span class="fstat-no" title="function not covered" >normalizeEmail(</s
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-15T08:15:14.089Z
+                at 2026-04-15T14:32:22.907Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

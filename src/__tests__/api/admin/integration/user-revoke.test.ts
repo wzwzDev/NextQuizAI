@@ -1,12 +1,14 @@
 import { POST, GET } from "@/app/api/(admin)/users/[userId]/revoke/route";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+import type { NextRequest } from "next/server";
 jest.setTimeout(30000);
 
 describe("/api/users/[userId]/revoke Route Handler", () => {
-  let adminUser: any;
-  let normalUser: any;
-  let targetUser: any;
-  let ownerUser: any;
+  let adminUser: User;
+  let normalUser: User;
+  let targetUser: User;
+  let ownerUser: User;
   const unique = Date.now();
   const adminEmail = `admin-revoke-${unique}@example.com`;
   const userEmail = `user-revoke-${unique}@example.com`;
@@ -58,7 +60,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       method: "POST",
       headers: { "x-test-user-email": normalUser.email },
     });
-    const res = await POST(req as any, {
+    const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(401);
@@ -71,7 +73,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       method: "POST",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await POST(req as any, {
+    const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(200);
@@ -87,7 +89,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       headers: { "x-test-user-email": adminUser.email },
     });
 
-    const res = await POST(req as any, {
+    const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: ownerUser.id }),
     });
 
@@ -101,7 +103,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": normalUser.email },
     });
-    const res = await GET(req as any, {
+    const res = await GET(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(401);
@@ -112,7 +114,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await GET(req as any, {
+    const res = await GET(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
     });
     expect(res.status).toBe(200);
@@ -125,7 +127,7 @@ describe("/api/users/[userId]/revoke Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await GET(req as any, {
+    const res = await GET(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: "nonexistentid" }),
     });
     expect(res.status).toBe(404);

@@ -1,10 +1,12 @@
 import { POST, GET, DELETE } from "@/app/api/(admin)/quiz-review/route";
 import { prisma } from "@/server/core/db";
+import type { User } from "@prisma/client";
+import type { NextRequest } from "next/server";
 jest.setTimeout(30000);
 
 describe("/api/quiz-review Route Handler", () => {
-  let adminUser: any;
-  let normalUser: any;
+  let adminUser: User;
+  let normalUser: User;
   let quizId: string;
   const createdQuizIds = new Set<string>();
 
@@ -47,7 +49,7 @@ describe("/api/quiz-review Route Handler", () => {
         "x-test-user-email": normalUser.email,
       },
     });
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     expect(res.status).toBe(401);
   });
 
@@ -65,7 +67,7 @@ describe("/api/quiz-review Route Handler", () => {
         "x-test-user-email": adminUser.email,
       },
     });
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     expect(res.status).toBe(201);
     const json = await res.json();
     expect(json.quiz.title).toBe("myquiz");
@@ -87,7 +89,7 @@ describe("/api/quiz-review Route Handler", () => {
         "x-test-user-email": adminUser.email,
       },
     });
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     expect(res.status).toBe(201);
     const json = await res.json();
     expect(json.quiz.title).toBe("Untitled Quiz");
@@ -108,7 +110,7 @@ describe("/api/quiz-review Route Handler", () => {
         "x-test-user-email": adminUser.email,
       },
     });
-    const res = await POST(req as any);
+    const res = await POST(req as unknown as NextRequest);
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(typeof json.error).toBe("string");
@@ -117,7 +119,7 @@ describe("/api/quiz-review Route Handler", () => {
   // GET tests
   it("returns 401 if not authenticated (GET)", async () => {
     const req = new Request("http://localhost/api/quiz-review", { method: "GET" });
-    const res = await GET(req as any);
+    const res = await GET(req as unknown as NextRequest);
     expect(res.status).toBe(401);
   });
 
@@ -126,7 +128,7 @@ describe("/api/quiz-review Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await GET(req as any);
+    const res = await GET(req as unknown as NextRequest);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(Array.isArray(json.quizzes)).toBe(true);
@@ -135,7 +137,7 @@ describe("/api/quiz-review Route Handler", () => {
   // DELETE tests
   it("returns 401 if not authenticated (DELETE)", async () => {
     const req = new Request("http://localhost/api/quiz-review?id=" + quizId, { method: "DELETE" });
-    const res = await DELETE(req as any);
+    const res = await DELETE(req as unknown as NextRequest);
     expect(res.status).toBe(401);
   });
 
@@ -144,7 +146,7 @@ describe("/api/quiz-review Route Handler", () => {
       method: "DELETE",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await DELETE(req as any);
+    const res = await DELETE(req as unknown as NextRequest);
     expect(res.status).toBe(400);
   });
 
@@ -164,7 +166,7 @@ describe("/api/quiz-review Route Handler", () => {
       method: "DELETE",
       headers: { "x-test-user-email": adminUser.email },
     });
-    const res = await DELETE(req as any);
+    const res = await DELETE(req as unknown as NextRequest);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
