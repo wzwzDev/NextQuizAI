@@ -106,7 +106,7 @@ export async function GET(req: Request) {
         status: 200,
       },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "An unexpected error occurred." },
       {

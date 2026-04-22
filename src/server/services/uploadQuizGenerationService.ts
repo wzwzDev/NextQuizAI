@@ -19,6 +19,12 @@ const MIN_FALLBACK_SENTENCE_LENGTH = 24;
 const MAX_CITATION_SENTENCES = 180;
 const MAX_CITATION_SNIPPET_LENGTH = 190;
 const MIN_TOKEN_LENGTH = 3;
+const DEFAULT_OCR_MODEL_CANDIDATES = [
+  DEFAULT_PDF_OCR_MODEL,
+  "gpt-4.1-mini",
+  "gpt-4.1",
+  "gpt-4o-mini",
+];
 
 const COMMON_STOP_WORDS = new Set([
   "the",
@@ -461,34 +467,48 @@ async function extractTextFromPdf(file: File): Promise<string> {
 async function extractTextFromPdfWithOcr(file: File): Promise<string> {
   const openai = getOpenAIClient();
   const pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const models = Array.from(
+    new Set(
+      DEFAULT_OCR_MODEL_CANDIDATES.map((model) => model.trim()).filter(Boolean),
+    ),
+  );
 
-  try {
-    const response = await openai.responses.create({
-      model: DEFAULT_PDF_OCR_MODEL,
-      temperature: 0,
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text:
-                "Extract all readable text from this course PDF. Return plain text only without markdown, explanation, or summaries.",
-            },
-            {
-              type: "input_file",
-              filename: file.name || "course.pdf",
-              file_data: `data:application/pdf;base64,${pdfBase64}`,
-            },
-          ],
-        },
-      ],
-    });
+  const errors: string[] = [];
 
-    return response.output_text?.trim() || "";
-  } catch {
-    throw new Error("PDF OCR failed.");
+  for (const model of models) {
+    try {
+      const response = await openai.responses.create({
+        model,
+        temperature: 0,
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text:
+                  "Extract all readable text from this course PDF. Return plain text only without markdown, explanation, or summaries.",
+              },
+              {
+                type: "input_file",
+                filename: file.name || "course.pdf",
+                file_data: `data:application/pdf;base64,${pdfBase64}`,
+              },
+            ],
+          },
+        ],
+      });
+
+      return response.output_text?.trim() || "";
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown OCR provider error.";
+      errors.push(`${model}: ${message}`);
+    }
   }
+
+  const joinedErrors = errors.join(" | ");
+  throw new Error(`OpenAI OCR failed: ${joinedErrors}`);
 }
 
 function ensureAcceptedFile(file: File) {

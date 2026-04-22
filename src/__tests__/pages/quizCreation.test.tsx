@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import QuizCreation from "../../components/forms/QuizCreation";
 
 // Mocks
@@ -50,8 +50,6 @@ jest.mock("next/navigation", () => ({
 }));
 
 describe("QuizCreation", () => {
-  
-
   it("switches quiz type when buttons are clicked", () => {
     render(<QuizCreation topic="Math" />);
     const mcqBtn = screen.getByRole("button", { name: /Multiple Choice/i });
@@ -60,5 +58,4 @@ describe("QuizCreation", () => {
     fireEvent.click(mcqBtn);
     // No assertion needed, just ensure no crash
   });
-
 });

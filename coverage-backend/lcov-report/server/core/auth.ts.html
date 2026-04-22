@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">13.92% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/79</span>
+                <span class='fraction'>0/79</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">8.24% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/97</span>
+                <span class='fraction'>0/97</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">12.98% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/77</span>
+                <span class='fraction'>0/77</span>
             </div>
         
             
@@ -326,25 +326,25 @@
 <a name='L261'></a><a href='#L261'>261</a>
 <a name='L262'></a><a href='#L262'>262</a>
 <a name='L263'></a><a href='#L263'>263</a>
-<a name='L264'></a><a href='#L264'>264</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L264'></a><a href='#L264'>264</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -371,7 +371,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -577,7 +577,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -589,24 +589,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import {
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { PrismaAdapter } from "@next-auth/prisma-adapter";</span>
+<span class="cstat-no" title="statement not covered" >import {</span>
   getServerSession,
   type NextAuthOptions,
   type DefaultSession,
 } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/server/core/db";
-import {
+<span class="cstat-no" title="statement not covered" >import GoogleProvider from "next-auth/providers/google";</span>
+<span class="cstat-no" title="statement not covered" >import CredentialsProvider from "next-auth/providers/credentials";</span>
+<span class="cstat-no" title="statement not covered" >import { prisma } from "@/server/core/db";</span>
+<span class="cstat-no" title="statement not covered" >import {</span>
   getAdminCredentialsConfig,
   isOwnerEmail,
 } from "@/server/core/roles";
 &nbsp;
 const resolvedAuthSecret =
-  process.env.NEXTAUTH_SECRET<span class="branch-0 cbranch-no" title="branch not covered" > ?? p</span>rocess.env.AUTH_SECRET;
+<span class="cstat-no" title="statement not covered" >  process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;</span>
 &nbsp;
-<span class="missing-if-branch" title="if path not taken" >I</span>if (!resolvedAuthSecret &amp;&amp; process.env.NODE_ENV === "production") {
+<span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span>if (!resolvedAuthSecret &amp;&amp; process.env.NODE_ENV === "production") {</span>
 <span class="cstat-no" title="statement not covered" >  throw new Error(</span>
     "Missing NextAuth secret. Set NEXTAUTH_SECRET (or AUTH_SECRET) in your environment.",
   );
@@ -634,13 +634,13 @@ declare module "next-auth/jwt" {
   }
 }
 &nbsp;
-export const authOptions: NextAuthOptions = {
+export const <span class="cstat-no" title="statement not covered" >authOptions: NextAuthOptions = {</span>
   session: {
     strategy: "jwt",
   },
   // In development we allow a deterministic fallback to avoid local boot failures.
   // Production always requires NEXTAUTH_SECRET/AUTH_SECRET.
-  secret: <span class="branch-0 cbranch-no" title="branch not covered" >resolvedAuthSecret </span>?? "local-dev-nextauth-secret",
+  secret: resolvedAuthSecret ?? "local-dev-nextauth-secret",
   pages: {
     signIn: "/auth/signin",
   },
@@ -840,7 +840,7 @@ async function <span class="fstat-no" title="function not covered" >getTestSessi
   };
 }
 &nbsp;
-export const getAuthSession = <span class="fstat-no" title="function not covered" >async </span>(req?: Request) =&gt; {
+export const <span class="cstat-no" title="statement not covered" >getAuthSession = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >a</span>sync </span>(req?: Request) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const session = <span class="cstat-no" title="statement not covered" >await getServerSession(authOptions);</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (session?.user) {</span>
@@ -859,7 +859,7 @@ export const getAuthSession = <span class="fstat-no" title="function not covered
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-15T14:32:22.907Z
+                at 2026-04-22T07:18:45.170Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

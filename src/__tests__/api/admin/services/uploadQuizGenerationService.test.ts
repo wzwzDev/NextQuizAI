@@ -38,7 +38,8 @@ async function startFakeOpenAiServer(outputs: string[]) {
   let requestCount = 0;
 
   const server = createServer(async (req, res) => {
-    for await (const _chunk of req) {
+    for await (const chunk of req) {
+      void chunk;
       // Drain request stream.
     }
 
@@ -94,7 +95,8 @@ async function startRateLimitedOpenAiServer() {
   let requestCount = 0;
 
   const server = createServer(async (req, res) => {
-    for await (const _chunk of req) {
+    for await (const chunk of req) {
+      void chunk;
       // Drain request stream.
     }
 

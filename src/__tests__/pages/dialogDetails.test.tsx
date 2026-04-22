@@ -17,7 +17,6 @@ jest.mock("lucide-react", () => ({
 }));
 
 jest.mock("next/image", () => (props: any) => (
-  // eslint-disable-next-line @next/next/no-img-element
   <img {...props} />
 ));
 

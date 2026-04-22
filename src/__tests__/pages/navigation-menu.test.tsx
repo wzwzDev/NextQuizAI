@@ -13,8 +13,6 @@ import {
   NavigationMenuTrigger,
   NavigationMenuContent,
   NavigationMenuLink,
-  NavigationMenuIndicator,
-  NavigationMenuViewport,
 } from "../../components/ui/navigation-menu";
 
 // Mock the Radix UI icons and utils
@@ -59,6 +57,4 @@ describe("NavigationMenu", () => {
     fireEvent.click(screen.getByText("Menu"));
     expect(screen.getByText("Test Link")).toBeInTheDocument();
   });
-
-  
 });

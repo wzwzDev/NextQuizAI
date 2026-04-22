@@ -14,7 +14,7 @@ jest.mock("../../components/ui/button", () => ({
   buttonVariants: () => "btn",
 }));
 jest.mock("../../components/OpenEndedPercentage", () => () => <div data-testid="open-ended-percentage" />);
-jest.mock("../../components/BlankAnswerInput", () => ({ setBlankAnswer, answer }: any) => (
+jest.mock("../../components/BlankAnswerInput", () => ({ setBlankAnswer }: any) => (
   <input
     data-testid="blank-input"
     onChange={e => setBlankAnswer(e.target.value)}

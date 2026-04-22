@@ -30,7 +30,6 @@ describe("LoadingQuizzes", () => {
 
   it("updates loading text periodically", () => {
     render(<LoadingQuizzes />);
-    const initialText = screen.getByText(/Loading quizzes|Fetching the best questions|Sharpening your mind|Preparing your quiz adventure|Almost ready to start/i).textContent;
     act(() => {
       jest.advanceTimersByTime(2000);
     });

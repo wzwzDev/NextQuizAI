@@ -65,14 +65,24 @@ export function similarity(a: unknown, b: unknown) {
   return maxLen === 0 ? 1 : 1 - distance / maxLen;
 }
 
-export function calculateAccuracy(game: any): number {
+type AccuracyQuestion = {
+  isCorrect?: boolean | null;
+  percentageCorrect?: number | null;
+};
+
+type AccuracyGame = {
+  gameType: "mcq" | "open_ended" | string;
+  questions: AccuracyQuestion[];
+};
+
+export function calculateAccuracy(game: AccuracyGame): number {
   if (!game.questions.length) return 0;
   if (game.gameType === "mcq") {
-    const totalCorrect = game.questions.filter((q: any) => q.isCorrect).length;
+    const totalCorrect = game.questions.filter((q) => q.isCorrect).length;
     return Math.round((totalCorrect / game.questions.length) * 100 * 100) / 100;
   } else if (game.gameType === "open_ended") {
     const total = game.questions.reduce(
-      (acc: number, q: any) => acc + (q.percentageCorrect ?? 0),
+      (acc, q) => acc + (q.percentageCorrect ?? 0),
       0,
     );
     return Math.round((total / game.questions.length) * 100) / 100;
