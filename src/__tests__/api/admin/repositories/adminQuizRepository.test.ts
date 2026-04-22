@@ -30,6 +30,7 @@ describe("adminQuizRepository", () => {
       title: "repo-admin-quiz-1",
       category: "math",
       difficulty: "easy",
+      status: "approved",
       questions: [{ question: "Q1", answer: "A1" }],
     });
 

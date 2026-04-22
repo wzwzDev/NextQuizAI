@@ -12,6 +12,13 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-frontend",
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      functions: 80,
+      lines: 80,
+    },
+  },
   collectCoverageFrom: [
     "src/components/admin/OpenAIGenerator.tsx",
     "src/components/admin/QuizList.tsx",

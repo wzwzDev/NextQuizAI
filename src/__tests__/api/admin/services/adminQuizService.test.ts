@@ -84,11 +84,17 @@ describe("adminQuizService", () => {
   });
 
   it("builds quiz statistics summary by quiz title", async () => {
+    const suffix = Date.now();
+    const statsQuizIdOne = `service-admin-stats-q1-${suffix}`;
+    const statsQuizIdTwo = `service-admin-stats-q2-${suffix}`;
+    const statsQuizTitleOne = `service-admin-quiz-a-${suffix}`;
+    const statsQuizTitleTwo = `service-admin-quiz-b-${suffix}`;
+
     await prisma.userQuizAttempt.createMany({
       data: [
         {
-          quizId: "service-q1",
-          quizTitle: "service-admin-quiz-a",
+          quizId: statsQuizIdOne,
+          quizTitle: statsQuizTitleOne,
           score: 80,
           userId: "u1",
           answers: [],
@@ -96,8 +102,8 @@ describe("adminQuizService", () => {
           completedAt: new Date(),
         },
         {
-          quizId: "service-q1",
-          quizTitle: "service-admin-quiz-a",
+          quizId: statsQuizIdOne,
+          quizTitle: statsQuizTitleOne,
           score: 60,
           userId: "u2",
           answers: [],
@@ -105,8 +111,8 @@ describe("adminQuizService", () => {
           completedAt: new Date(),
         },
         {
-          quizId: "service-q2",
-          quizTitle: "service-admin-quiz-b",
+          quizId: statsQuizIdTwo,
+          quizTitle: statsQuizTitleTwo,
           score: 90,
           userId: "u3",
           answers: [],
@@ -121,15 +127,15 @@ describe("adminQuizService", () => {
     expect(summary).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          quizId: "service-q1",
-          quizTitle: "service-admin-quiz-a",
+          quizId: statsQuizIdOne,
+          quizTitle: statsQuizTitleOne,
           attempts: 2,
           averageScore: 70,
           completionRate: 100,
         }),
         expect.objectContaining({
-          quizId: "service-q2",
-          quizTitle: "service-admin-quiz-b",
+          quizId: statsQuizIdTwo,
+          quizTitle: statsQuizTitleTwo,
           attempts: 1,
           averageScore: 90,
           completionRate: 100,
