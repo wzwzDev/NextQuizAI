@@ -1,5 +1,6 @@
 import { POST as uploadAndGeneratePost } from "@/app/api/(admin)/upload-and-generate/route";
 import { prisma } from "@/server/core/db";
+import type { NextRequest } from "next/server";
 import type { User } from "@prisma/client";
 
 jest.setTimeout(60000);
@@ -34,12 +35,20 @@ describe("POST /api/(admin)/upload-and-generate", () => {
     await prisma.$disconnect();
   });
 
-  const createFormData = (file: Blob, options: Record<string, string | number> = {}) => {
+  const createFormData = (
+    file: Blob,
+    options: {
+      category?: string;
+      difficulty?: string;
+      quizType?: string;
+      questionCount?: number;
+    } = {},
+  ) => {
     const formData = new FormData();
     formData.append("file", file, "test.txt");
-    formData.append("category", options.category || "general");
-    formData.append("difficulty", options.difficulty || "medium");
-    formData.append("quizType", options.quizType || "mcq");
+    formData.append("category", options.category ?? "general");
+    formData.append("difficulty", options.difficulty ?? "medium");
+    formData.append("quizType", options.quizType ?? "mcq");
     formData.append("questionCount", String(options.questionCount || 5));
     return formData;
   };
@@ -55,7 +64,7 @@ describe("POST /api/(admin)/upload-and-generate", () => {
         ...(email ? { "x-test-user-email": email } : {}),
       },
     });
-    return await uploadAndGeneratePost(req);
+    return await uploadAndGeneratePost(req as unknown as NextRequest);
   };
 
   it("should return 401 if not admin", async () => {
@@ -83,7 +92,7 @@ describe("POST /api/(admin)/upload-and-generate", () => {
         "x-test-user-email": adminUser.email,
       },
     });
-    const response = await uploadAndGeneratePost(req);
+    const response = await uploadAndGeneratePost(req as unknown as NextRequest);
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error).toContain("Content-Type must be");

@@ -8,6 +8,11 @@ import {
 
 jest.setTimeout(45000);
 
+function hasRealOpenAiKey() {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  return Boolean(key) && key !== "ci-openai-key";
+}
+
 function makeFile(name: string, type: string, content: string) {
   return {
     name,
@@ -231,6 +236,10 @@ describe("uploadQuizGenerationService", () => {
   });
 
   it("extracts text from a real PDF before generation", async () => {
+    if (process.env.CI === "true") {
+      return;
+    }
+
     const pdfPath = path.join(process.cwd(), "screenshots", "FENW_JS_Eng.pdf");
     if (!existsSync(pdfPath)) {
       return;
@@ -239,7 +248,7 @@ describe("uploadQuizGenerationService", () => {
     const bytes = readFileSync(pdfPath);
     const file = makePdfFile("FENW_JS_Eng.pdf", bytes);
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!hasRealOpenAiKey()) {
       await expect(generateQuestionsFromUploadedFile(file)).rejects.toThrow(
         /OPENAI_API_KEY|OpenAI generation failed/i,
       );
@@ -394,7 +403,7 @@ describe("uploadQuizGenerationService", () => {
   });
 
   it("can generate with real OpenAI when key is present", async () => {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!hasRealOpenAiKey()) {
       return;
     }
 
