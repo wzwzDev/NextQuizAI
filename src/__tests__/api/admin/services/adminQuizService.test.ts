@@ -46,6 +46,45 @@ describe("adminQuizService", () => {
     expect(quiz.title).toBe("Untitled Quiz");
   });
 
+  it("normalizes MCQ options and keeps the answer included once", async () => {
+    const quiz = await createApprovedAdminQuiz({
+      title: "service-admin-quiz-mcq",
+      category: "science",
+      difficulty: "medium",
+      quizType: "mcq",
+      questions: [
+        {
+          question: "What is the answer?",
+          answer: "Correct",
+          options: ["Wrong 1, Wrong 2", "Correct", "Wrong 3", "Wrong 1"],
+        },
+      ],
+    });
+
+    expect(quiz.questions[0].options).toEqual(
+      expect.arrayContaining(["Correct", "Wrong 1", "Wrong 2", "Wrong 3"]),
+    );
+    expect(new Set(quiz.questions[0].options).size).toBe(4);
+  });
+
+  it("rejects MCQ quizzes with too few choices", async () => {
+    await expect(
+      createApprovedAdminQuiz({
+        title: "service-admin-quiz-mcq-invalid",
+        category: "science",
+        difficulty: "medium",
+        quizType: "mcq",
+        questions: [
+          {
+            question: "What is the answer?",
+            answer: "Correct",
+            options: [],
+          },
+        ],
+      }),
+    ).rejects.toThrow("must contain at least 2 choices for MCQ");
+  });
+
   it("delegates quiz listing", async () => {
     await createApprovedAdminQuiz({
       title: "service-admin-quiz-list",
@@ -141,6 +180,46 @@ describe("adminQuizService", () => {
           completionRate: 100,
         }),
       ]),
+    );
+  });
+
+  it("counts pending attempts in quiz statistics summary", async () => {
+    const suffix = Date.now();
+    const statsQuizId = `service-admin-stats-pending-${suffix}`;
+    const statsQuizTitle = `service-admin-quiz-pending-${suffix}`;
+
+    await prisma.userQuizAttempt.createMany({
+      data: [
+        {
+          quizId: statsQuizId,
+          quizTitle: statsQuizTitle,
+          score: 50,
+          userId: "u4",
+          answers: [],
+          status: "pending",
+        },
+        {
+          quizId: statsQuizId,
+          quizTitle: statsQuizTitle,
+          score: 100,
+          userId: "u5",
+          answers: [],
+          status: "completed",
+          completedAt: new Date(),
+        },
+      ],
+    });
+
+    const summary = await getQuizStatisticsSummary();
+    const entry = summary.find((item) => item.quizId === statsQuizId);
+
+    expect(entry).toEqual(
+      expect.objectContaining({
+        quizTitle: statsQuizTitle,
+        attempts: 1,
+        averageScore: 100,
+        completionRate: 50,
+      }),
     );
   });
 });
