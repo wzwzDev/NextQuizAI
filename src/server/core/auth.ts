@@ -7,6 +7,7 @@ import {
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/server/core/db";
+import { normalizeEmail, verifyPassword } from "@/server/auth/password";
 import {
   getAdminCredentialsConfig,
   isOwnerEmail,
@@ -202,6 +203,51 @@ export const authOptions: NextAuthOptions = {
           id: adminUser.id,
           name: adminUser.name,
           email: adminUser.email,
+        };
+      },
+    }),
+    CredentialsProvider({
+      id: "user-credentials",
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email =
+          typeof credentials?.email === "string"
+            ? normalizeEmail(credentials.email)
+            : "";
+        const password =
+          typeof credentials?.password === "string"
+            ? credentials.password
+            : "";
+
+        if (!email || !password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!user || !user.passwordHash || !user.emailVerified) {
+          return null;
+        }
+
+        if (user.banned || user.revoked) {
+          return null;
+        }
+
+        const validPassword = await verifyPassword(password, user.passwordHash);
+        if (!validPassword) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
         };
       },
     }),

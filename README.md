@@ -28,6 +28,8 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 
 ### 👥 User Management
 - **Role-Based Access**: Admin and regular user permissions
+- **Flexible Authentication**: Google OAuth and email/password sign-in
+- **Email Verification**: New email/password accounts must verify via email link
 - **User Banning/Revoking**: Comprehensive user moderation tools
 - **Online Status Tracking**: Real-time user activity monitoring
 - **Session Management**: Secure authentication with NextAuth.js
@@ -76,7 +78,8 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 - Node.js 18.x or later
 - MySQL database
 - OpenAI API key
-- Google OAuth credentials (for authentication)
+- Google OAuth credentials (optional for Google authentication)
+- SMTP credentials (recommended for email verification in production)
 
 ### Installation
 
@@ -100,6 +103,12 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
    
    GOOGLE_CLIENT_ID="your-google-client-id"
    GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+   SMTP_HOST="smtp.your-provider.com"
+   SMTP_PORT="587"
+   SMTP_USER="smtp-user"
+   SMTP_PASS="smtp-password"
+   EMAIL_FROM="QuizUPM <no-reply@your-domain.com>"
    
    OPENAI_API_KEY="your-openai-api-key"
    ```
@@ -124,11 +133,13 @@ QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and
 ## 📱 Application Structure
 
 ### User Journey
-1. **Authentication**: Google OAuth sign-in
-2. **Dashboard**: Personal analytics and quiz history
-3. **Quiz Selection**: Browse available quizzes by category
-4. **Quiz Playing**: Interactive quiz experience
-5. **Results**: Detailed performance feedback
+1. **Authentication**: Google OAuth or email/password sign-in
+2. **Registration**: New users can register with name, email, and password
+3. **Email Verification**: Verify account with a link sent to email
+4. **Dashboard**: Personal analytics and quiz history
+5. **Quiz Selection**: Browse available quizzes by category
+6. **Quiz Playing**: Interactive quiz experience
+7. **Results**: Detailed performance feedback
 
 ### Admin Features
 - Quiz creation and management

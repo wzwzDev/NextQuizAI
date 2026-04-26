@@ -37,6 +37,7 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String   @unique
+  passwordHash  String?
   emailVerified DateTime?
   image    String?
   accounts Account[]
@@ -48,6 +49,18 @@ model User {
   isAdmin   Boolean  @default(false)
   lastSeen  DateTime @default(now()) @updatedAt
 
+}
+
+model EmailVerificationToken {
+  id         String   @id @default(cuid())
+  email      String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 enum GameType{
