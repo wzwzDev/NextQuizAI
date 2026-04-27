@@ -1,6 +1,7 @@
 import { GET } from "@/app/api/quizzes/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 jest.setTimeout(30000);
 
@@ -38,7 +39,7 @@ describe("GET /api/quizzes", () => {
         ...(email ? { "x-test-user-email": email } : {}),
       },
     });
-    return await GET(req);
+    return await GET(req as unknown as NextRequest);
   };
 
   it("should return 401 if not authenticated", async () => {

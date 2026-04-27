@@ -64,7 +64,10 @@ describe("adminQuizService", () => {
     expect(quiz.questions[0].options).toEqual(
       expect.arrayContaining(["Correct", "Wrong 1", "Wrong 2", "Wrong 3"]),
     );
-    expect(new Set(quiz.questions[0].options).size).toBe(4);
+    const normalizedOptions = Array.isArray(quiz.questions[0].options)
+      ? (quiz.questions[0].options as string[])
+      : [];
+    expect(new Set(normalizedOptions).size).toBe(4);
   });
 
   it("rejects MCQ quizzes with too few choices", async () => {

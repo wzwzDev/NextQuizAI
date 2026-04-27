@@ -1,6 +1,7 @@
 import { POST as assignAdminPost } from "@/app/api/(admin)/users/[userId]/assign-admin/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 jest.setTimeout(30000);
 
@@ -67,7 +68,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
         },
       },
     );
-    return await assignAdminPost(req, {
+    return await assignAdminPost(req as unknown as NextRequest, {
       params: Promise.resolve({ userId }),
     });
   };
@@ -85,7 +86,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
         headers: { "x-test-user-email": adminUser.email },
       },
     );
-    const response = await assignAdminPost(req, {
+    const response = await assignAdminPost(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: "" }),
     });
     expect(response.status).toBe(400);
