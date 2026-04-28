@@ -36,9 +36,7 @@ export class CheckAnswerUseCase {
     isAdmin?: boolean;
   }): Promise<CheckAnswerResult> {
     // Find question
-    const question = await this.questionRepository.findQuestionWithGameOwnerById(
-      input.questionId,
-    );
+    const question = await this.questionRepository.findById(input.questionId);
 
     if (!question) {
       throw new QuestionNotFoundError();

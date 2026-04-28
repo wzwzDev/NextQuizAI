@@ -5,7 +5,7 @@ export class LlmGatewayAdapter implements LlmGatewayPort {
   async strictOutput(
     systemPrompt: string,
     userPrompt: string | string[],
-    outputFormat: Record<string, unknown>,
+    outputFormat: Parameters<typeof strict_output>[2],
   ): Promise<unknown> {
     return strict_output(systemPrompt, userPrompt, outputFormat);
   }

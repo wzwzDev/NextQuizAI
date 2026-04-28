@@ -7,6 +7,10 @@ import {
 } from "@/server/repositories/questionRepository";
 
 export class QuestionRepositoryAdapter implements QuestionRepositoryPort {
+  async findById(questionId: string) {
+    return findQuestionWithGameOwnerById(questionId);
+  }
+
   async findQuestionWithGameOwnerById(questionId: string) {
     return findQuestionWithGameOwnerById(questionId);
   }

@@ -21,36 +21,39 @@ export class PdfOcrAdapter implements PdfOcrPort {
   async extractTextFromPdf(fileData: Buffer): Promise<string> {
     const client = getOpenAIClient();
     const base64Data = fileData.toString("base64");
+    const models = Array.from(
+      new Set(DEFAULT_OCR_MODEL_CANDIDATES.map((model) => model.trim()).filter(Boolean)),
+    );
 
-    const response = await client.messages.create({
-      model: this.getOcrModel(),
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: base64Data,
+    for (const model of models) {
+      const response = await client.responses.create({
+        model,
+        temperature: 0,
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: "Extract all readable text from this PDF. Return plain text only without markdown or commentary.",
               },
-            },
-            {
-              type: "text",
-              text: "Extract all text content from this PDF document. Return only the extracted text, no additional commentary.",
-            },
-          ],
-        },
-      ],
-    } as Parameters<typeof client.messages.create>[0]);
+              {
+                type: "input_file",
+                filename: "document.pdf",
+                file_data: `data:application/pdf;base64,${base64Data}`,
+              },
+            ],
+          },
+        ],
+      });
 
-    const textContent = Array.isArray(response.content)
-      ? response.content.find((block) => block.type === "text")
-      : undefined;
+      const outputText = response.output_text?.trim();
+      if (outputText) {
+        return outputText;
+      }
+    }
 
-    return textContent && "text" in textContent ? textContent.text : "";
+    return "";
   }
 
   isValidOcrContent(text: string): boolean {

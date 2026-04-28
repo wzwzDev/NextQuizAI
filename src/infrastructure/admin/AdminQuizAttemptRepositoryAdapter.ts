@@ -9,9 +9,6 @@ export class AdminQuizAttemptRepositoryAdapter
   implements AdminQuizAttemptRepositoryPort
 {
   async findUserAttemptsByQuizIds(quizIds: string[]) {
-    return listUserQuizAttemptsByQuizIds(
-      "", // userId not needed for this query in the repository
-      quizIds,
-    );
+    return listUserQuizAttemptsByQuizIds(quizIds);
   }
 }
