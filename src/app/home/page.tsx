@@ -1,5 +1,5 @@
 import { getAuthSession } from "@/server/core/auth";
-import { prisma } from "@/server/core/db";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import HomeClient from "@/components/home/HomeClient";
 
@@ -10,11 +10,8 @@ export default async function Home() {
   }
 
   // Check if the user is revoked
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { revoked: true },
-  });
-  if (user?.revoked) {
+  const isRevoked = await getUserRevokedStatus(session.user.id);
+  if (isRevoked) {
     redirect("/revoked");
   }
 

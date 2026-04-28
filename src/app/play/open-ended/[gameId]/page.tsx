@@ -1,6 +1,6 @@
 import OpenEnded from "@/components/OpenEnded";
-import { prisma } from "@/server/core/db";
 import { getAuthSession } from "@/server/core/auth";
+import { getOpenEndedGameForPlay } from "@/server/services/playReadService";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -18,20 +18,10 @@ const OpenEndedPage = async (props: Props) => {
     redirect("/");
   }
 
-  const game = await prisma.game.findFirst({
-    where: {
-      id: gameId,
-      ...(isAdmin ? {} : { userId: session.user.id }),
-    },
-    include: {
-      questions: {
-        select: {
-          id: true,
-          question: true,
-          answer: true,
-        },
-      },
-    },
+  const game = await getOpenEndedGameForPlay({
+    gameId,
+    userId: session.user.id,
+    isAdmin,
   });
   if (!game || game.gameType === "mcq") {
     return redirect("/quiz");

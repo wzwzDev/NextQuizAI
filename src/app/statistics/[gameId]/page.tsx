@@ -1,6 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
-import { prisma } from "@/server/core/db";
 import { getAuthSession } from "@/server/core/auth";
+import { getGameForStatistics } from "@/server/services/statisticsReadService";
 import { LucideLayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -23,12 +23,10 @@ const Statistics = async (props: Props) => {
   if (!session?.user && !isAdmin) {
     redirect("/");
   }
-  const game = await prisma.game.findFirst({
-    where: {
-      id: gameId,
-      ...(isAdmin ? {} : { userId: session.user.id }),
-    },
-    include: { questions: true },
+  const game = await getGameForStatistics({
+    gameId,
+    userId: session.user.id,
+    isAdmin,
   });
   if (!game) {
     return redirect("/");

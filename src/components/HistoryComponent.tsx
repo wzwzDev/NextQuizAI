@@ -1,4 +1,4 @@
-import { prisma } from "@/server/core/db";
+import { getRecentGames } from "@/server/services/historyReadService";
 import { Clock, CopyCheck, Edit2 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -9,15 +9,7 @@ type Props = {
 };
 
 const HistoryComponent = async ({ limit, userId }: Props) => {
-  const games = await prisma.game.findMany({
-    take: limit,
-    where: {
-      userId,
-    },
-    orderBy: {
-      timeStarted: "desc",
-    },
-  });
+  const games = await getRecentGames({ limit, userId });
   return (
     <div className="space-y-8">
       {games.map((game) => {

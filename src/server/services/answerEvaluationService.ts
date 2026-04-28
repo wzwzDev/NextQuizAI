@@ -1,4 +1,6 @@
-import stringSimilarity from "string-similarity";
+import { GradeOpenEndedAnswerUseCase } from "@/application/use-cases/quiz/GradeOpenEndedAnswerUseCase";
+import type { OpenEndedGradingMethod } from "@/domain/services/OpenEndedGrader";
+import { StringSimilarityAdapter } from "@/infrastructure/similarity/StringSimilarityAdapter";
 import {
   findQuestionWithGameOwnerById,
   saveMcqResult,
@@ -6,9 +8,9 @@ import {
   saveUserAnswer,
 } from "@/server/repositories/questionRepository";
 
-const TYPO_TOLERANCE_THRESHOLD = 0.8;
-
-export type OpenEndedGradingMethod = "exact_match" | "typo_tolerant";
+const gradeOpenEndedAnswerUseCase = new GradeOpenEndedAnswerUseCase(
+  new StringSimilarityAdapter(),
+);
 
 export function cosineSimilarity(a: number[], b: number[]) {
   if (!a.length || !b.length || a.length !== b.length) {
@@ -32,81 +34,6 @@ export function cosineSimilarity(a: number[], b: number[]) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function normalizeText(value: string) {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function containsTokenSequence(fullText: string, phrase: string) {
-  const fullTokens = fullText.split(" ").filter(Boolean);
-  const phraseTokens = phrase.split(" ").filter(Boolean);
-
-  if (!fullTokens.length || !phraseTokens.length || phraseTokens.length > fullTokens.length) {
-    return false;
-  }
-
-  const maxStart = fullTokens.length - phraseTokens.length;
-  for (let start = 0; start <= maxStart; start++) {
-    let matches = true;
-    for (let offset = 0; offset < phraseTokens.length; offset++) {
-      if (fullTokens[start + offset] !== phraseTokens[offset]) {
-        matches = false;
-        break;
-      }
-    }
-
-    if (matches) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function lexicalScore(expected: string, userInput: string) {
-  return stringSimilarity.compareTwoStrings(
-    normalizeText(expected),
-    normalizeText(userInput),
-  );
-}
-
-function hasSingleAdjacentSwap(expected: string, userInput: string) {
-  if (expected.length !== userInput.length || expected.length < 2) {
-    return false;
-  }
-
-  const mismatchIndexes: number[] = [];
-  for (let i = 0; i < expected.length; i++) {
-    if (expected[i] !== userInput[i]) {
-      mismatchIndexes.push(i);
-      if (mismatchIndexes.length > 2) {
-        return false;
-      }
-    }
-  }
-
-  if (mismatchIndexes.length !== 2) {
-    return false;
-  }
-
-  const [first, second] = mismatchIndexes;
-  if (second !== first + 1) {
-    return false;
-  }
-
-  return (
-    expected[first] === userInput[second] &&
-    expected[second] === userInput[first]
-  );
-}
-
-function typoSimilarityScore(expected: string, userInput: string) {
-  if (hasSingleAdjacentSwap(expected, userInput)) {
-    return 1;
-  }
-
-  return lexicalScore(expected, userInput);
-}
-
 export async function evaluateOpenEndedSimilarity(
   expected: string,
   userInput: string,
@@ -115,47 +42,11 @@ export async function evaluateOpenEndedSimilarity(
   gradingMethod: OpenEndedGradingMethod;
   rawScore: number;
 }> {
-  const normalizedExpected = normalizeText(expected);
-  const normalizedUserInput = normalizeText(userInput);
-
-  if (!normalizedExpected && !normalizedUserInput) {
-    return {
-      percentageSimilar: 100,
-      gradingMethod: "exact_match",
-      rawScore: 1,
-    };
-  }
-
-  if (!normalizedUserInput) {
-    return {
-      percentageSimilar: 0,
-      gradingMethod: "typo_tolerant",
-      rawScore: 0,
-    };
-  }
-
-  if (normalizedExpected === normalizedUserInput) {
-    return {
-      percentageSimilar: 100,
-      gradingMethod: "exact_match",
-      rawScore: 1,
-    };
-  }
-
-  if (containsTokenSequence(normalizedUserInput, normalizedExpected)) {
-    return {
-      percentageSimilar: 100,
-      gradingMethod: "typo_tolerant",
-      rawScore: 1,
-    };
-  }
-
-  const score = typoSimilarityScore(normalizedExpected, normalizedUserInput);
-  const isAccepted = score >= TYPO_TOLERANCE_THRESHOLD;
+  const result = gradeOpenEndedAnswerUseCase.execute(expected, userInput);
   return {
-    percentageSimilar: isAccepted ? 100 : 0,
-    gradingMethod: "typo_tolerant",
-    rawScore: score,
+    percentageSimilar: result.percentageSimilar,
+    gradingMethod: result.gradingMethod,
+    rawScore: result.rawScore,
   };
 }
 
