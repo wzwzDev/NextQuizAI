@@ -1,39 +1,24 @@
+import { CreateAdminQuizUseCase } from "@/application/use-cases/admin/CreateAdminQuizUseCase";
+import { GetAdminQuizzesUseCase } from "@/application/use-cases/admin/GetAdminQuizzesUseCase";
+import { AdminQuizRepositoryAdapter } from "@/infrastructure/admin/AdminQuizRepositoryAdapter";
+import { AdminQuizAttemptRepositoryAdapter } from "@/infrastructure/admin/AdminQuizAttemptRepositoryAdapter";
 import {
-  createAdminQuiz,
-  deleteAdminQuizById,
-  findAdminQuizzes,
-  findAllUserQuizAttempts,
   findApprovedQuizzesForLibrary,
+  findAllUserQuizAttempts,
   findApprovedQuizById,
+  deleteAdminQuizById,
 } from "@/server/admin/repositories/adminQuizRepository";
-import { listUserQuizAttemptsByQuizIds } from "@/server/repositories/userQuizAttemptRepository";
 
-const MIN_MCQ_OPTIONS = 2;
+const adminQuizRepository = new AdminQuizRepositoryAdapter();
+const adminQuizAttemptRepository = new AdminQuizAttemptRepositoryAdapter();
 
-function splitOptionChunks(option: string): string[] {
-  if (!option) {
-    return [];
-  }
-
-  return option
-    .split(/\r?\n|[,;|]/)
-    .map((value) => value.trim())
-    .filter(Boolean);
-}
-
-function normalizeOptions(options: string[] | undefined) {
-  if (!Array.isArray(options)) {
-    return [];
-  }
-
-  return Array.from(
-    new Set(
-      options
-        .filter((value): value is string => typeof value === "string")
-        .flatMap(splitOptionChunks),
-    ),
-  );
-}
+const createAdminQuizUseCase = new CreateAdminQuizUseCase(
+  adminQuizRepository,
+);
+const getAdminQuizzesUseCase = new GetAdminQuizzesUseCase(
+  adminQuizRepository,
+  adminQuizAttemptRepository,
+);
 
 export async function createApprovedAdminQuiz(input: {
   title?: string;
@@ -48,127 +33,14 @@ export async function createApprovedAdminQuiz(input: {
     citation?: { source: string; snippet: string; confidence?: number };
   }>;
 }) {
-  let title = input.title?.trim() ?? "";
-  if (!title && input.fileName) {
-    title = input.fileName.replace(/\.[^/.]+$/, "");
-  }
-  if (!title) {
-    title = "Untitled Quiz";
-  }
-
-  const normalizedQuizType = input.quizType ?? "open_ended";
-  const normalizedQuestions = input.questions.map((question, index) => {
-    const normalizedQuestion = question.question.trim();
-    const normalizedAnswer = question.answer.trim();
-
-    if (!normalizedQuestion || !normalizedAnswer) {
-      throw new Error(
-        `Question ${index + 1} must include both question and answer text.`,
-      );
-    }
-
-    if (normalizedQuizType !== "mcq") {
-      return {
-        question: normalizedQuestion,
-        answer: normalizedAnswer,
-        ...(question.citation ? { citation: question.citation } : {}),
-      };
-    }
-
-    const options = normalizeOptions([...(question.options ?? []), normalizedAnswer]);
-    if (options.length < MIN_MCQ_OPTIONS) {
-      throw new Error(
-        `Question ${index + 1} must contain at least ${MIN_MCQ_OPTIONS} choices for MCQ.`,
-      );
-    }
-
-    return {
-      question: normalizedQuestion,
-      answer: normalizedAnswer,
-      options,
-      ...(question.citation ? { citation: question.citation } : {}),
-    };
-  });
-
-  return createAdminQuiz({
-    title,
-    category: input.category,
-    difficulty: input.difficulty,
-    quizType: normalizedQuizType,
-    status: "approved",
-    questions: normalizedQuestions,
-  });
+  return createAdminQuizUseCase.execute(input);
 }
 
 export async function getAdminQuizzes(filter?: {
   category?: string;
   difficulty?: string;
 }) {
-  const quizzes = await findAdminQuizzes(filter);
-  const attempts = await listUserQuizAttemptsByQuizIds(quizzes.map((quiz) => quiz.id));
-
-  const attemptsByQuizId: Record<
-    string,
-    {
-      totalAttempts: number;
-      completedAttempts: number;
-      pendingAttempts: number;
-      totalCompletedScore: number;
-      lastAttemptAt: Date | null;
-      lastCompletedAt: Date | null;
-    }
-  > = {};
-
-  for (const attempt of attempts) {
-    if (!attemptsByQuizId[attempt.quizId]) {
-      attemptsByQuizId[attempt.quizId] = {
-        totalAttempts: 0,
-        completedAttempts: 0,
-        pendingAttempts: 0,
-        totalCompletedScore: 0,
-        lastAttemptAt: null,
-        lastCompletedAt: null,
-      };
-    }
-
-    const stats = attemptsByQuizId[attempt.quizId];
-    stats.totalAttempts += 1;
-
-    if (attempt.status === "completed") {
-      stats.completedAttempts += 1;
-      stats.totalCompletedScore += attempt.score || 0;
-      if (!stats.lastCompletedAt || (attempt.completedAt && attempt.completedAt > stats.lastCompletedAt)) {
-        stats.lastCompletedAt = attempt.completedAt;
-      }
-    } else {
-      stats.pendingAttempts += 1;
-    }
-
-    if (!stats.lastAttemptAt || attempt.createdAt > stats.lastAttemptAt) {
-      stats.lastAttemptAt = attempt.createdAt;
-    }
-  }
-
-  return quizzes.map((quiz) => {
-    const stats = attemptsByQuizId[quiz.id];
-    const averageScore =
-      stats && stats.completedAttempts > 0
-        ? Math.round((stats.totalCompletedScore / stats.completedAttempts) * 100) / 100
-        : null;
-
-    return {
-      ...quiz,
-      questionCount: quiz.questions.length,
-      attemptSummary: {
-        totalAttempts: stats?.totalAttempts ?? 0,
-        completedAttempts: stats?.completedAttempts ?? 0,
-        pendingAttempts: stats?.pendingAttempts ?? 0,
-        averageScore,
-        lastAttemptAt: stats?.lastAttemptAt ?? null,
-        lastCompletedAt: stats?.lastCompletedAt ?? null,
-      },
-    };
-  });
+  return getAdminQuizzesUseCase.execute(filter);
 }
 
 export async function removeAdminQuiz(id: string) {
