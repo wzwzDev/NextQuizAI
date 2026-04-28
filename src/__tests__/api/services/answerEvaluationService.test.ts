@@ -43,6 +43,16 @@ describe("answerEvaluationService", () => {
       expect(result.percentageSimilar).toBe(100);
     });
 
+    it("accepts answers that contain the expected phrase", async () => {
+      const result = await evaluateOpenEndedSimilarity(
+        "transformer",
+        "transformer architecture",
+      );
+
+      expect(result.gradingMethod).toBe("typo_tolerant");
+      expect(result.percentageSimilar).toBe(100);
+    });
+
     it("rejects unrelated answers", async () => {
       const result = await evaluateOpenEndedSimilarity(
         "forEach",

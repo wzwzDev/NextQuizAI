@@ -50,6 +50,32 @@ function normalizeText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function containsTokenSequence(fullText: string, phrase: string) {
+  const fullTokens = fullText.split(" ").filter(Boolean);
+  const phraseTokens = phrase.split(" ").filter(Boolean);
+
+  if (!fullTokens.length || !phraseTokens.length || phraseTokens.length > fullTokens.length) {
+    return false;
+  }
+
+  const maxStart = fullTokens.length - phraseTokens.length;
+  for (let start = 0; start <= maxStart; start++) {
+    let matches = true;
+    for (let offset = 0; offset < phraseTokens.length; offset++) {
+      if (fullTokens[start + offset] !== phraseTokens[offset]) {
+        matches = false;
+        break;
+      }
+    }
+
+    if (matches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function lexicalSimilarity(expected: string, userInput: string) {
   return stringSimilarity.compareTwoStrings(
     normalizeText(expected),
@@ -158,6 +184,18 @@ async function scoreOpenEndedAnswer(expected: string, userInput: string) {
       isAccepted: true,
       confidence: 0.99,
       decisionReason: "Exact text match after normalization.",
+      reviewRequired: false,
+      rawSimilarity: 1,
+    };
+  }
+
+  if (containsTokenSequence(normalizedUserInput, normalizedExpected)) {
+    return {
+      percentageSimilar: 100,
+      gradingMethod: "typo_tolerant" as const,
+      isAccepted: true,
+      confidence: 0.9,
+      decisionReason: "Accepted because the expected answer appears in the submitted phrase.",
       reviewRequired: false,
       rawSimilarity: 1,
     };

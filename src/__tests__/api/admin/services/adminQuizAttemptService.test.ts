@@ -118,6 +118,33 @@ describe("adminQuizAttemptService", () => {
     ).toBe(true);
   });
 
+  it("accepts open-ended answers that include the expected phrase", async () => {
+    const quiz = await createApprovedAdminQuiz({
+      title: "attempt-service-quiz-open-contained",
+      category: "programming",
+      difficulty: "easy",
+      quizType: "open_ended",
+      questions: [
+        { question: "Foundational architecture", answer: "transformer" },
+      ],
+    });
+
+    const result = await submitAndGradeAdminQuizAttempt({
+      quizId: quiz.id,
+      userId: "u5",
+      answers: ["transformer architecture"],
+    });
+
+    expect(result.score).toBe(100);
+    expect(result.questionResults[0]).toEqual(
+      expect.objectContaining({
+        gradingMethod: "typo_tolerant",
+        isAccepted: true,
+        percentageSimilar: 100,
+      }),
+    );
+  });
+
   it("treats non-array answers input as empty submissions", async () => {
     const quiz = await createApprovedAdminQuiz({
       title: "attempt-service-quiz-open-2",

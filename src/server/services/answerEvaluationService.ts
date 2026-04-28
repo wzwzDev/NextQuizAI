@@ -36,6 +36,32 @@ function normalizeText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function containsTokenSequence(fullText: string, phrase: string) {
+  const fullTokens = fullText.split(" ").filter(Boolean);
+  const phraseTokens = phrase.split(" ").filter(Boolean);
+
+  if (!fullTokens.length || !phraseTokens.length || phraseTokens.length > fullTokens.length) {
+    return false;
+  }
+
+  const maxStart = fullTokens.length - phraseTokens.length;
+  for (let start = 0; start <= maxStart; start++) {
+    let matches = true;
+    for (let offset = 0; offset < phraseTokens.length; offset++) {
+      if (fullTokens[start + offset] !== phraseTokens[offset]) {
+        matches = false;
+        break;
+      }
+    }
+
+    if (matches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function lexicalScore(expected: string, userInput: string) {
   return stringSimilarity.compareTwoStrings(
     normalizeText(expected),
@@ -112,6 +138,14 @@ export async function evaluateOpenEndedSimilarity(
     return {
       percentageSimilar: 100,
       gradingMethod: "exact_match",
+      rawScore: 1,
+    };
+  }
+
+  if (containsTokenSequence(normalizedUserInput, normalizedExpected)) {
+    return {
+      percentageSimilar: 100,
+      gradingMethod: "typo_tolerant",
       rawScore: 1,
     };
   }
