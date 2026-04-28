@@ -1,10 +1,6 @@
-import { prisma } from "@/server/core/db";
+import { findUserRevokeStatus } from "@/server/repositories/userRepository";
 
 export async function getUserRevokedStatus(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { revoked: true },
-  });
-
+  const user = await findUserRevokeStatus(userId);
   return user?.revoked === true;
 }

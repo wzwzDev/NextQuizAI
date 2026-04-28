@@ -31,6 +31,42 @@ export async function findGameWithQuestionsById(gameId: string) {
   });
 }
 
+export async function findGameWithQuestionsForUserOrAdmin(
+  gameId: string,
+  userId: string,
+  isAdmin: boolean,
+) {
+  return prisma.game.findFirst({
+    where: {
+      id: gameId,
+      ...(isAdmin ? {} : { userId: userId }),
+    },
+    include: { questions: true },
+  });
+}
+
+export async function findOpenEndedGameForUserOrAdmin(
+  gameId: string,
+  userId: string,
+  isAdmin: boolean,
+) {
+  return prisma.game.findFirst({
+    where: {
+      id: gameId,
+      ...(isAdmin ? {} : { userId: userId }),
+    },
+    include: {
+      questions: {
+        select: {
+          id: true,
+          question: true,
+          answer: true,
+        },
+      },
+    },
+  });
+}
+
 export async function markGameEnded(gameId: string) {
   return prisma.game.update({
     where: { id: gameId },

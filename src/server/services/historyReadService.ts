@@ -1,13 +1,5 @@
-import { prisma } from "@/server/core/db";
+import { findRecentGamesByUserId } from "@/server/repositories/gameRepository";
 
 export async function getRecentGames(input: { userId: string; limit: number }) {
-  return prisma.game.findMany({
-    take: input.limit,
-    where: {
-      userId: input.userId,
-    },
-    orderBy: {
-      timeStarted: "desc",
-    },
-  });
+  return findRecentGamesByUserId(input.userId, input.limit);
 }

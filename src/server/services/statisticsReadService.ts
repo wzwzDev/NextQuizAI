@@ -1,11 +1,5 @@
-import { prisma } from "@/server/core/db";
+import { findGameWithQuestionsForUserOrAdmin } from "@/server/repositories/gameRepository";
 
 export async function getGameForStatistics(input: { gameId: string; userId: string; isAdmin: boolean }) {
-  return prisma.game.findFirst({
-    where: {
-      id: input.gameId,
-      ...(input.isAdmin ? {} : { userId: input.userId }),
-    },
-    include: { questions: true },
-  });
+  return findGameWithQuestionsForUserOrAdmin(input.gameId, input.userId, input.isAdmin);
 }
