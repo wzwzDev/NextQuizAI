@@ -30,6 +30,8 @@ module.exports = {
     "src/components/ui/navigation-menu.tsx",
     "src/components/ui/table.tsx",
     "src/components/ui/toast.tsx",
+    "src/app/auth/verify-email/page.tsx",
+    "src/app/auth/verify-email/verify-email-content.tsx",
     "!src/**/*.d.ts",
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"

@@ -93,12 +93,22 @@ function getErrorMessage(error: unknown): string {
 }
 
 function stripCodeFences(value: string) {
-  const match = value.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (match?.[1]) {
-    return match[1].trim();
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("```") || !trimmed.endsWith("```")) {
+    return trimmed;
   }
 
-  return value.trim();
+  const firstLineBreak = trimmed.indexOf("\n");
+  if (firstLineBreak === -1) {
+    return "";
+  }
+
+  const closingFenceIndex = trimmed.lastIndexOf("```");
+  if (closingFenceIndex <= firstLineBreak) {
+    return trimmed.slice(firstLineBreak + 1).trim();
+  }
+
+  return trimmed.slice(firstLineBreak + 1, closingFenceIndex).trim();
 }
 
 function extractFirstJsonSegment(value: string) {

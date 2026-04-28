@@ -153,7 +153,9 @@ export default function QuizPage() {
           };
 
           const questions = Array.isArray(rawQuiz.questions)
-            ? rawQuiz.questions.map(parseQuestion)
+            ? rawQuiz.questions.map((rawQuestion, index) =>
+                parseQuestion(rawQuestion, index),
+              )
             : [];
 
           const parsedQuiz: Quiz = {
