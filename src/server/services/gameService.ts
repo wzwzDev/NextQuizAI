@@ -1,11 +1,11 @@
+import { StartGameUseCase } from "@/application/use-cases/game/StartGameUseCase";
+import { EndGameUseCase } from "@/application/use-cases/game/EndGameUseCase";
+import { GameRepositoryAdapter } from "@/infrastructure/game/GameRepositoryAdapter";
+import { PermissionCheckAdapter } from "@/infrastructure/game/PermissionCheckAdapter";
 import {
   createQuestionsForGame,
-  createGame,
-  findGameById,
   findGameWithQuestionsById,
-  markGameEnded,
 } from "@/server/repositories/gameRepository";
-import { incrementTopicCount } from "@/server/repositories/topicRepository";
 import { GameType } from "@prisma/client";
 
 type McqQuestion = {
@@ -21,18 +21,17 @@ type OpenQuestion = {
   answer: string;
 };
 
+const gameRepository = new GameRepositoryAdapter();
+const permissionCheck = new PermissionCheckAdapter();
+const startGameUseCase = new StartGameUseCase(gameRepository);
+const endGameUseCase = new EndGameUseCase(gameRepository, permissionCheck);
+
 export async function createGameWithTopicCount(params: {
   userId: string;
   topic: string;
   type: GameType;
 }) {
-  const game = await createGame({
-    userId: params.userId,
-    topic: params.topic,
-    gameType: params.type,
-  });
-  await incrementTopicCount(params.topic);
-  return game;
+  return startGameUseCase.execute(params);
 }
 
 export async function saveGeneratedQuestionsForGame(params: {
@@ -83,15 +82,22 @@ export async function endGame(
   gameId: string,
   requester?: { userId: string; isAdmin?: boolean },
 ) {
-  const game = await findGameById(gameId);
-  if (!game) {
-    return { status: 404 as const, body: { message: "Game not found" } };
+  try {
+    await endGameUseCase.execute({
+      gameId,
+      userId: requester?.userId,
+      isAdmin: requester?.isAdmin,
+    });
+    return { status: 200 as const, body: { message: "Game ended" } };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === "GameNotFoundError") {
+        return { status: 404 as const, body: { message: "Game not found" } };
+      }
+      if (error.name === "GameAccessForbiddenError") {
+        return { status: 403 as const, body: { message: "Forbidden" } };
+      }
+    }
+    throw error;
   }
-
-  if (requester && !requester.isAdmin && game.userId !== requester.userId) {
-    return { status: 403 as const, body: { message: "Forbidden" } };
-  }
-
-  await markGameEnded(gameId);
-  return { status: 200 as const, body: { message: "Game ended" } };
 }
