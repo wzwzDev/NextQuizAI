@@ -3,14 +3,14 @@ import { prisma } from "@/server/core/db";
 
 export class QuizRepositoryAdapter implements QuizRepositoryPort {
   async findApprovedQuizWithQuestions(quizId: string) {
-    return prisma.quiz.findUnique({
+    return prisma.quiz.findFirst({
       where: { id: quizId, approved: true },
       include: { questions: true },
     });
   }
 
   async findApprovedQuizById(quizId: string) {
-    return prisma.quiz.findUnique({
+    return prisma.quiz.findFirst({
       where: { id: quizId, approved: true },
       select: { id: true, title: true, quizType: true },
     });

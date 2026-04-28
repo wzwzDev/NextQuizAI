@@ -71,7 +71,7 @@ export class CheckAnswerUseCase {
     }
 
     if (question.questionType === "open_ended") {
-      const grading = this.gradeOpenEndedUseCase.execute(
+      const grading = await this.gradeOpenEndedUseCase.execute(
         question.answer,
         input.userAnswer,
       );
