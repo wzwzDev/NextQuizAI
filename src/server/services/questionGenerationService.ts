@@ -1,4 +1,5 @@
 import { strict_output } from "@/server/ai/gpt";
+import { QuestionGenerationConfigAdapter } from "@/infrastructure/question-generation/QuestionGenerationConfigAdapter";
 
 export type TopicQuestionInput = {
   amount: number;
@@ -19,41 +20,18 @@ type McqQuestion = {
   option3: string;
 };
 
-const DEFAULT_QUESTION_MODELS = ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"];
-const DEFAULT_TEMPERATURE = 0.85;
+const configAdapter = new QuestionGenerationConfigAdapter();
 
 function getQuestionGenerationModels() {
-  const fromList = (process.env.OPENAI_QUESTION_MODELS ?? "")
-    .split(",")
-    .map((model) => model.trim())
-    .filter(Boolean);
-
-  const fromSingle = [
-    process.env.OPENAI_QUESTION_MODEL?.trim(),
-    process.env.OPENAI_MODEL?.trim(),
-  ].filter((model): model is string => Boolean(model));
-
-  const merged = [...fromList, ...fromSingle];
-  if (merged.length === 0) {
-    return DEFAULT_QUESTION_MODELS;
-  }
-
-  return Array.from(new Set(merged));
+  return configAdapter.getAvailableModels();
 }
 
 function getQuestionGenerationTemperature() {
-  const raw = process.env.OPENAI_QUESTION_TEMPERATURE;
-  const parsed = raw ? Number(raw) : Number.NaN;
-
-  if (!Number.isFinite(parsed)) {
-    return DEFAULT_TEMPERATURE;
-  }
-
-  return Math.min(1.2, Math.max(0, parsed));
+  return configAdapter.getTemperature();
 }
 
 function createBatchToken() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return configAdapter.createBatchToken();
 }
 
 function shuffleCopy<T>(items: T[]) {
