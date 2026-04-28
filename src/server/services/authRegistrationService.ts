@@ -1,45 +1,36 @@
-import { createEmailVerificationToken } from "@/server/auth/emailVerification";
-import { hashPassword, normalizeEmail } from "@/server/auth/password";
+import { AuthRegistrationRepositoryAdapter } from "@/infrastructure/auth/AuthRegistrationRepositoryAdapter";
+import { EmailVerificationTokenAdapter } from "@/infrastructure/auth/EmailVerificationTokenAdapter";
+import { PasswordHasherAdapter } from "@/infrastructure/security/PasswordHasherAdapter";
+import { VerificationEmailSenderAdapter } from "@/infrastructure/mail/VerificationEmailSenderAdapter";
 import {
-  createUserWithPassword,
-  findUserByEmail,
-} from "@/server/repositories/authRegistrationRepository";
+  RegisterUserWithPasswordUseCase,
+  RegistrationConflictError,
+} from "@/application/use-cases/auth/RegisterUserWithPasswordUseCase";
 import {
   buildVerificationUrl,
-  sendVerificationEmail,
 } from "@/server/mailer/email";
 
-export class RegistrationConflictError extends Error {}
+// Adapter implementing VerificationUrlBuilderPort
+class VerificationUrlBuilder {
+  buildVerificationUrl(token: string): string {
+    return buildVerificationUrl(token);
+  }
+}
+
+const registerUserUseCase = new RegisterUserWithPasswordUseCase(
+  new AuthRegistrationRepositoryAdapter(),
+  new PasswordHasherAdapter(),
+  new EmailVerificationTokenAdapter(),
+  new VerificationUrlBuilder(),
+  new VerificationEmailSenderAdapter(),
+);
+
+export { RegistrationConflictError };
 
 export async function registerUserWithEmailPassword(input: {
   name?: string;
   email: string;
   password: string;
 }) {
-  const email = normalizeEmail(input.email);
-  const name = input.name?.trim() || null;
-
-  const existingUser = await findUserByEmail(email);
-
-  if (existingUser) {
-    throw new RegistrationConflictError(
-      "An account already exists for this email. Sign in or use another email.",
-    );
-  }
-
-  const passwordHash = await hashPassword(input.password);
-
-  await createUserWithPassword({
-    email,
-    name,
-    passwordHash,
-  });
-
-  const { token } = await createEmailVerificationToken(email);
-  const verificationUrl = buildVerificationUrl(token);
-
-  await sendVerificationEmail({
-    to: email,
-    verificationUrl,
-  });
+  await registerUserUseCase.execute(input);
 }
