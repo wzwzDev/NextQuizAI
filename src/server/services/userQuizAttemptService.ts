@@ -1,10 +1,13 @@
+import { StartQuizAttemptUseCase } from "@/application/use-cases/quiz/StartQuizAttemptUseCase";
+import { SubmitQuizAttemptUseCase } from "@/application/use-cases/quiz/SubmitQuizAttemptUseCase";
+import { ReviewQuizAttemptUseCase } from "@/application/use-cases/quiz/ReviewQuizAttemptUseCase";
+import { QuizAttemptRepositoryAdapter } from "@/infrastructure/quiz/QuizAttemptRepositoryAdapter";
 import {
-  completePendingUserQuizAttempt,
-  createUserQuizAttempt,
-  ensurePendingUserQuizAttempt,
-  findUserQuizAttemptByUserAndQuiz,
   listUserQuizAttemptsByUserId,
   listUserQuizAttemptsByUserIdAndQuizIds,
+  findUserQuizAttemptByUserAndQuiz,
+  createUserQuizAttempt,
+  createPendingUserQuizAttempt,
 } from "@/server/repositories/userQuizAttemptRepository";
 
 export class UserQuizAttemptAlreadyCompletedError extends Error {
@@ -21,6 +24,11 @@ export class UserQuizAttemptNotStartedError extends Error {
   }
 }
 
+const quizAttemptRepository = new QuizAttemptRepositoryAdapter();
+const startQuizAttemptUseCase = new StartQuizAttemptUseCase(quizAttemptRepository);
+const submitQuizAttemptUseCase = new SubmitQuizAttemptUseCase(quizAttemptRepository);
+const reviewQuizAttemptUseCase = new ReviewQuizAttemptUseCase(quizAttemptRepository);
+
 export async function saveUserQuizAttempt(params: {
   userId: string;
   quizId: string;
@@ -33,30 +41,35 @@ export async function saveUserQuizAttempt(params: {
     params.quizId,
   );
 
+  // If already completed, throw error
   if (existingAttempt?.status === "completed") {
     throw new UserQuizAttemptAlreadyCompletedError();
   }
 
+  // If pending, complete it
   if (existingAttempt?.status === "pending") {
-    const completedAttempt = await completePendingUserQuizAttempt({
-      userId: params.userId,
-      quizId: params.quizId,
-      answers: params.answers,
-      score: params.score,
-    });
-
-    if (!completedAttempt) {
-      throw new UserQuizAttemptNotStartedError();
+    try {
+      await submitQuizAttemptUseCase.execute({
+        userId: params.userId,
+        quizId: params.quizId,
+        answers: params.answers,
+        score: params.score,
+      });
+      return findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("already completed")) {
+        throw new UserQuizAttemptAlreadyCompletedError();
+      }
+      throw error;
     }
-
-    return completedAttempt;
   }
 
+  // No attempt exists, create a new one
   return createUserQuizAttempt(params);
 }
 
 export async function getUserQuizAttempt(userId: string, quizId: string) {
-  return findUserQuizAttemptByUserAndQuiz(userId, quizId);
+  return reviewQuizAttemptUseCase.execute({ userId, quizId });
 }
 
 export async function ensurePendingQuizAttempt(params: {
@@ -73,7 +86,12 @@ export async function ensurePendingQuizAttempt(params: {
     throw new UserQuizAttemptAlreadyCompletedError();
   }
 
-  const pendingAttempt = await ensurePendingUserQuizAttempt(params);
+  if (existingAttempt?.status === "pending") {
+    return existingAttempt;
+  }
+
+  // Create a new pending attempt
+  const pendingAttempt = await createPendingUserQuizAttempt(params);
   if (!pendingAttempt) {
     throw new UserQuizAttemptNotStartedError();
   }
@@ -100,12 +118,15 @@ export async function completePendingQuizAttempt(params: {
     throw new UserQuizAttemptAlreadyCompletedError();
   }
 
-  const completedAttempt = await completePendingUserQuizAttempt(params);
-  if (!completedAttempt) {
-    throw new UserQuizAttemptNotStartedError();
+  try {
+    await submitQuizAttemptUseCase.execute(params);
+    return findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("already completed")) {
+      throw new UserQuizAttemptAlreadyCompletedError();
+    }
+    throw error;
   }
-
-  return completedAttempt;
 }
 
 export async function getUserQuizAttemptStatuses(
