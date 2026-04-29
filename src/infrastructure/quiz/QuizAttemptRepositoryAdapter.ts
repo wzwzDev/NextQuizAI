@@ -6,24 +6,38 @@ import {
 } from "@/server/repositories/userQuizAttemptRepository";
 
 export class QuizAttemptRepositoryAdapter implements QuizAttemptRepositoryPort {
-  async ensurePendingAttempt(params: {
+  async ensurePending(input: {
     userId: string;
     quizId: string;
     quizTitle: string;
   }) {
-    return ensurePendingUserQuizAttempt(params);
+    return ensurePendingUserQuizAttempt(input);
   }
 
   async findAttemptByUserAndQuiz(userId: string, quizId: string) {
     return findUserQuizAttemptByUserAndQuiz(userId, quizId);
   }
 
-  async completeAttempt(params: {
+  async completeAttempt(input: {
     userId: string;
     quizId: string;
     answers: unknown;
     score: number;
   }) {
-    await completePendingUserQuizAttempt(params);
+    await completePendingUserQuizAttempt(input);
+  }
+
+  async complete(input: {
+    userId: string;
+    quizId: string;
+    score: number;
+    details: unknown;
+  }) {
+    await completePendingUserQuizAttempt({
+      userId: input.userId,
+      quizId: input.quizId,
+      answers: input.details,
+      score: input.score,
+    });
   }
 }
