@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "db:seed": "node prisma/seed.js",
+    "db:reset": "npx prisma migrate reset --force --skip-generate && npm run db:seed",
     "test:frontend": "jest --config jest.frontend.config.js",
     "test:backend": "jest --config jest.backend.config.js",
     "test:backend:watch": "jest --config jest.backend.config.js --watch",

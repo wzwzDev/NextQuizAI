@@ -8,20 +8,16 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { getAuthSession } from "@/server/core/auth";
+import { getTotalGamesCount } from "@/server/services/historyReadService";
 import { redirect } from "next/navigation";
 import HistoryComponent from "../HistoryComponent";
-import { prisma } from "@/server/core/db";
 
 const RecentActivityCard = async () => {
   const session = await getAuthSession();
   if (!session?.user) {
     return redirect("/");
   }
-  const games_count = await prisma.game.count({
-    where: {
-      userId: session.user.id,
-    },
-  });
+  const games_count = await getTotalGamesCount(session.user.id);
   return (
     <Card className="col-span-4 lg:col-span-3">
       <CardHeader>

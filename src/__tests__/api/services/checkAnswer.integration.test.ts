@@ -144,6 +144,27 @@ describe("/api/checkAnswer Route Handler", () => {
     expect(res.body.percentageSimilar).toBe(0);
   });
 
+  it("accepts trimmed multiline execution output", async () => {
+    const multilineQuestion = await prisma.question.create({
+      data: {
+        question: "What does this print?\nconsole.log('Hello');",
+        answer: "Hello\n",
+        questionType: "open_ended",
+        gameId: game.id,
+      },
+    });
+
+    const res = await callHandler(
+      { questionId: multilineQuestion.id, userInput: "  Hello  \n\n" },
+      user.email,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.percentageSimilar).toBe(100);
+
+    await prisma.question.delete({ where: { id: multilineQuestion.id } });
+  });
+
   it("returns 400 for invalid questionId format (number instead of string)", async () => {
     const res = await callHandler({ questionId: "12345", userInput: "Paris" }, user.email);
     expect([400, 404]).toContain(res.status);

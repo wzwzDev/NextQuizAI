@@ -38,7 +38,7 @@ export class StartQuizAttemptUseCase {
     }
 
     // Ensure pending attempt exists or create one
-    const attempt = await this.quizAttemptRepository.ensurePendingAttempt(input);
+    const attempt = await this.quizAttemptRepository.ensurePending(input);
 
     if (!attempt) {
       throw new QuizAttemptStartError();
@@ -46,8 +46,8 @@ export class StartQuizAttemptUseCase {
 
     return {
       id: attempt.id,
-      userId: attempt.userId,
-      quizId: attempt.quizId,
+      userId: input.userId,
+      quizId: input.quizId,
       status: "pending",
     };
   }

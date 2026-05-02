@@ -7,6 +7,7 @@ import {
   findApprovedQuizzesForLibrary,
   findApprovedQuizById,
 } from "@/server/admin/repositories/adminQuizRepository";
+import { AdminQuiz } from "@/domain/entities/AdminQuiz";
 
 /**
  * Adapter for admin quiz repository operations
@@ -26,8 +27,7 @@ export class AdminQuizRepositoryAdapter implements AdminQuizRepositoryPort {
       citation?: { source: string; snippet: string; confidence?: number };
     }>;
   }) {
-    // createAdminQuiz returns the full quiz object with questions included
-    return createAdminQuiz({
+    const res = await createAdminQuiz({
       title: input.title,
       category: input.category,
       difficulty: input.difficulty,
@@ -35,17 +35,22 @@ export class AdminQuizRepositoryAdapter implements AdminQuizRepositoryPort {
       status: input.status,
       questions: input.questions,
     });
+    return AdminQuiz.fromPrisma(res)!;
   }
 
   async findApprovedQuizzesWithAttempts(filter?: {
     category?: string;
     difficulty?: string;
   }) {
-    return findAdminQuizzes(filter);
+    const res = await findAdminQuizzes(filter);
+    return (res ?? [])
+      .map((r: unknown) => AdminQuiz.fromPrisma(r))
+      .filter((quiz): quiz is AdminQuiz => quiz !== null);
   }
 
   async findApprovedQuizById(id: string) {
-    return findApprovedQuizById(id);
+    const res = await findApprovedQuizById(id);
+    return AdminQuiz.fromPrisma(res);
   }
 
   async deleteQuizById(id: string) {
@@ -53,7 +58,10 @@ export class AdminQuizRepositoryAdapter implements AdminQuizRepositoryPort {
   }
 
   async findApprovedQuizzesForLibrary() {
-    return findApprovedQuizzesForLibrary();
+    const res = await findApprovedQuizzesForLibrary();
+    return (res ?? [])
+      .map((r: unknown) => AdminQuiz.fromPrisma(r))
+      .filter((quiz): quiz is AdminQuiz => quiz !== null);
   }
 
   async findAllUserQuizAttempts() {

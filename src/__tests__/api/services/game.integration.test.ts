@@ -82,6 +82,35 @@ describe("/api/game Route Handler", () => {
     expect(typeof json.gameId).toBe("string");
   });
 
+  it("creates an open-ended game and saves generated questions (POST)", async () => {
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+
+    try {
+      const res = await callPost(
+        { topic: "history", type: "open_ended", amount: 2 },
+        user.email,
+      );
+      const json = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(typeof json.gameId).toBe("string");
+
+      const createdGame = await prisma.game.findUnique({
+        where: { id: json.gameId },
+        include: { questions: true },
+      });
+
+      expect(createdGame).toBeTruthy();
+      expect(createdGame?.questions.length).toBe(2);
+      expect(createdGame?.questions.every((question) => question.questionType === "open_ended")).toBe(true);
+    } finally {
+      if (previousApiKey) {
+        process.env.OPENAI_API_KEY = previousApiKey;
+      }
+    }
+  });
+
   // GET tests
   it("returns 401 if not authenticated (GET)", async () => {
     const res = await callGet("missing-id");

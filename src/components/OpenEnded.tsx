@@ -28,6 +28,18 @@ type CheckAnswerResponse = {
   percentageSimilar: number;
 };
 
+function isCodeLikeQuestion(question: string) {
+  return (
+    question.includes("\n") ||
+    question.trim().startsWith("```") ||
+    /\bfunction\b|=>|console\.log|\bvar\b|\bconst\b|\blet\b/.test(question)
+  );
+}
+
+function isFillBlankScriptQuestion(question: string) {
+  return /\[fill_blank\]|fill in the blank|_____/.test(question.toLowerCase());
+}
+
 function extractErrorMessage(error: unknown, fallback: string) {
   const axiosLikeError = error as {
     isAxiosError?: boolean;
@@ -57,6 +69,14 @@ const OpenEnded = ({ game }: Props) => {
   const currentQuestion = React.useMemo(() => {
     return game.questions[questionIndex];
   }, [questionIndex, game.questions]);
+  const codeQuestion = React.useMemo(
+    () => isCodeLikeQuestion(currentQuestion?.question ?? ""),
+    [currentQuestion?.question],
+  );
+  const fillBlankScriptQuestion = React.useMemo(
+    () => isFillBlankScriptQuestion(currentQuestion?.question ?? ""),
+    [currentQuestion?.question],
+  );
   const { mutate: endGame } = useMutation({
     mutationFn: async () => {
       const payload: z.infer<typeof endGameSchema> = {
@@ -75,15 +95,19 @@ const OpenEnded = ({ game }: Props) => {
   >({
     mutationFn: async () => {
       let filledAnswer = blankAnswer;
-      document
-        .querySelectorAll('[data-blank-answer-input="true"]')
-        .forEach((input) => {
-        filledAnswer = filledAnswer.replace(
-          "_____",
-          (input as HTMLInputElement).value,
-        );
-        (input as HTMLInputElement).value = "";
-      });
+
+      if (!codeQuestion || fillBlankScriptQuestion) {
+        document
+          .querySelectorAll('[data-blank-answer-input="true"]')
+          .forEach((input) => {
+            filledAnswer = filledAnswer.replace(
+              "_____",
+              (input as HTMLInputElement).value,
+            );
+            (input as HTMLInputElement).value = "";
+          });
+      }
+
       const payload: z.infer<typeof checkAnswerSchema> = {
         questionId: currentQuestion.id,
         userInput: filledAnswer,
@@ -178,6 +202,10 @@ const OpenEnded = ({ game }: Props) => {
     };
   }, [handleNext]);
 
+  React.useEffect(() => {
+    setBlankAnswer("");
+  }, [currentQuestion?.id, codeQuestion, fillBlankScriptQuestion]);
+
   if (hasEnded) {
     return (
       <div className="absolute flex flex-col justify-center -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
@@ -222,16 +250,38 @@ const OpenEnded = ({ game }: Props) => {
               {game.questions.length}
             </div>
           </CardTitle>
-          <CardDescription className="flex-grow text-lg">
-            {currentQuestion?.question}
-          </CardDescription>
+          {codeQuestion ? (
+            <div className="flex-grow">
+              <pre className="whitespace-pre-wrap rounded-md bg-slate-100 p-3 font-mono text-sm text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                {currentQuestion?.question}
+              </pre>
+            </div>
+          ) : (
+            <CardDescription className="flex-grow text-lg">
+              {currentQuestion?.question}
+            </CardDescription>
+          )}
         </CardHeader>
       </Card>
       <div className="flex flex-col items-center justify-center w-full mt-4">
-        <BlankAnswerInput
-          setBlankAnswer={setBlankAnswer}
-          answer={currentQuestion.answer}
-        />
+        {codeQuestion && !fillBlankScriptQuestion ? (
+          <div className="w-full">
+            <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-slate-300">
+              Type the execution result
+            </label>
+            <textarea
+              className="min-h-32 w-full rounded-md border border-slate-300 bg-white p-3 font-mono text-sm text-slate-900 outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              value={blankAnswer}
+              onChange={(event) => setBlankAnswer(event.target.value)}
+              placeholder="Paste or type the output here"
+            />
+          </div>
+        ) : (
+          <BlankAnswerInput
+            setBlankAnswer={setBlankAnswer}
+            answer={currentQuestion.answer}
+          />
+        )}
         <Button
           variant="outline"
           className="mt-4"

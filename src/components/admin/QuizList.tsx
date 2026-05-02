@@ -79,6 +79,9 @@ type QuizListProps = {
 
 export default function QuizList({ refreshKey = 0 }: QuizListProps) {
   const [allQuizzes, setAllQuizzes] = useState<AdminQuizDraft[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [quizType, setQuizType] = useState("");
@@ -94,7 +97,13 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
 
     (async () => {
       try {
-        const res = await fetch("/api/quiz-review");
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", String(limit));
+        if (category) params.set("category", category);
+        if (difficulty) params.set("difficulty", difficulty);
+
+        const res = await fetch(`/api/quiz-review?${params.toString()}`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -123,6 +132,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           );
 
           setAllQuizzes(normalizedQuizzes);
+          setTotal(Number.isFinite(Number(data.total)) ? Number(data.total) : 0);
         }
       } catch (loadError) {
         if (isMounted) {
@@ -143,7 +153,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
     return () => {
       isMounted = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, page, limit, category, difficulty]);
 
   const categories = React.useMemo(() => {
     return Array.from(
@@ -329,6 +339,29 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           </table>
         </div>
       )}
+
+      {/* Pagination controls */}
+      <div className="mt-4 flex items-center justify-between">
+        <div>
+          <button
+            className="px-3 py-1 mr-2 rounded border"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            Previous
+          </button>
+          <button
+            className="px-3 py-1 rounded border"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page * limit >= total}
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Page {page} — {Math.min(page * limit, total)} of {total}
+        </div>
+      </div>
 
       <Dialog
         open={selectedQuiz !== null}

@@ -368,11 +368,20 @@ export default function QuizReview({
                 </td>
                 <td className="p-2 border">
                   {editIdx === idx ? (
-                    <input
-                      className="border rounded px-2 py-1 w-full"
-                      value={editA}
-                      onChange={(e) => setEditA(e.target.value)}
-                    />
+                    quizType === "mcq" && editA.length <= 80 && !editA.includes("\n") ? (
+                      <input
+                        className="border rounded px-2 py-1 w-full"
+                        value={editA}
+                        onChange={(e) => setEditA(e.target.value)}
+                      />
+                    ) : (
+                      <textarea
+                        className="border rounded px-2 py-1 w-full min-h-24 whitespace-pre-wrap"
+                        value={editA}
+                        onChange={(e) => setEditA(e.target.value)}
+                        placeholder="Type or paste the full expected output"
+                      />
+                    )
                   ) : (
                     q.answer
                   )}

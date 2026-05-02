@@ -1,4 +1,4 @@
-import type { StringSimilarityPort } from "@/application/ports/out/StringSimilarityPort";
+import type { StringSimilarityPort } from "@/domain/ports/StringSimilarityPort";
 import {
   gradeOpenEndedAnswer,
   type OpenEndedGradeResult,

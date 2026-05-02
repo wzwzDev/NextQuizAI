@@ -4,6 +4,7 @@ import {
   findUserQuizAttemptByUserAndQuiz,
   completePendingUserQuizAttempt,
 } from "@/server/repositories/userQuizAttemptRepository";
+import { UserQuizAttempt } from "@/domain/entities/UserQuizAttempt";
 
 export class QuizAttemptRepositoryAdapter implements QuizAttemptRepositoryPort {
   async ensurePending(input: {
@@ -11,11 +12,13 @@ export class QuizAttemptRepositoryAdapter implements QuizAttemptRepositoryPort {
     quizId: string;
     quizTitle: string;
   }) {
-    return ensurePendingUserQuizAttempt(input);
+    const res = await ensurePendingUserQuizAttempt(input);
+    return UserQuizAttempt.fromPrisma(res);
   }
 
   async findAttemptByUserAndQuiz(userId: string, quizId: string) {
-    return findUserQuizAttemptByUserAndQuiz(userId, quizId);
+    const res = await findUserQuizAttemptByUserAndQuiz(userId, quizId);
+    return UserQuizAttempt.fromPrisma(res);
   }
 
   async completeAttempt(input: {

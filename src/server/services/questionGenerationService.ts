@@ -47,11 +47,19 @@ function shuffleCopy<T>(items: T[]) {
 
 function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
   return Array.from({ length: input.amount }, (_, index) => {
+    const isFillBlankMode = index % 2 === 0;
     return [
-      `Generate one challenging short-answer question about ${input.topic}.`,
+      `Generate one challenging code-or-script question about ${input.topic}.`,
       `Question position: ${index + 1}/${input.amount}.`,
       `Batch token: ${batchToken}-${index + 1}.`,
-      "Answer must be exact and concise (1-6 words).",
+      "The question must present a short script, command, code snippet, or console output scenario.",
+      isFillBlankMode
+        ? "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question."
+        : "Use full-output mode and ask the user to type the full execution result.",
+      isFillBlankMode
+        ? "The question must contain exactly one visible blank marker: _____."
+        : "Do not include blank markers in the question text.",
+      "The answer must be the exact execution result, including line breaks when relevant.",
       "Avoid broad definitions, trivia clichés, and repeated phrasing.",
       "Each question in this batch must test a different subtopic.",
     ].join(" ");
@@ -171,28 +179,48 @@ function fillMcqQuestionsWithFallback(
 function buildFallbackOpenEndedQuestions(input: TopicQuestionInput): OpenEndedQuestion[] {
   const topic = normalizeTopic(input.topic);
 
-  const templates = shuffleCopy([
-    `What is one important concept in ${topic}?`,
-    `Name a practical technique used in ${topic}.`,
-    `What is a key term every beginner should know in ${topic}?`,
-    `Identify one core building block of ${topic}.`,
-    `What is one common pitfall to avoid in ${topic}?`,
-    `Name one real-world use case of ${topic}.`,
+  const fallbackPairs = shuffleCopy<OpenEndedQuestion>([
+    {
+      question:
+        "[FILL_BLANK] Complete the blank output.\n\nconsole.log(\"" +
+        topic +
+        "\".toUpperCase());\nOutput: _____",
+      answer: `${topic.toUpperCase()}`,
+    },
+    {
+      question:
+        "What does this print?\n\nconsole.log(\"" + topic + " ready\");",
+      answer: `${topic} ready`,
+    },
+    {
+      question:
+        "[FILL_BLANK] Fill the missing output value.\n\nconst values = [1, 2, 3].map((value) => value * 2);\nconsole.log(values.join(\",\"));\nOutput: _____",
+      answer: "2,4,6",
+    },
+    {
+      question:
+        "What is the output of this snippet?\n\nfunction greet(name) {\n  return \"Hello, \" + name + \"!\";\n}\nconsole.log(greet(\"" +
+        topic +
+        "\"));",
+      answer: `Hello, ${topic}!`,
+    },
+    {
+      question:
+        "What does this program print?\n\nfor (let index = 1; index <= 3; index += 1) {\n  console.log(index);\n}",
+      answer: "1\n2\n3",
+    },
+    {
+      question:
+        "[FILL_BLANK] Complete the missing output.\n\nconsole.log(JSON.stringify({ topic: \"" +
+        topic +
+        "\" }));\nOutput: _____",
+      answer: `{"topic":"${topic}"}`,
+    },
   ]);
 
-  const answers = shuffleCopy([
-    `${topic} fundamentals`,
-    `${topic} workflow`,
-    `${topic} best practice`,
-    `${topic} core concept`,
-    `${topic} architecture`,
-    `${topic} application`,
-  ]);
-
-  return Array.from({ length: input.amount }, (_, index) => ({
-    question: templates[index % templates.length],
-    answer: answers[index % answers.length],
-  }));
+  return Array.from({ length: input.amount }, (_, index) => {
+    return fallbackPairs[index % fallbackPairs.length];
+  });
 }
 
 function buildFallbackMcqQuestions(input: TopicQuestionInput): McqQuestion[] {
@@ -362,11 +390,11 @@ export async function generateQuestionsByTopic(input: TopicQuestionInput) {
     for (const model of models) {
       try {
         const generated = await strict_output(
-          "You are a helpful AI that generates short-answer quiz pairs. Every answer must be an exact, objective target (code output, keyword, syntax token, function name, number, or short phrase). Avoid definition/explanation style questions. Answers must be 1-6 words and never a paragraph.",
+          "You are a helpful AI that generates code-style quiz pairs. Produce a balanced mix of two modes: (1) [FILL_BLANK] questions with exactly one _____ marker, and (2) full-output questions where users type the full execution result. Every question must show a short script, code snippet, or command. The answer must be the exact output of running the code, including line breaks when appropriate. Avoid definitions, explanations, trivia, and paragraph-length answers.",
           buildOpenEndedPrompts(input, batchToken),
           {
             question: "question",
-            answer: "exact answer with max length of 6 words",
+            answer: "exact execution result with line breaks when relevant",
           },
           "",
           false,

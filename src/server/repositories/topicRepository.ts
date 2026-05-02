@@ -39,3 +39,7 @@ export async function incrementTopicCount(topic: string) {
     throw error;
   }
 }
+
+export async function listTopicCounts() {
+  return prisma.topicCount.findMany({ orderBy: { count: "desc" } });
+}

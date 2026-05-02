@@ -2,10 +2,6 @@ import { StartGameUseCase } from "@/application/use-cases/game/StartGameUseCase"
 import { EndGameUseCase } from "@/application/use-cases/game/EndGameUseCase";
 import { GameRepositoryAdapter } from "@/infrastructure/game/GameRepositoryAdapter";
 import { PermissionCheckAdapter } from "@/infrastructure/game/PermissionCheckAdapter";
-import {
-  createQuestionsForGame,
-  findGameWithQuestionsById,
-} from "@/server/repositories/gameRepository";
 import { GameType } from "@prisma/client";
 
 type McqQuestion = {
@@ -20,6 +16,12 @@ type OpenQuestion = {
   question: string;
   answer: string;
 };
+
+const MAX_DB_STRING_LENGTH = 180;
+
+function fitDbString(value: string) {
+  return value.trim().slice(0, MAX_DB_STRING_LENGTH);
+}
 
 const gameRepository = new GameRepositoryAdapter();
 const permissionCheck = new PermissionCheckAdapter();
@@ -42,40 +44,45 @@ export async function saveGeneratedQuestionsForGame(params: {
   if (params.type === "mcq") {
     const manyData = params.questions.map((question) => {
       const typedQuestion = question as McqQuestion;
+      const safeQuestion = fitDbString(typedQuestion.question);
+      const safeAnswer = fitDbString(typedQuestion.answer);
+      const safeOption1 = fitDbString(typedQuestion.option1);
+      const safeOption2 = fitDbString(typedQuestion.option2);
+      const safeOption3 = fitDbString(typedQuestion.option3);
       const options = [
-        typedQuestion.option1,
-        typedQuestion.option2,
-        typedQuestion.option3,
-        typedQuestion.answer,
+        safeOption1,
+        safeOption2,
+        safeOption3,
+        safeAnswer,
       ].sort(() => Math.random() - 0.5);
       return {
-        question: typedQuestion.question,
-        answer: typedQuestion.answer,
+        question: safeQuestion,
+        answer: safeAnswer,
         options: JSON.stringify(options),
         gameId: params.gameId,
         questionType: "mcq" as const,
       };
     });
 
-    await createQuestionsForGame(manyData);
+    await gameRepository.createQuestionsForGame(manyData);
     return;
   }
 
   const manyData = params.questions.map((question) => {
     const typedQuestion = question as OpenQuestion;
     return {
-      question: typedQuestion.question,
-      answer: typedQuestion.answer,
+      question: fitDbString(typedQuestion.question),
+      answer: fitDbString(typedQuestion.answer),
       gameId: params.gameId,
       questionType: "open_ended" as const,
     };
   });
 
-  await createQuestionsForGame(manyData);
+  await gameRepository.createQuestionsForGame(manyData);
 }
 
 export async function getGameWithQuestions(gameId: string) {
-  return findGameWithQuestionsById(gameId);
+  return gameRepository.findGameWithQuestionsById(gameId);
 }
 
 export async function endGame(

@@ -1,8 +1,9 @@
 import MCQ from "@/components/MCQ";
-import { prisma } from "@/server/core/db";
 import { getAuthSession } from "@/server/core/auth";
+import { getGameForStatistics } from "@/server/services/statisticsReadService";
 import { redirect } from "next/navigation";
 import React from "react";
+import type { Game, Question } from "@prisma/client";
 
 type Props = {
   params: Promise<{
@@ -20,21 +21,13 @@ const MCQPage = async (props: Props) => {
     redirect("/");
   }
 
-  const game = await prisma.game.findFirst({
-    where: {
-      id: gameId,
-      ...(isAdmin ? {} : { userId: session.user.id }),
-    },
-    include: {
-      questions: {
-        select: {
-          id: true,
-          question: true,
-          options: true,
-        },
-      },
-    },
-  });
+  const game = (await getGameForStatistics({
+    gameId,
+    userId: session.user.id,
+    isAdmin,
+  })) as (Game & {
+    questions: Pick<Question, "id" | "question" | "options">[];
+  }) | null;
   if (!game || game.gameType === "open_ended") {
     return redirect("/quiz");
   }

@@ -55,13 +55,14 @@ describe("/api/users Route Handler", () => {
   });
 
   it("returns all users for admin", async () => {
-    const req = new Request("http://localhost/api/users", {
+    const req = new Request("http://localhost/api/users?limit=100", {
       method: "GET",
       headers: { "x-test-user-email": adminUser.email },
     });
     const res = await GET(req);
     expect(res.status).toBe(200);
-    const users = (await res.json()) as AdminUserResponse[];
+    const payload = await res.json();
+    const users = Array.isArray(payload) ? payload : payload?.users ?? [];
     expect(Array.isArray(users)).toBe(true);
     expect(users.some((u) => u.email === "adminusers@example.com")).toBe(true);
     expect(users.some((u) => u.email === "userusers@example.com")).toBe(true);

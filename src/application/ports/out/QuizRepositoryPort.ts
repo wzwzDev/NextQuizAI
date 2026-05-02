@@ -1,5 +1,5 @@
+import type { Quiz } from "@/domain/entities/Quiz";
+
 export interface QuizRepositoryPort {
-  findApprovedById(
-    id: string,
-  ): Promise<{ id: string; title: string; quizType: "mcq" | "open_ended" } | null>;
+  findApprovedById(id: number): Promise<Quiz | null>;
 }

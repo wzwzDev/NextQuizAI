@@ -1,5 +1,5 @@
 import stringSimilarity from "string-similarity";
-import type { StringSimilarityPort } from "@/application/ports/out/StringSimilarityPort";
+import type { StringSimilarityPort } from "@/domain/ports/StringSimilarityPort";
 
 function normalizeText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();

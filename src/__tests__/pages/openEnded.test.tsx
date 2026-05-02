@@ -95,4 +95,41 @@ describe("OpenEnded", () => {
     // Button should not be in the document
     expect(screen.queryByRole("button", { name: /Next/i })).not.toBeInTheDocument();
   });
+
+  it("renders a textarea for code-style questions", () => {
+    const codeGame = {
+      ...mockGame,
+      questions: [
+        {
+          id: "q-code",
+          question: "console.log('Hello world');",
+          answer: "Hello world",
+        },
+      ],
+    };
+
+    render(<OpenEnded game={codeGame as any} />);
+
+    expect(screen.getByText(/console\.log/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/output here/i)).toBeInTheDocument();
+  });
+
+  it("renders fill-blank input for [FILL_BLANK] script questions", () => {
+    const fillBlankCodeGame = {
+      ...mockGame,
+      questions: [
+        {
+          id: "q-code-blank",
+          question: "[FILL_BLANK] Complete output\\n\\nconsole.log('A');\\nOutput: _____",
+          answer: "A",
+        },
+      ],
+    };
+
+    render(<OpenEnded game={fillBlankCodeGame as any} />);
+
+    expect(screen.getByText(/\[FILL_BLANK\]/)).toBeInTheDocument();
+    expect(screen.getByTestId("blank-input")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/output here/i)).not.toBeInTheDocument();
+  });
 });

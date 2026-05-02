@@ -1,5 +1,6 @@
 import type { GameRepositoryPort } from "@/application/ports/out/GameRepositoryPort";
 import { GameType } from "@prisma/client";
+import type { Game } from "@prisma/client";
 
 export class StartGameUseCase {
   constructor(private gameRepository: GameRepositoryPort) {}
@@ -8,13 +9,7 @@ export class StartGameUseCase {
     userId: string;
     topic: string;
     type: GameType;
-  }): Promise<{
-    id: string;
-    userId: string;
-    topic: string;
-    gameType: GameType;
-    timeStarted: Date;
-  }> {
+  }): Promise<Game> {
     // Create game
     const game = await this.gameRepository.createGame({
       userId: input.userId,

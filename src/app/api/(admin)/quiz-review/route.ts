@@ -80,13 +80,19 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const difficulty = searchParams.get("difficulty");
+  const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
+  const limit = parseInt(searchParams.get("limit") ?? "10", 10) || 10;
 
-  const quizzes = await getAdminQuizzes({
+  const allQuizzes = await getAdminQuizzes({
     category: category ?? undefined,
     difficulty: difficulty ?? undefined,
   });
 
-  return NextResponse.json({ quizzes });
+  const total = Array.isArray(allQuizzes) ? allQuizzes.length : 0;
+  const start = (page - 1) * limit;
+  const pageItems = Array.isArray(allQuizzes) ? allQuizzes.slice(start, start + limit) : [];
+
+  return NextResponse.json({ quizzes: pageItems, total });
 }
 
 export async function DELETE(req: NextRequest) {

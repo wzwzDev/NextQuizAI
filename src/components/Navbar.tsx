@@ -8,6 +8,13 @@ import { Home, Sparkles, ShieldCheck, ChartSpline } from "lucide-react";
 
 const Navbar = async () => {
   const session = await getAuthSession();
+  const isAuthenticated = Boolean(
+    session?.user?.id &&
+      session?.user?.email &&
+      !session?.user?.banned &&
+      !session?.user?.revoked,
+  );
+  const authenticatedUser = isAuthenticated && session?.user ? session.user : null;
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 px-3 py-3 sm:px-6">
@@ -21,28 +28,30 @@ const Navbar = async () => {
           </p>
         </Link>
 
-        <nav className="mx-2 hidden flex-1 justify-center md:flex">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/home"
-              className="chip-pill lift-hover inline-flex items-center gap-2 px-4 py-2 text-sm text-foreground"
-            >
-              <Home className="h-4 w-4 text-primary" />
-              Home
-            </Link>
-            <Link
-              href="/mystats"
-              className="chip-pill lift-hover inline-flex items-center gap-2 px-4 py-2 text-sm text-foreground"
-            >
-              <ChartSpline className="h-4 w-4 text-secondary-foreground" />
-              My Stats
-            </Link>
-          </div>
-        </nav>
+        {isAuthenticated && (
+          <nav className="mx-2 hidden flex-1 justify-center md:flex">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/home"
+                className="chip-pill lift-hover inline-flex items-center gap-2 px-4 py-2 text-sm text-foreground"
+              >
+                <Home className="h-4 w-4 text-primary" />
+                Home
+              </Link>
+              <Link
+                href="/mystats"
+                className="chip-pill lift-hover inline-flex items-center gap-2 px-4 py-2 text-sm text-foreground"
+              >
+                <ChartSpline className="h-4 w-4 text-secondary-foreground" />
+                My Stats
+              </Link>
+            </div>
+          </nav>
+        )}
 
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle className="mr-1" />
-          {session?.user?.isAdmin && (
+          {authenticatedUser?.isAdmin && (
             <Link
               href="/admin"
               className="chip-pill lift-hover inline-flex items-center gap-2 px-3 py-2 text-xs text-foreground sm:text-sm"
@@ -51,8 +60,8 @@ const Navbar = async () => {
               Admin
             </Link>
           )}
-          {session?.user ? (
-            <UserAccountNav user={session.user} />
+          {authenticatedUser ? (
+            <UserAccountNav user={authenticatedUser} />
           ) : (
             <SignInButton text={"Sign In"} />
           )}

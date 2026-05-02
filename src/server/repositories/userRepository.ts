@@ -46,9 +46,27 @@ export async function findUserIdentityById(userId: string) {
   });
 }
 
+export async function findUserIdentityByEmail(email: string) {
+  return prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      isAdmin: true,
+    },
+  });
+}
+
 export async function findUserBanStatus(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
+    select: { banned: true },
+  });
+}
+
+export async function findUserBanStatusByEmail(email: string) {
+  return prisma.user.findUnique({
+    where: { email },
     select: { banned: true },
   });
 }

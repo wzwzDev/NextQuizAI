@@ -5,7 +5,6 @@ import QuizReview from "@/components/admin/QuizReview";
 import QuizList from "@/components/admin/QuizList";
 import QuizStatistics from "@/components/admin/QuizStatistics";
 import UserManagement from "@/components/admin/UserManagement";
-import AIReviewQueue from "@/components/admin/AIReviewQueue";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,7 +22,6 @@ import {
 } from "@/components/ui/card";
 import {
   BarChart3,
-  BrainCircuit,
   ClipboardList,
   Maximize2,
   Minimize2,
@@ -32,7 +30,7 @@ import {
 } from "lucide-react";
 import { AdminQuizDraft } from "@/components/admin/types";
 
-type ExpandedSection = "statistics" | "review" | "users" | "ai-review" | null;
+type ExpandedSection = "statistics" | "review" | "users" | null;
 
 const AdminDashboardClient = () => {
   const [quizToReview, setQuizToReview] = useState<AdminQuizDraft | null>(null);
@@ -62,12 +60,6 @@ const AdminDashboardClient = () => {
       if (event.key === "3") {
         event.preventDefault();
         setExpandedSection("users");
-        return;
-      }
-
-      if (event.key === "4") {
-        event.preventDefault();
-        setExpandedSection("ai-review");
         return;
       }
 
@@ -157,8 +149,6 @@ const AdminDashboardClient = () => {
         ? "Quiz Review / List"
         : expandedSection === "users"
           ? "User Management"
-          : expandedSection === "ai-review"
-            ? "AI Review Queue"
           : "";
 
   const expandedDescription =
@@ -168,8 +158,6 @@ const AdminDashboardClient = () => {
         ? "Review quizzes awaiting approval or see all quizzes."
         : expandedSection === "users"
           ? "Manage users and their permissions."
-          : expandedSection === "ai-review"
-            ? "Review low-confidence AI grading decisions."
           : "";
 
   return (
@@ -184,7 +172,7 @@ const AdminDashboardClient = () => {
       </div>
 
       <p className="mb-5 text-sm text-muted-foreground">
-        Shortcuts: Alt+1 Statistics, Alt+2 Quiz Review, Alt+3 Users, Alt+4 AI Review, Alt+0 Close.
+        Shortcuts: Alt+1 Statistics, Alt+2 Quiz Review, Alt+3 Users, Alt+0 Close.
       </p>
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="section-shell border-0 bg-card/80">
@@ -289,37 +277,6 @@ const AdminDashboardClient = () => {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6">
-        <Card className="section-shell lift-hover flex min-h-[30rem] flex-col border-0 bg-card/80">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0">
-            <div className="space-y-1.5">
-              <CardTitle className="inline-flex items-center gap-2 text-xl">
-                <BrainCircuit className="h-5 w-5 text-primary" />
-                AI Review Queue
-              </CardTitle>
-              <CardDescription>
-                Review low-confidence AI grading decisions and resolve edge cases.
-              </CardDescription>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Expand AI review queue"
-              title="Maximize (Alt+4)"
-              onClick={() => setExpandedSection("ai-review")}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="h-full w-full overflow-y-auto pr-1">
-              <AIReviewQueue compact />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Dialog
         open={expandedSection !== null}
         onOpenChange={(open) => {
@@ -356,7 +313,6 @@ const AdminDashboardClient = () => {
                 {expandedSection === "statistics" && <QuizStatistics compact />}
                 {expandedSection === "review" && renderQuizReviewContent()}
                 {expandedSection === "users" && <UserManagement compact />}
-                {expandedSection === "ai-review" && <AIReviewQueue compact />}
               </div>
             </div>
           )}

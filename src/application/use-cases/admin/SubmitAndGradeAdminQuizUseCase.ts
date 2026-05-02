@@ -1,10 +1,7 @@
 import { AdminQuizRepositoryPort } from "@/application/ports/admin/AdminQuizRepositoryPort";
 import { AdminQuizGradingPort } from "@/application/ports/admin/AdminQuizGradingPort";
-import {
-  completePendingQuizAttempt,
-  ensurePendingQuizAttempt,
-} from "@/server/services/userQuizAttemptService";
-import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
+import { AdminQuizAttemptLifecyclePort } from "@/application/ports/admin/AdminQuizAttemptLifecyclePort";
+import { AdminQuizQuestionMetadataPort } from "@/application/ports/admin/AdminQuizQuestionMetadataPort";
 
 export type AdminQuizQuestionResult = {
   question: string;
@@ -48,6 +45,8 @@ export class SubmitAndGradeAdminQuizUseCase {
   constructor(
     private adminQuizRepository: AdminQuizRepositoryPort,
     private adminQuizGrading: AdminQuizGradingPort,
+    private quizAttemptLifecycle: AdminQuizAttemptLifecyclePort,
+    private questionMetadata: AdminQuizQuestionMetadataPort,
   ) {}
 
   async execute(input: {
@@ -74,7 +73,7 @@ export class SubmitAndGradeAdminQuizUseCase {
           userInput: userAnswer,
           quizType: quiz.quizType,
         });
-        const metadata = parseQuestionMetadata(question.options);
+        const metadata = this.questionMetadata.parse(question.options);
 
         return {
           question: question.question,
@@ -100,14 +99,14 @@ export class SubmitAndGradeAdminQuizUseCase {
     );
 
     // Ensure pending attempt exists
-    await ensurePendingQuizAttempt({
+    await this.quizAttemptLifecycle.ensurePendingAttempt({
       userId: input.userId,
       quizId: quiz.id,
       quizTitle: quiz.title,
     });
 
     // Complete the attempt
-    await completePendingQuizAttempt({
+    await this.quizAttemptLifecycle.completePendingAttempt({
       userId: input.userId,
       quizId: quiz.id,
       answers: {

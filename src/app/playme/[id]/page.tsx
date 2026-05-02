@@ -1,6 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 type Question = {
   id: string;
@@ -48,6 +49,7 @@ type Quiz = {
 export default function QuizPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const quizId = params.id as string;
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,6 +141,10 @@ export default function QuizPage() {
             typeof data?.score === "number" ? data.score : null,
           );
           setError(data?.error || "You already completed this quiz.");
+          toast({
+            title: "Quiz already completed",
+            description: "You can review your score and return to home.",
+          });
           return;
         }
 
@@ -172,13 +178,33 @@ export default function QuizPage() {
           setAttemptStatus(data?.attemptStatus === "pending" ? "pending" : "available");
           setQuiz(parsedQuiz);
           setUserAnswers(Array(questions.length).fill(""));
+          toast({
+            title: data?.attemptStatus === "pending" ? "Quiz resumed" : "Quiz started",
+            description:
+              data?.attemptStatus === "pending"
+                ? "Continue where you left off."
+                : "Good luck. Your quiz is ready.",
+            variant: "success",
+          });
         } else {
           setError(data?.error || "Quiz not found.");
+          toast({
+            title: "Could not load quiz",
+            description: data?.error || "Quiz not found.",
+            variant: "destructive",
+          });
         }
       })
-      .catch(() => setError("Failed to load quiz."))
+      .catch(() => {
+        setError("Failed to load quiz.");
+        toast({
+          title: "Network error",
+          description: "Failed to load quiz.",
+          variant: "destructive",
+        });
+      })
       .finally(() => setLoading(false));
-  }, [quizId]);
+  }, [quizId, toast]);
 
   async function submitQuizAttempt() {
     if (!quiz) {
@@ -227,12 +253,22 @@ export default function QuizPage() {
       try {
         await submitQuizAttempt();
         setShowFinish(true);
+        toast({
+          title: "Quiz submitted",
+          description: "Your results are ready.",
+          variant: "success",
+        });
       } catch (submissionError) {
         const message =
           submissionError instanceof Error
             ? submissionError.message
             : "Failed to submit quiz.";
         setSubmitError(message);
+        toast({
+          title: "Submission failed",
+          description: message,
+          variant: "destructive",
+        });
       } finally {
         setSubmitting(false);
       }
@@ -285,10 +321,28 @@ export default function QuizPage() {
 
   const question = quiz.questions[current];
   const hasAnswer = userAnswers[current]?.trim().length > 0;
+  const answeredCount = userAnswers.filter((answer) => answer.trim().length > 0).length;
+  const totalQuestions = quiz.questions.length;
+  const remainingQuestions = Math.max(totalQuestions - answeredCount, 0);
+  const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
   return (
     <main className="p-8 mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold mb-4">{quiz.title}</h1>
+      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Progress</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{progress}%</p>
+        </div>
+        <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Answered</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{answeredCount}</p>
+        </div>
+        <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Remaining</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{remainingQuestions}</p>
+        </div>
+      </div>
       <div className="mb-2 text-gray-600">
         Category: {quiz.category} | Difficulty: {quiz.difficulty} | Type: {quiz.quizType === "mcq" ? "Multiple Choice" : "Open Ended"}
       </div>

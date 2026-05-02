@@ -1,4 +1,4 @@
-import { updateUserOnlineByEmail } from "@/server/repositories/userRepository";
+import { UserRepositoryAdapter } from "@/infrastructure/user/UserRepositoryAdapter";
 
 export {
   getUsersForAdmin,
@@ -9,6 +9,8 @@ export {
   setUserRevoked,
 } from "@/server/admin/services/adminUserManagementService";
 
+const userRepository = new UserRepositoryAdapter();
+
 export async function markUserOfflineByEmail(email: string) {
-  return updateUserOnlineByEmail(email, false);
+  return userRepository.setOnlineByEmail(email, false);
 }

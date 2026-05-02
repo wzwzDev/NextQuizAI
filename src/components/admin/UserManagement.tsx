@@ -20,15 +20,29 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (pageNum?: number) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/users");
+      let response;
+      if (pageNum === undefined) {
+        response = await fetch(`/api/users`);
+      } else {
+        const params = new URLSearchParams();
+        params.set("page", String(pageNum));
+        params.set("limit", String(limit));
+        response = await fetch(`/api/users?${params.toString()}`);
+      }
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setUsers(data);
+      if (Array.isArray(data.users) || Array.isArray(data)) {
+        // support both legacy and new paginated responses
+        const usersList = Array.isArray(data.users) ? data.users : data;
+        setUsers(usersList);
+        setTotal(Number.isFinite(Number(data.total)) ? Number(data.total) : usersList.length);
       } else {
         setUsers([]);
         setError(data.error || "Failed to load users");
@@ -103,7 +117,7 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
     <div className={compact ? "h-full" : "rounded-xl bg-white p-8 shadow dark:bg-black"}>
       {!compact && <h2 className="mb-4 text-2xl font-bold">User Management</h2>}
       <button
-        onClick={fetchUsers}
+        onClick={() => fetchUsers(undefined)}
         className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
       >
         Refresh
@@ -215,6 +229,36 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
             ))}
           </tbody>
         </table>
+      </div>
+      {/* Pagination controls */}
+      <div className="mt-4 flex items-center justify-between">
+        <div>
+          <button
+            className="px-3 py-1 mr-2 rounded border"
+            onClick={() => {
+              const next = Math.max(1, page - 1);
+              setPage(next);
+              fetchUsers(next);
+            }}
+            disabled={page <= 1}
+          >
+            Previous
+          </button>
+          <button
+            className="px-3 py-1 rounded border"
+            onClick={() => {
+              const next = page + 1;
+              setPage(next);
+              fetchUsers(next);
+            }}
+            disabled={page * limit >= total}
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Page {page} — {Math.min(page * limit, total)} of {total}
+        </div>
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ export async function saveUserQuizAttempt(params: {
         answers: params.answers,
         score: params.score,
       });
-      return findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId);
+      return (await findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId))!;
     } catch (error) {
       if (error instanceof Error && error.message.includes("already completed")) {
         throw new UserQuizAttemptAlreadyCompletedError();
@@ -120,7 +120,7 @@ export async function completePendingQuizAttempt(params: {
 
   try {
     await submitQuizAttemptUseCase.execute(params);
-    return findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId);
+    return (await findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId))!;
   } catch (error) {
     if (error instanceof Error && error.message.includes("already completed")) {
       throw new UserQuizAttemptAlreadyCompletedError();

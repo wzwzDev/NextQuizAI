@@ -1,7 +1,4 @@
-/**
- * Port for admin quiz repository operations
- * Defines the contract for quiz management in the admin domain
- */
+import type { AdminQuiz } from "@/domain/entities/AdminQuiz";
 
 export interface AdminQuizRepositoryPort {
   createApprovedQuiz(input: {
@@ -13,78 +10,21 @@ export interface AdminQuizRepositoryPort {
     questions: Array<{
       question: string;
       answer: string;
-      options?: string[];
+      options?: unknown;
       citation?: { source: string; snippet: string; confidence?: number };
     }>;
-  }): Promise<{
-    id: string;
-    title: string;
-    category: string;
-    difficulty: string;
-    quizType: "mcq" | "open_ended";
-    status: string;
-    questions: Array<{
-      id: string;
-      question: string;
-      answer: string;
-      options?: string | null;
-      citation?: { source: string; snippet: string; confidence?: number };
-    }>;
-  }>;
+  }): Promise<AdminQuiz>;
 
   findApprovedQuizzesWithAttempts(filter?: {
     category?: string;
     difficulty?: string;
-  }): Promise<
-    Array<{
-      id: string;
-      title: string;
-      category: string;
-      difficulty: string;
-      quizType: "mcq" | "open_ended";
-      status: string;
-      questions: Array<{
-        question: string;
-        answer: string;
-        options?: string[];
-        citation?: { source: string; snippet: string; confidence?: number };
-      }>;
-      _count?: { questions: number };
-    }>
-  >;
+  }): Promise<AdminQuiz[]>;
 
-  findApprovedQuizById(id: string): Promise<{
-    id: string;
-    title: string;
-    category: string;
-    difficulty: string;
-    quizType: "mcq" | "open_ended";
-    status: string;
-    questions: Array<{
-      question: string;
-      answer: string;
-      options?: string;
-      citation?: { source: string; snippet: string; confidence?: number };
-    }>;
-    createdAt: Date;
-    updatedAt: Date;
-  } | null>;
+  findApprovedQuizById(id: string): Promise<AdminQuiz | null>;
 
   deleteQuizById(id: string): Promise<void>;
 
-  findApprovedQuizzesForLibrary(): Promise<
-    Array<{
-      id: string;
-      title: string;
-      category: string;
-      difficulty: string;
-      quizType: "mcq" | "open_ended";
-      status: string;
-      createdAt: Date;
-      updatedAt: Date;
-      _count: { questions: number };
-    }>
-  >;
+  findApprovedQuizzesForLibrary(): Promise<AdminQuiz[]>;
 
   findAllUserQuizAttempts(): Promise<
     Array<{

@@ -6,9 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getUserBannedStatusByEmail } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/db";
 import { Sparkles, Trophy } from "lucide-react";
 export default async function Home() {
   const session = await getServerSession();
@@ -17,12 +17,8 @@ export default async function Home() {
     if (!email) {
       redirect("/dashboard");
     }
-    // Fetch user from DB to check banned status
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { banned: true },
-    });
-    if (user?.banned) {
+    const isBanned = await getUserBannedStatusByEmail(email);
+    if (isBanned) {
       redirect("/banned");
     }
     redirect("/dashboard");

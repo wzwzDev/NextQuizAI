@@ -1,5 +1,11 @@
-import { findRecentGamesByUserId } from "@/server/repositories/gameRepository";
+import { GameRepositoryAdapter } from "@/infrastructure/game/GameRepositoryAdapter";
+
+const gameRepository = new GameRepositoryAdapter();
 
 export async function getRecentGames(input: { userId: string; limit: number }) {
-  return findRecentGamesByUserId(input.userId, input.limit);
+  return gameRepository.findRecentGamesByUserId(input.userId, input.limit);
+}
+
+export async function getTotalGamesCount(userId: string) {
+  return gameRepository.countGamesByUserId(userId);
 }

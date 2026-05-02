@@ -1,16 +1,12 @@
 import { GradeOpenEndedAnswerUseCase } from "@/application/use-cases/quiz/GradeOpenEndedAnswerUseCase";
 import type { OpenEndedGradingMethod } from "@/domain/services/OpenEndedGrader";
+import { QuestionRepositoryAdapter } from "@/infrastructure/game/QuestionRepositoryAdapter";
 import { StringSimilarityAdapter } from "@/infrastructure/similarity/StringSimilarityAdapter";
-import {
-  findQuestionWithGameOwnerById,
-  saveMcqResult,
-  saveOpenEndedResult,
-  saveUserAnswer,
-} from "@/server/repositories/questionRepository";
 
 const gradeOpenEndedAnswerUseCase = new GradeOpenEndedAnswerUseCase(
   new StringSimilarityAdapter(),
 );
+const questionRepository = new QuestionRepositoryAdapter();
 
 export function cosineSimilarity(a: number[], b: number[]) {
   if (!a.length || !b.length || a.length !== b.length) {
@@ -55,7 +51,7 @@ export async function gradeAndSaveAnswer(
   userInput: string,
   requester?: { userId: string; isAdmin?: boolean },
 ) {
-  const question = await findQuestionWithGameOwnerById(questionId);
+  const question = await questionRepository.findById(questionId);
   if (!question) {
     return { status: 404 as const, body: { message: "Question not found" } };
   }
@@ -68,12 +64,12 @@ export async function gradeAndSaveAnswer(
     return { status: 403 as const, body: { message: "Forbidden" } };
   }
 
-  await saveUserAnswer(questionId, userInput);
+  await questionRepository.saveUserAnswer(questionId, userInput);
 
   if (question.questionType === "mcq") {
     const isCorrect =
       question.answer.toLowerCase().trim() === userInput.toLowerCase().trim();
-    await saveMcqResult(questionId, isCorrect);
+    await questionRepository.saveMcqResult(questionId, isCorrect);
     return { status: 200 as const, body: { isCorrect } };
   }
 
@@ -82,7 +78,7 @@ export async function gradeAndSaveAnswer(
       question.answer,
       userInput,
     );
-    await saveOpenEndedResult(questionId, percentageSimilar);
+    await questionRepository.saveOpenEndedResult(questionId, percentageSimilar);
     return {
       status: 200 as const,
       body: { percentageSimilar, gradingMethod },

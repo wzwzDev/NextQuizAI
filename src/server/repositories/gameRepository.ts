@@ -79,3 +79,15 @@ export async function createQuestionsForGame(
 ) {
   return prisma.question.createMany({ data: manyData });
 }
+
+export async function findRecentGamesByUserId(userId: string, limit: number) {
+  return prisma.game.findMany({
+    where: { userId },
+    orderBy: { timeStarted: "desc" },
+    take: limit,
+  });
+}
+
+export async function countGamesByUserId(userId: string) {
+  return prisma.game.count({ where: { userId } });
+}

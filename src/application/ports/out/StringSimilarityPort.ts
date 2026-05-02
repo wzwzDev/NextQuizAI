@@ -1,3 +1,1 @@
-export interface StringSimilarityPort {
-  compare(left: string, right: string): number;
-}
+export type { StringSimilarityPort } from "@/domain/ports/StringSimilarityPort";

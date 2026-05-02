@@ -6,11 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getHotTopics } from "@/server/services/topicReadService";
 import WordCloud from "../WordCloud";
-import { prisma } from "@/server/core/db";
 
 const HotTopicsCard = async () => {
-  const topics = await prisma.topicCount.findMany({});
+  const topics = await getHotTopics();
   const formattedTopics = topics.map((topic) => {
     return {
       text: topic.topic,

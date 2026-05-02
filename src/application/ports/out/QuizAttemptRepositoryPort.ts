@@ -1,14 +1,16 @@
+import type { UserQuizAttempt } from "@/domain/entities/UserQuizAttempt";
+
 export interface QuizAttemptRepositoryPort {
   ensurePending(input: {
     userId: string;
     quizId: string;
     quizTitle: string;
-  }): Promise<{ id: string; status: "pending" | "completed" }>;
+  }): Promise<UserQuizAttempt | null>;
 
   findAttemptByUserAndQuiz(
     userId: string,
     quizId: string,
-  ): Promise<{ id: string; status: "pending" | "completed" } | null>;
+  ): Promise<UserQuizAttempt | null>;
 
   completeAttempt(input: {
     userId: string;

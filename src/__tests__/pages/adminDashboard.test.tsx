@@ -8,7 +8,6 @@ jest.mock("@/components/admin/QuizReview", () => () => <div>QuizReview</div>);
 jest.mock("@/components/admin/QuizList", () => () => <div>QuizList</div>);
 jest.mock("@/components/admin/QuizStatistics", () => () => <div>QuizStatistics</div>);
 jest.mock("@/components/admin/UserManagement", () => () => <div>UserManagement</div>);
-jest.mock("@/components/admin/AIReviewQueue", () => () => <div>AIReviewQueue</div>);
 
 describe("AdminDashboardClient", () => {
   it("renders dashboard sections", () => {
@@ -18,12 +17,10 @@ describe("AdminDashboardClient", () => {
     expect(screen.getByText(/Quiz Statistics/)).toBeInTheDocument();
     expect(screen.getByText(/Quiz Review \/ List/)).toBeInTheDocument();
     expect(screen.getByText(/User Management/)).toBeInTheDocument();
-    expect(screen.getByText(/AI Review Queue/)).toBeInTheDocument();
     expect(screen.getByText("QuizUpload")).toBeInTheDocument();
     expect(screen.getByText("QuizStatistics")).toBeInTheDocument();
     expect(screen.getByText("QuizList")).toBeInTheDocument();
     expect(screen.getByText("UserManagement")).toBeInTheDocument();
-    expect(screen.getByText("AIReviewQueue")).toBeInTheDocument();
   });
 
   it("opens centered dialog when a card expand button is clicked", () => {
@@ -52,9 +49,6 @@ describe("AdminDashboardClient", () => {
 
     fireEvent.keyDown(window, { key: "3", altKey: true });
     expect(screen.getAllByText("UserManagement")).toHaveLength(2);
-
-    fireEvent.keyDown(window, { key: "4", altKey: true });
-    expect(screen.getAllByText("AIReviewQueue")).toHaveLength(2);
 
     fireEvent.keyDown(window, { key: "0", altKey: true });
     expect(screen.getAllByText("UserManagement")).toHaveLength(1);

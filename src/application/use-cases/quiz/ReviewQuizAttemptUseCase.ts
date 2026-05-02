@@ -1,4 +1,5 @@
 import type { QuizAttemptRepositoryPort } from "@/application/ports/out/QuizAttemptRepositoryPort";
+import type { UserQuizAttempt } from "@/domain/entities/UserQuizAttempt";
 
 export class ReviewQuizAttemptUseCase {
   constructor(private quizAttemptRepository: QuizAttemptRepositoryPort) {}
@@ -6,10 +7,7 @@ export class ReviewQuizAttemptUseCase {
   async execute(input: {
     userId: string;
     quizId: string;
-  }): Promise<{
-    id: string;
-    status: "pending" | "completed";
-  } | null> {
+  }): Promise<UserQuizAttempt | null> {
     return this.quizAttemptRepository.findAttemptByUserAndQuiz(
       input.userId,
       input.quizId,

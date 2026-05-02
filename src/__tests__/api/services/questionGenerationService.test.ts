@@ -85,4 +85,31 @@ describe("questionGenerationService", () => {
       },
     ]);
   });
+
+  it("prompts open-ended generation for code or script execution results", async () => {
+    const strictOutputSpy = jest
+      .spyOn(gpt, "strict_output")
+      .mockResolvedValueOnce([
+        {
+          question: "Run this script and type the exact output:\n\nconsole.log(\"react\".toUpperCase());",
+          answer: "REACT",
+        },
+      ]);
+
+    await generateQuestionsByTopic({
+      amount: 1,
+      topic: "react",
+      type: "open_ended",
+    });
+
+    expect(strictOutputSpy).toHaveBeenCalled();
+    const [systemPrompt, prompts, outputFormat] = strictOutputSpy.mock.calls[0];
+    expect(String(systemPrompt)).toContain("code-style quiz pairs");
+    expect(String(systemPrompt)).toContain("balanced mix");
+    expect(String(prompts[0])).toContain("code-or-script question");
+    expect(String(prompts[0])).toContain("exact execution result");
+    expect(String(prompts[0])).toContain("[FILL_BLANK]");
+    expect(outputFormat).toHaveProperty("question");
+    expect(outputFormat).toHaveProperty("answer");
+  });
 });
