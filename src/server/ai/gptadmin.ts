@@ -72,6 +72,7 @@ function parseRetryDelayMs(error: unknown, attempt: number): number {
   }
 
   const exponential = MIN_RATE_LIMIT_DELAY_MS * Math.pow(2, attempt);
+  // SAFE: Using crypto.randomInt for cryptographically secure jitter (not security-critical but acceptable)
   const jitter = randomInt(0, 150);
   return Math.min(MAX_RATE_LIMIT_DELAY_MS, exponential + jitter);
 }

@@ -4,25 +4,34 @@ interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
 }
 
+let cachedClient: OpenAI | null = null;
+let cachedApiKey: string | null = null;
+
 /**
- * Refactored strict_output function now accepts an optional OpenAI client instance.
- * If not provided, it creates its own with env var.
+ * Gets or creates a cached OpenAI client instance.
+ * SAFE: Client is cached to prevent repeated instantiation with API keys.
+ * @returns OpenAI client instance
+ * @throws Error if OPENAI_API_KEY is not set
  */
-export async function strict_output(
-  system_prompt: string,
-  user_prompt: string | string[],
-  output_format: OutputFormat,
-  default_category: string = "",
-  output_value_only: boolean = false,
-  model: string = "gpt-3.5-turbo",
-  temperature: number = 1,
-  num_tries: number = 3,
-  verbose: boolean = false,
-  openaiClient?: OpenAI, // <-- injected client
-): Promise<{ question: string; answer: string }[]> {
-  // Use provided client or create new one
-  const openai =
-    openaiClient ?? new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOrCreateClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "The OPENAI_API_KEY environment variable is missing or empty."
+    );
+  }
+
+  if (cachedClient && cachedApiKey === apiKey) {
+    return cachedClient;
+  }
+
+  cachedClient = new OpenAI({ apiKey });
+  cachedApiKey = apiKey;
+  return cachedClient;
+}
+
+/**
+ * Refactored strict_output function now accepts an optional OpenAI client instance.\n * If not provided, uses cached client or creates new one with env var.\n */\nexport async function strict_output(\n  system_prompt: string,\n  user_prompt: string | string[],\n  output_format: OutputFormat,\n  default_category: string = \"\",\n  output_value_only: boolean = false,\n  model: string = \"gpt-3.5-turbo\",\n  temperature: number = 1,\n  num_tries: number = 3,\n  verbose: boolean = false,\n  openaiClient?: OpenAI, // <-- injected client\n): Promise<{ question: string; answer: string }[]> {\n  // Use provided client, cached client, or create new one\n  const openai = openaiClient ?? getOrCreateClient();
 
   const isListInput = Array.isArray(user_prompt);
   const hasDynamicElements = /<.*?>/.test(JSON.stringify(output_format));
