@@ -3,6 +3,7 @@ import { EndGameUseCase } from "@/application/use-cases/game/EndGameUseCase";
 import { GameRepositoryAdapter } from "@/infrastructure/game/GameRepositoryAdapter";
 import { PermissionCheckAdapter } from "@/infrastructure/game/PermissionCheckAdapter";
 import { GameType } from "@prisma/client";
+import { randomInt } from "node:crypto";
 
 type McqQuestion = {
   question: string;
@@ -21,6 +22,17 @@ const MAX_DB_STRING_LENGTH = 180;
 
 function fitDbString(value: string) {
   return value.trim().slice(0, MAX_DB_STRING_LENGTH);
+}
+
+function shuffleOptions(options: string[]) {
+  const shuffled = [...options];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(0, index + 1);
+    const current = shuffled[index];
+    shuffled[index] = shuffled[swapIndex];
+    shuffled[swapIndex] = current;
+  }
+  return shuffled;
 }
 
 const gameRepository = new GameRepositoryAdapter();
@@ -49,12 +61,12 @@ export async function saveGeneratedQuestionsForGame(params: {
       const safeOption1 = fitDbString(typedQuestion.option1);
       const safeOption2 = fitDbString(typedQuestion.option2);
       const safeOption3 = fitDbString(typedQuestion.option3);
-      const options = [
+      const options = shuffleOptions([
         safeOption1,
         safeOption2,
         safeOption3,
         safeAnswer,
-      ].sort(() => Math.random() - 0.5);
+      ]);
       return {
         question: safeQuestion,
         answer: safeAnswer,

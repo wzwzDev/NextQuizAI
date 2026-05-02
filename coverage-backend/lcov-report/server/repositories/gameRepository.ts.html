@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.94% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/19</span>
+                <span class='fraction'>19/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.94% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/19</span>
+                <span class='fraction'>19/19</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -193,7 +193,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -207,7 +207,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -238,7 +238,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -246,7 +246,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { prisma } from "@/server/core/db";
 import { GameType, Prisma } from "@prisma/client";
 &nbsp;
@@ -280,12 +280,12 @@ export async function findGameWithQuestionsById(gameId: string) {
   });
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >findGameWithQuestionsForUserOrAdmin(</span>
+export async function findGameWithQuestionsForUserOrAdmin(
   gameId: string,
   userId: string,
   isAdmin: boolean,
 ) {
-<span class="cstat-no" title="statement not covered" >  return prisma.game.findFirst({</span>
+  return prisma.game.findFirst({
     where: {
       id: gameId,
       ...(isAdmin ? {} : { userId: userId }),
@@ -294,15 +294,15 @@ export async function <span class="fstat-no" title="function not covered" >findG
   });
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >findOpenEndedGameForUserOrAdmin(</span>
+export async function findOpenEndedGameForUserOrAdmin(
   gameId: string,
   userId: string,
   isAdmin: boolean,
 ) {
-<span class="cstat-no" title="statement not covered" >  return prisma.game.findFirst({</span>
+  return prisma.game.findFirst({
     where: {
       id: gameId,
-      ...(isAdmin ? {} : { userId: userId }),
+      ...(isAdmin ? <span class="branch-0 cbranch-no" title="branch not covered" >{} </span>: { userId: userId }),
     },
     include: {
       questions: {
@@ -329,16 +329,16 @@ export async function createQuestionsForGame(
   return prisma.question.createMany({ data: manyData });
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >findRecentGamesByUserId(</span>userId: string, limit: number) {
-<span class="cstat-no" title="statement not covered" >  return prisma.game.findMany({</span>
+export async function findRecentGamesByUserId(userId: string, limit: number) {
+  return prisma.game.findMany({
     where: { userId },
     orderBy: { timeStarted: "desc" },
     take: limit,
   });
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >countGamesByUserId(</span>userId: string) {
-<span class="cstat-no" title="statement not covered" >  return prisma.game.count({ where: { userId } });</span>
+export async function countGamesByUserId(userId: string) {
+  return prisma.game.count({ where: { userId } });
 }</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -346,7 +346,7 @@ export async function <span class="fstat-no" title="function not covered" >count
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-02T07:23:27.626Z
+                at 2026-05-02T08:05:08.189Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,4 +1,7 @@
 import {
+  findUserBanStatusByEmail,
+  findUserIdentityByEmail,
+  findUserIdentityById,
   findUserBanStatus,
   findUserRevokeStatus,
   listUsersForAdmin,
@@ -60,6 +63,16 @@ describe("userRepository", () => {
 
     expect(ban?.banned).toBe(true);
     expect(revoke?.revoked).toBe(true);
+  });
+
+  it("fetches identity and ban status by email", async () => {
+    const identityById = await findUserIdentityById(user.id);
+    const identityByEmail = await findUserIdentityByEmail(user.email);
+    const banByEmail = await findUserBanStatusByEmail(user.email);
+
+    expect(identityById?.id).toBe(user.id);
+    expect(identityByEmail?.email).toBe(user.email);
+    expect(banByEmail?.banned).toBe(true);
   });
 
   it("updates online status by email", async () => {

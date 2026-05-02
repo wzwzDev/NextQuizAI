@@ -276,10 +276,28 @@ function normalizeQuestionCount(value?: number) {
   return Math.max(MIN_QUESTION_COUNT, Math.min(MAX_QUESTION_COUNT, roundedValue));
 }
 
+function trimTokenDelimiters(token: string) {
+  const isDelimiter = (char: string) =>
+    char === "_" || char === "#" || char === "." || char === "-";
+
+  let start = 0;
+  let end = token.length;
+
+  while (start < end && isDelimiter(token[start])) {
+    start += 1;
+  }
+
+  while (end > start && isDelimiter(token[end - 1])) {
+    end -= 1;
+  }
+
+  return token.slice(start, end);
+}
+
 function pickFallbackAnswerToken(sentence: string) {
   const rawTokens = sentence.match(/[A-Za-z0-9_+#.-]+/g) ?? [];
   const cleanedTokens = rawTokens
-    .map((token) => token.replace(/^[_#.-]+|[_#.-]+$/g, ""))
+    .map((token) => trimTokenDelimiters(token))
     .filter(Boolean);
 
   const preferred = cleanedTokens.find((token) => {

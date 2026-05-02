@@ -1,5 +1,6 @@
 import { strict_output } from "@/server/ai/gpt";
 import { QuestionGenerationConfigAdapter } from "@/infrastructure/question-generation/QuestionGenerationConfigAdapter";
+import { randomInt } from "node:crypto";
 
 export type TopicQuestionInput = {
   amount: number;
@@ -37,7 +38,7 @@ function createBatchToken() {
 function shuffleCopy<T>(items: T[]) {
   const cloned = [...items];
   for (let index = cloned.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const randomIndex = randomInt(0, index + 1);
     const current = cloned[index];
     cloned[index] = cloned[randomIndex];
     cloned[randomIndex] = current;

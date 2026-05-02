@@ -1,8 +1,12 @@
 import {
+  countGamesByUserId,
   createGame,
   createQuestionsForGame,
   findGameById,
+  findGameWithQuestionsForUserOrAdmin,
   findGameWithQuestionsById,
+  findOpenEndedGameForUserOrAdmin,
+  findRecentGamesByUserId,
   markGameEnded,
 } from "@/server/repositories/gameRepository";
 import { prisma } from "@/server/core/db";
@@ -80,5 +84,24 @@ describe("gameRepository", () => {
 
     const created = await prisma.question.findMany({ where: { gameId: game.id, question: "Q" } });
     expect(created.length).toBeGreaterThan(0);
+  });
+
+  it("finds game for user/admin access variants", async () => {
+    const asOwner = await findGameWithQuestionsForUserOrAdmin(game.id, user.id, false);
+    expect(asOwner?.id).toBe(game.id);
+
+    const asAdmin = await findGameWithQuestionsForUserOrAdmin(game.id, "other-user", true);
+    expect(asAdmin?.id).toBe(game.id);
+  });
+
+  it("returns open-ended game projection and supports recents/count", async () => {
+    const projection = await findOpenEndedGameForUserOrAdmin(game.id, user.id, false);
+    expect(projection?.questions).toBeDefined();
+
+    const recent = await findRecentGamesByUserId(user.id, 5);
+    expect(Array.isArray(recent)).toBe(true);
+
+    const count = await countGamesByUserId(user.id);
+    expect(count).toBeGreaterThan(0);
   });
 });

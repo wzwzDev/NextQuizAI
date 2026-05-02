@@ -148,6 +148,23 @@ describe("userQuizAttemptService", () => {
 
       expect(result.status).toBe("pending");
     });
+
+    it("returns existing pending attempt if already started", async () => {
+      const first = await ensurePendingQuizAttempt({
+        userId: adminUser.id,
+        quizId: "service-q3",
+        quizTitle: "Quiz 3",
+      });
+
+      const second = await ensurePendingQuizAttempt({
+        userId: adminUser.id,
+        quizId: "service-q3",
+        quizTitle: "Quiz 3",
+      });
+
+      expect(second.id).toBe(first.id);
+      expect(second.status).toBe("pending");
+    });
   });
 
   describe("completePendingQuizAttempt", () => {
@@ -209,6 +226,48 @@ describe("userQuizAttemptService", () => {
     it("should handle empty quiz list", async () => {
       const result = await getAdaptiveQuizRecommendations(adminUser.id, []);
       expect(result).toHaveLength(0);
+    });
+
+    it("returns diversification reason for unseen category", async () => {
+      const result = await getAdaptiveQuizRecommendations(adminUser.id, [
+        { id: "new-cat-quiz", category: "philosophy", difficulty: "easy" },
+      ]);
+
+      expect(result[0].categoryMastery).toBeNull();
+      expect(result[0].recommendationReason.toLowerCase()).toContain("new category");
+    });
+
+    it("returns aligned/challenging reasons based on mastery and difficulty", async () => {
+      await prisma.userQuizAttempt.upsert({
+        where: { user_quiz_attempt_unique: { userId: adminUser.id, quizId } },
+        update: {
+          quizTitle: "Service Quiz 1",
+          status: "completed",
+          score: 100,
+          answers: { questionResults: [{ isAccepted: true }, { isAccepted: true }] },
+        },
+        create: {
+          userId: adminUser.id,
+          quizId,
+          quizTitle: "Service Quiz 1",
+          status: "completed",
+          score: 100,
+          answers: { questionResults: [{ isAccepted: true }, { isAccepted: true }] },
+        },
+      });
+
+      const result = await getAdaptiveQuizRecommendations(adminUser.id, [
+        { id: quizId, category: "math", difficulty: "medium" },
+        { id: "math-hard", category: "math", difficulty: "hard" },
+      ]);
+
+      expect(result.length).toBe(2);
+      expect(
+        result.some((item) =>
+          item.recommendationReason.toLowerCase().includes("difficulty is well aligned") ||
+          item.recommendationReason.toLowerCase().includes("challenging"),
+        ),
+      ).toBe(true);
     });
   });
 });

@@ -1,4 +1,5 @@
 import type { QuestionGenerationConfigPort } from "@/application/ports/out/QuestionGenerationConfigPort";
+import { randomBytes } from "node:crypto";
 
 const DEFAULT_QUESTION_MODELS = ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1"];
 const DEFAULT_TEMPERATURE = 0.85;
@@ -35,6 +36,6 @@ export class QuestionGenerationConfigAdapter implements QuestionGenerationConfig
   }
 
   createBatchToken(): string {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    return `${Date.now().toString(36)}-${randomBytes(4).toString("hex").slice(0, 6)}`;
   }
 }

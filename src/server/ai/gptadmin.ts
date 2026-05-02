@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { randomInt } from "node:crypto";
 
 let openaiClient: OpenAI | null = null;
 let cachedApiKey: string | null = null;
@@ -71,7 +72,7 @@ function parseRetryDelayMs(error: unknown, attempt: number): number {
   }
 
   const exponential = MIN_RATE_LIMIT_DELAY_MS * Math.pow(2, attempt);
-  const jitter = Math.floor(Math.random() * 150);
+  const jitter = randomInt(0, 150);
   return Math.min(MAX_RATE_LIMIT_DELAY_MS, exponential + jitter);
 }
 

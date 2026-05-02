@@ -14,6 +14,9 @@
     "test:backend": "jest --config jest.backend.config.js",
     "test:backend:watch": "jest --config jest.backend.config.js --watch",
     "test": "npm run test:frontend && npm run test:backend"
+    ,
+    "coverage:merge": "npx lcov-result-merger \"coverage*/lcov.info\" -o coverage/lcov.info",
+    "sonar:prepare": "npm run coverage:merge"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
