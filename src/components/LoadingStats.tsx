@@ -10,13 +10,17 @@ const loadingTexts = [
   "Almost ready to show your progress!",
 ];
 
+const getRandomIndex = (length: number): number => {
+  return Math.floor(Math.random() * length);
+};
+
 const LoadingStats = () => {
   const [progress, setProgress] = React.useState(10);
   const [loadingText, setLoadingText] = React.useState(loadingTexts[0]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * loadingTexts.length);
+      const randomIndex = getRandomIndex(loadingTexts.length);
       setLoadingText(loadingTexts[randomIndex]);
     }, 2000);
     return () => clearInterval(interval);

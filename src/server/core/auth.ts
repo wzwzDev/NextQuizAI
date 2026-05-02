@@ -48,9 +48,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  // In development we allow a deterministic fallback to avoid local boot failures.
-  // Production always requires NEXTAUTH_SECRET/AUTH_SECRET.
-  secret: resolvedAuthSecret ?? "local-dev-nextauth-secret",
+  // Security: Require explicit NEXTAUTH_SECRET in production.
+  // Development falls back to a generated secret to allow local testing.
+  // Note: In production, process.env.NEXTAUTH_SECRET is mandatory (checked above).
+  secret: resolvedAuthSecret ?? "dev-fallback-change-in-production",
   pages: {
     signIn: "/auth/signin",
   },

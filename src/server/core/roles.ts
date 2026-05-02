@@ -1,14 +1,18 @@
-const DEFAULT_OWNER_EMAIL = "waelwzwz@gmail.com";
-const DEFAULT_ADMIN_LOGIN_EMAIL = "admin@nextquizai.local";
-const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD = "admin";
+// Security: All credentials must be explicitly set via environment variables.
+// No hardcoded defaults allowed in production.
 
 function normalizeEmail(email?: string | null) {
   return (email ?? "").trim().toLowerCase();
 }
 
 export function getOwnerEmail() {
-  return normalizeEmail(process.env.OWNER_EMAIL ?? DEFAULT_OWNER_EMAIL);
+  const ownerEmail = process.env.OWNER_EMAIL;
+  if (!ownerEmail && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Missing OWNER_EMAIL environment variable. This is required in production."
+    );
+  }
+  return normalizeEmail(ownerEmail ?? "");
 }
 
 export function isOwnerEmail(email?: string | null) {
@@ -16,12 +20,25 @@ export function isOwnerEmail(email?: string | null) {
 }
 
 export function getAdminCredentialsConfig() {
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminLoginEmail = process.env.ADMIN_LOGIN_EMAIL;
+  const adminDisplayName = process.env.ADMIN_DISPLAY_NAME;
+
+  if (!adminUsername && process.env.NODE_ENV === "production") {
+    throw new Error("Missing ADMIN_USERNAME environment variable.");
+  }
+  if (!adminPassword && process.env.NODE_ENV === "production") {
+    throw new Error("Missing ADMIN_PASSWORD environment variable.");
+  }
+  if (!adminLoginEmail && process.env.NODE_ENV === "production") {
+    throw new Error("Missing ADMIN_LOGIN_EMAIL environment variable.");
+  }
+
   return {
-    username: (process.env.ADMIN_USERNAME ?? DEFAULT_ADMIN_USERNAME).trim(),
-    password: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
-    loginEmail: normalizeEmail(
-      process.env.ADMIN_LOGIN_EMAIL ?? DEFAULT_ADMIN_LOGIN_EMAIL,
-    ),
-    displayName: (process.env.ADMIN_DISPLAY_NAME ?? "Admin Account").trim(),
+    username: (adminUsername ?? "").trim(),
+    password: adminPassword ?? "",
+    loginEmail: normalizeEmail(adminLoginEmail ?? ""),
+    displayName: (adminDisplayName ?? "Admin Account").trim(),
   };
 }
