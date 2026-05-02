@@ -22,6 +22,9 @@ module.exports = {
   collectCoverageFrom: [
     "src/app/api/**/*.ts",
     "src/server/**/*.ts",
+    "src/application/**/*.ts",
+    "src/domain/**/*.ts",
+    "src/infrastructure/**/*.ts",
     "src/schemas/**/*.ts",
     "!src/app/api/auth/[[]...nextauth[]]/route.ts",
     "!src/server/ai/**",
@@ -38,6 +41,10 @@ module.exports = {
     "!src/server/admin/services/userService.ts",
     "!src/server/ai/experimental/**",
     "!src/server/repositories/userQuizAttemptRepository.ts",
+    "!src/application/ports/**/*.ts",
+    "!src/domain/ports/**/*.ts",
+    "!src/domain/index.ts",
+    "!src/domain/**/index.ts",
     "!src/**/*.d.ts",
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"
