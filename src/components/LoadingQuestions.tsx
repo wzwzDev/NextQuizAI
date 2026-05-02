@@ -12,8 +12,14 @@ const loadingTexts = [
   "The flame of wonder and exploration...",
 ];
 
-const getRandomIndex = (length: number): number => {
-  return Math.floor(Math.random() * length);
+/**
+ * Generate cryptographically secure random integer in range [0, max)
+ */
+const getSecureRandomIndex = (length: number): number => {
+  if (length <= 0) return 0;
+  const randomValues = new Uint32Array(1);
+  crypto.getRandomValues(randomValues);
+  return randomValues[0] % length;
 };
 
 const LoadingQuestions = ({ finished }: Props) => {
@@ -21,7 +27,7 @@ const LoadingQuestions = ({ finished }: Props) => {
   const [loadingText, setLoadingText] = React.useState(loadingTexts[0]);
   React.useEffect(() => {
     const interval = setInterval(() => {
-      const randomIndex = getRandomIndex(loadingTexts.length);
+      const randomIndex = getSecureRandomIndex(loadingTexts.length);
       setLoadingText(loadingTexts[randomIndex]);
     }, 2000);
     return () => clearInterval(interval);
@@ -34,7 +40,10 @@ const LoadingQuestions = ({ finished }: Props) => {
         if (prev === 100) {
           return 0;
         }
-        if (Math.random() < 0.1) {
+        // Use crypto for random threshold comparison
+        const randomValues = new Uint32Array(1);
+        crypto.getRandomValues(randomValues);
+        if ((randomValues[0] % 10000) < 1000) {
           return prev + 2;
         }
         return prev + 0.5;

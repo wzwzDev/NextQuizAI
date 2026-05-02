@@ -8,6 +8,16 @@ type Props = {
 
 const blank = "_____";
 
+/**
+ * Generate cryptographically secure random integer in range [0, max)
+ */
+const secureRandomInt = (max: number): number => {
+  if (max <= 0) return 0;
+  const randomValues = new Uint32Array(1);
+  crypto.getRandomValues(randomValues);
+  return randomValues[0] % max;
+};
+
 const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
   const keywords = React.useMemo(() => {
     const words = keyword_extractor.extract(answer, {
@@ -16,10 +26,10 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
       return_changed_case: false,
       remove_duplicates: false,
     });
-    // Fisher-Yates shuffle with cryptographically secure random (client-side fallback)
+    // Fisher-Yates shuffle with cryptographically secure random
     const shuffled = [...words];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = secureRandomInt(i + 1);
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled.slice(0, 2);
