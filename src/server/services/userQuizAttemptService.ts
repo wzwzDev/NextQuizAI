@@ -1,4 +1,3 @@
-import { StartQuizAttemptUseCase } from "@/application/use-cases/quiz/StartQuizAttemptUseCase";
 import { SubmitQuizAttemptUseCase } from "@/application/use-cases/quiz/SubmitQuizAttemptUseCase";
 import { ReviewQuizAttemptUseCase } from "@/application/use-cases/quiz/ReviewQuizAttemptUseCase";
 import { QuizAttemptRepositoryAdapter } from "@/infrastructure/quiz/QuizAttemptRepositoryAdapter";
@@ -25,7 +24,6 @@ export class UserQuizAttemptNotStartedError extends Error {
 }
 
 const quizAttemptRepository = new QuizAttemptRepositoryAdapter();
-const startQuizAttemptUseCase = new StartQuizAttemptUseCase(quizAttemptRepository);
 const submitQuizAttemptUseCase = new SubmitQuizAttemptUseCase(quizAttemptRepository);
 const reviewQuizAttemptUseCase = new ReviewQuizAttemptUseCase(quizAttemptRepository);
 

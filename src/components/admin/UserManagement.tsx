@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 type User = {
   id: string;
@@ -24,7 +24,7 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
 
-  const fetchUsers = async (pageNum?: number) => {
+  const fetchUsers = useCallback(async (pageNum?: number) => {
     setLoading(true);
     setError(null);
     try {
@@ -52,11 +52,11 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
       setError("Failed to load users");
     }
     setLoading(false);
-  };
+  }, [limit]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleBanUser = async (userId: string) => {
     await fetch(`/api/users/${userId}/ban`, { method: "POST" });

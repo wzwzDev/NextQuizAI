@@ -152,7 +152,7 @@ describe("userQuizAttemptService", () => {
 
   describe("completePendingQuizAttempt", () => {
     it("should complete pending attempt", async () => {
-      const pending = await ensurePendingQuizAttempt({
+      await ensurePendingQuizAttempt({
         userId: adminUser.id,
         quizId: "service-q3",
         quizTitle: "Quiz 3",

@@ -22,10 +22,7 @@ export class GenerateTopicQuestionsUseCase {
   }): Promise<TopicQuestion[]> {
     const batchToken = this.config.createBatchToken();
     const prompts = this.buildPrompts(input, batchToken);
-    const models = this.config.getAvailableModels();
-    const temperature = this.config.getTemperature();
-
-    const model = models[0]; // Use first available model
+    // models currently unused; keep prompt building deterministic
 
     const outputFormat =
       input.type === "open_ended"

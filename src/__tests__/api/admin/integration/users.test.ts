@@ -2,17 +2,6 @@ import { GET } from "@/app/api/(admin)/users/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
 
-type AdminUserResponse = {
-  id: string;
-  email: string;
-  name: string | null;
-  lastSeen: Date | null;
-  banned: boolean;
-  revoked: boolean;
-  isAdmin: boolean;
-  isOwner?: boolean;
-};
-
 jest.setTimeout(30000);
 
 describe("/api/users Route Handler", () => {
@@ -64,10 +53,10 @@ describe("/api/users Route Handler", () => {
     const payload = await res.json();
     const users = Array.isArray(payload) ? payload : payload?.users ?? [];
     expect(Array.isArray(users)).toBe(true);
-    expect(users.some((u) => u.email === "adminusers@example.com")).toBe(true);
-    expect(users.some((u) => u.email === "userusers@example.com")).toBe(true);
+    expect(users.some((u: User) => u.email === "adminusers@example.com")).toBe(true);
+    expect(users.some((u: User) => u.email === "userusers@example.com")).toBe(true);
     // Check selected fields
-    const user = users.find((u) => u.email === "adminusers@example.com");
+    const user = users.find((u: User) => u.email === "adminusers@example.com");
     expect(user).toHaveProperty("id");
     expect(user).toHaveProperty("email");
     expect(user).toHaveProperty("isAdmin");
