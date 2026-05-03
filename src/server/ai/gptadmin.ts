@@ -172,6 +172,16 @@ function extractFirstJsonSegment(value: string) {
   return value.slice(start).trim();
 }
 
+function hasDelimitedPlaceholder(value: string, openChar: string, closeChar: string): boolean {
+  const openIndex = value.indexOf(openChar);
+  if (openIndex === -1) {
+    return false;
+  }
+
+  const closeIndex = value.indexOf(closeChar, openIndex + 1);
+  return closeIndex !== -1;
+}
+
 export async function strict_output(
   system_prompt: string,
   user_prompt: string | string[],
@@ -185,8 +195,9 @@ export async function strict_output(
 ): Promise<unknown> {
   const openai = getOpenAIClient();
   const list_input: boolean = Array.isArray(user_prompt);
-  const dynamic_elements: boolean = /<.*?>/.test(JSON.stringify(output_format));
-  const list_output: boolean = /\[.*?\]/.test(JSON.stringify(output_format));
+  const formatJson = JSON.stringify(output_format);
+  const dynamic_elements: boolean = hasDelimitedPlaceholder(formatJson, "<", ">");
+  const list_output: boolean = hasDelimitedPlaceholder(formatJson, "[", "]");
   let error_msg: string = "";
   let lastErrorMessage = "";
 
@@ -258,7 +269,7 @@ export async function strict_output(
 
       for (let index = 0; index < output.length; index++) {
         for (const key in output_format) {
-          if (/<.*?>/.test(key)) continue;
+          if (hasDelimitedPlaceholder(key, "<", ">")) continue;
           if (!(key in (output[index] as Record<string, unknown>))) {
             throw new Error(`${key} not in json output`);
           }

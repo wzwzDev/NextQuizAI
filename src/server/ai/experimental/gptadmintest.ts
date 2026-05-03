@@ -4,6 +4,16 @@ interface OutputFormat {
   [key: string]: string | string[] | OutputFormat;
 }
 
+function hasDelimitedPlaceholder(value: string, openChar: string, closeChar: string): boolean {
+  const openIndex = value.indexOf(openChar);
+  if (openIndex === -1) {
+    return false;
+  }
+
+  const closeIndex = value.indexOf(closeChar, openIndex + 1);
+  return closeIndex !== -1;
+}
+
 let cachedClient: OpenAI | null = null;
 let cachedApiKey: string | null = null;
 
@@ -34,8 +44,9 @@ function getOrCreateClient(): OpenAI {
  * Refactored strict_output function now accepts an optional OpenAI client instance.\n * If not provided, uses cached client or creates new one with env var.\n */\nexport async function strict_output(\n  system_prompt: string,\n  user_prompt: string | string[],\n  output_format: OutputFormat,\n  default_category: string = \"\",\n  output_value_only: boolean = false,\n  model: string = \"gpt-3.5-turbo\",\n  temperature: number = 1,\n  num_tries: number = 3,\n  verbose: boolean = false,\n  openaiClient?: OpenAI, // <-- injected client\n): Promise<{ question: string; answer: string }[]> {\n  // Use provided client, cached client, or create new one\n  const openai = openaiClient ?? getOrCreateClient();
 
   const isListInput = Array.isArray(user_prompt);
-  const hasDynamicElements = /<.*?>/.test(JSON.stringify(output_format));
-  const isListOutput = /\[.*?\]/.test(JSON.stringify(output_format));
+  const formatJson = JSON.stringify(output_format);
+  const hasDynamicElements = hasDelimitedPlaceholder(formatJson, "<", ">");
+  const isListOutput = hasDelimitedPlaceholder(formatJson, "[", "]");
   let errorMsg = "";
 
   for (let i = 0; i < num_tries; i++) {
@@ -87,7 +98,7 @@ function getOrCreateClient(): OpenAI {
 
       for (let item of outputArray) {
         for (const key in output_format) {
-          if (/<.*?>/.test(key)) continue; // skip dynamic keys
+          if (hasDelimitedPlaceholder(key, "<", ">")) continue; // skip dynamic keys
 
           if (!(key in item)) throw new Error(`Missing key: ${key}`);
 

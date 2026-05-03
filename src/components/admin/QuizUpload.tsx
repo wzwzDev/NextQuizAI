@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useId, useRef, useState } from "react";
 import {
   AdminQuestion,
   AdminQuizDraft,
@@ -66,6 +66,11 @@ function isAcceptedUploadFile(file: File) {
 }
 
 const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
+  const fileInputId = useId();
+  const categorySelectId = useId();
+  const difficultySelectId = useId();
+  const quizTypeSelectId = useId();
+  const questionCountInputId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +111,15 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDropZoneKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleButtonClick();
+    }
   };
 
   const handleUpload = async () => {
@@ -204,9 +218,14 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         onClick={handleButtonClick}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
+        onKeyDown={handleDropZoneKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload a JSON, TXT, or PDF file"
         style={{ cursor: "pointer" }}
       >
         <input
+          id={fileInputId}
           type="file"
           accept=".json,.txt,.pdf"
           onChange={handleFileChange}
@@ -238,8 +257,9 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       </button>
       <div className="w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Category</label>
+          <label htmlFor={categorySelectId} className="text-xs font-semibold text-gray-600">Category</label>
           <select
+            id={categorySelectId}
             className="border rounded px-2 py-2 bg-white text-gray-900"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
@@ -254,8 +274,9 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Difficulty</label>
+          <label htmlFor={difficultySelectId} className="text-xs font-semibold text-gray-600">Difficulty</label>
           <select
+            id={difficultySelectId}
             className="border rounded px-2 py-2 bg-white text-gray-900"
             value={difficulty}
             onChange={(event) => setDifficulty(event.target.value)}
@@ -270,8 +291,9 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Quiz Type</label>
+          <label htmlFor={quizTypeSelectId} className="text-xs font-semibold text-gray-600">Quiz Type</label>
           <select
+            id={quizTypeSelectId}
             className="border rounded px-2 py-2 bg-white text-gray-900"
             value={quizType}
             onChange={(event) => setQuizType(event.target.value as AdminQuizType)}
@@ -286,8 +308,9 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Question Count</label>
+          <label htmlFor={questionCountInputId} className="text-xs font-semibold text-gray-600">Question Count</label>
           <input
+            id={questionCountInputId}
             type="number"
             min={1}
             max={15}
