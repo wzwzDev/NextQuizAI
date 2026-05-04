@@ -109,19 +109,6 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
     }
   };
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleDropZoneKeyDown = (
-    event: React.KeyboardEvent<HTMLDivElement>,
-  ) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleButtonClick();
-    }
-  };
-
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a JSON, TXT, or PDF file to upload.");
@@ -210,19 +197,15 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
 
   return (
     <div className="flex flex-col items-center gap-4 bg-white dark:bg-black rounded-xl shadow p-6">
-      <div
+      <label
         className={`w-full max-w-md border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center transition-colors
           ${file ? "border-green-400 bg-green-50" : "border-blue-400 bg-blue-50 hover:bg-blue-100"}
           ${error ? "border-red-400 bg-red-50" : ""}
         `}
-        onClick={handleButtonClick}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        onKeyDown={handleDropZoneKeyDown}
-        role="button"
-        tabIndex={0}
+        htmlFor={fileInputId}
         aria-label="Upload a JSON, TXT, or PDF file"
-        style={{ cursor: "pointer" }}
       >
         <input
           id={fileInputId}
@@ -241,7 +224,7 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
         <span className="text-xs text-gray-500 mt-1">
           Only .json, .txt, or .pdf files are accepted.
         </span>
-      </div>
+      </label>
       <button
         onClick={handleUpload}
         disabled={uploading || !file}

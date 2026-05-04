@@ -1,9 +1,17 @@
+import { randomUUID } from "crypto";
+import * as vision from "@google-cloud/vision";
+import { Storage } from "@google-cloud/storage";
 import { strict_output } from "@/server/ai/gptadmin";
 import { getOpenAIClient } from "@/server/ai/openaiClient";
 
 const MIN_CONTENT_LENGTH = 10;
 const DEFAULT_UPLOAD_MODEL = process.env.OPENAI_QUIZ_MODEL?.trim() || "gpt-4o-mini";
 const DEFAULT_PDF_OCR_MODEL = process.env.OPENAI_PDF_OCR_MODEL?.trim() || "gpt-4o-mini";
+const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY?.trim() || "";
+const GOOGLE_VISION_FILES_ENDPOINT = "https://vision.googleapis.com/v1/files:annotate";
+const GOOGLE_VISION_GCS_BUCKET = process.env.GOOGLE_VISION_GCS_BUCKET?.trim() || "";
+const GOOGLE_APPLICATION_CREDENTIALS_JSON =
+  process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim() || "";
 const JSON_MIME = "application/json";
 const TEXT_MIME = "text/plain";
 const PDF_MIME = "application/pdf";
@@ -25,6 +33,56 @@ const DEFAULT_OCR_MODEL_CANDIDATES = [
   "gpt-4.1",
   "gpt-4o-mini",
 ];
+
+let visionClient: vision.ImageAnnotatorClient | null = null;
+let storageClient: Storage | null = null;
+let cachedCredentials:
+  | { client_email: string; private_key: string; project_id?: string }
+  | null
+  | undefined;
+
+function getGcpCredentials() {
+  if (cachedCredentials !== undefined) {
+    return cachedCredentials;
+  }
+
+  if (!GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    cachedCredentials = null;
+    return cachedCredentials;
+  }
+
+  try {
+    cachedCredentials = JSON.parse(GOOGLE_APPLICATION_CREDENTIALS_JSON) as {
+      client_email: string;
+      private_key: string;
+      project_id?: string;
+    };
+  } catch {
+    throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON.");
+  }
+
+  return cachedCredentials;
+}
+
+function getVisionClient() {
+  if (!visionClient) {
+    const credentials = getGcpCredentials();
+    visionClient = new vision.ImageAnnotatorClient(
+      credentials ? { credentials, projectId: credentials.project_id } : undefined,
+    );
+  }
+  return visionClient;
+}
+
+function getStorageClient() {
+  if (!storageClient) {
+    const credentials = getGcpCredentials();
+    storageClient = new Storage(
+      credentials ? { credentials, projectId: credentials.project_id } : undefined,
+    );
+  }
+  return storageClient;
+}
 
 const COMMON_STOP_WORDS = new Set([
   "the",
@@ -483,6 +541,31 @@ async function extractTextFromPdf(file: File): Promise<string> {
 }
 
 async function extractTextFromPdfWithOcr(file: File): Promise<string> {
+  const errors: string[] = [];
+  if (GOOGLE_VISION_GCS_BUCKET) {
+    try {
+      const textFromVision = await extractTextFromPdfWithGoogleVisionGcs(file);
+      if (textFromVision.trim()) {
+        return textFromVision;
+      }
+      errors.push("Google Vision GCS OCR returned empty text.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown Vision OCR error.";
+      errors.push(`Google Vision GCS OCR failed: ${message}`);
+    }
+  }
+
+  try {
+    const textFromVision = await extractTextFromPdfWithGoogleVision(file);
+    if (textFromVision.trim()) {
+      return textFromVision;
+    }
+    errors.push("Google Vision OCR returned empty text.");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown Vision OCR error.";
+    errors.push(`Google Vision OCR failed: ${message}`);
+  }
+
   const openai = getOpenAIClient();
   const pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
   const models = Array.from(
@@ -490,8 +573,6 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
       DEFAULT_OCR_MODEL_CANDIDATES.map((model) => model.trim()).filter(Boolean),
     ),
   );
-
-  const errors: string[] = [];
 
   for (const model of models) {
     try {
@@ -529,13 +610,164 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
   throw new Error(`OpenAI OCR failed: ${joinedErrors}`);
 }
 
+async function extractTextFromPdfWithGoogleVision(file: File): Promise<string> {
+  if (GOOGLE_VISION_API_KEY) {
+    return extractTextFromPdfWithGoogleVisionApiKey(file);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const client = getVisionClient();
+  const [result] = await client.batchAnnotateFiles({
+    requests: [
+      {
+        inputConfig: {
+          content: buffer,
+          mimeType: "application/pdf",
+        },
+        features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+      },
+    ],
+  });
+
+  const fileResponse = result.responses?.[0];
+  if (!fileResponse || !fileResponse.responses) {
+    return "";
+  }
+
+  return fileResponse.responses
+    .map((response: vision.protos.google.cloud.vision.v1.IAnnotateImageResponse) =>
+      response.fullTextAnnotation?.text ?? "",
+    )
+    .join("\n")
+    .trim();
+}
+
+function sanitizeGcsFileName(fileName: string) {
+  return fileName.replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 120) || "document.pdf";
+}
+
+async function extractTextFromPdfWithGoogleVisionGcs(file: File): Promise<string> {
+  if (!GOOGLE_VISION_GCS_BUCKET) {
+    throw new Error("Missing GOOGLE_VISION_GCS_BUCKET.");
+  }
+
+  const credentials = getGcpCredentials();
+  if (!credentials) {
+    throw new Error("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON.");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const bucket = getStorageClient().bucket(GOOGLE_VISION_GCS_BUCKET);
+  const id = randomUUID();
+  const safeName = sanitizeGcsFileName(file.name || "document.pdf");
+  const inputPath = `ocr-input/${id}/${safeName}`;
+  const outputPrefix = `ocr-output/${id}/`;
+
+  await bucket.file(inputPath).save(buffer, {
+    contentType: "application/pdf",
+    resumable: false,
+  });
+
+  const client = getVisionClient();
+  const [operation] = await client.asyncBatchAnnotateFiles({
+    requests: [
+      {
+        inputConfig: {
+          gcsSource: { uri: `gs://${GOOGLE_VISION_GCS_BUCKET}/${inputPath}` },
+          mimeType: "application/pdf",
+        },
+        features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+        outputConfig: {
+          gcsDestination: { uri: `gs://${GOOGLE_VISION_GCS_BUCKET}/${outputPrefix}` },
+          batchSize: 2,
+        },
+      },
+    ],
+  });
+
+  await operation.promise();
+
+  const [files] = await bucket.getFiles({ prefix: outputPrefix });
+  const textParts: string[] = [];
+
+  for (const outputFile of files) {
+    if (!outputFile.name.endsWith(".json")) {
+      continue;
+    }
+
+    const [contents] = await outputFile.download();
+    const json = JSON.parse(contents.toString("utf8")) as {
+      responses?: Array<{ fullTextAnnotation?: { text?: string } }>;
+    };
+
+    for (const response of json.responses ?? []) {
+      const text = response.fullTextAnnotation?.text?.trim();
+      if (text) {
+        textParts.push(text);
+      }
+    }
+  }
+
+  await bucket.deleteFiles({ prefix: `ocr-input/${id}/` }).catch(() => undefined);
+  await bucket.deleteFiles({ prefix: outputPrefix }).catch(() => undefined);
+
+  return textParts.join("\n").trim();
+}
+
+async function extractTextFromPdfWithGoogleVisionApiKey(file: File): Promise<string> {
+  if (!GOOGLE_VISION_API_KEY) {
+    throw new Error("Missing GOOGLE_VISION_API_KEY.");
+  }
+
+  const pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const response = await fetch(
+    `${GOOGLE_VISION_FILES_ENDPOINT}?key=${encodeURIComponent(GOOGLE_VISION_API_KEY)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requests: [
+          {
+            inputConfig: {
+              mimeType: "application/pdf",
+              content: pdfBase64,
+            },
+            features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+          },
+        ],
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Google Vision OCR failed: ${message}`);
+  }
+
+  const data = (await response.json()) as {
+    responses?: Array<{ responses?: Array<{ fullTextAnnotation?: { text?: string } }> }>;
+  };
+
+  const pages = data.responses?.[0]?.responses ?? [];
+  return pages
+    .map((page) => page.fullTextAnnotation?.text ?? "")
+    .join("\n")
+    .trim();
+}
+
 function ensureAcceptedFile(file: File) {
   if (!isJsonFile(file) && !isTextFile(file) && !isPdfFile(file)) {
     throw new Error("Only JSON, TXT, or PDF files are accepted.");
   }
 }
 
-async function extractCourseContent(file: File) {
+type ExtractedCourseContent = {
+  content: string;
+  source: "pdf" | "json" | "text";
+  ocrQuality: "ok" | "low" | "unknown";
+};
+
+async function extractCourseContent(file: File): Promise<ExtractedCourseContent> {
   if (isPdfFile(file)) {
     let textFromPdf = "";
     try {
@@ -547,7 +779,7 @@ async function extractCourseContent(file: File) {
     }
 
     if (textFromPdf.trim().length >= MIN_CONTENT_LENGTH) {
-      return textFromPdf;
+      return { content: textFromPdf, source: "pdf", ocrQuality: "unknown" };
     }
 
     const textFromOcr = await extractTextFromPdfWithOcr(file);
@@ -556,12 +788,11 @@ async function extractCourseContent(file: File) {
     }
 
     if (!isLikelyReadableOcrText(textFromOcr)) {
-      throw new Error(
-        "Extracted PDF text quality is too low. Please upload a clearer PDF or a text-based file.",
-      );
+      console.warn("Low-quality OCR text detected; continuing with fallback.");
+      return { content: textFromOcr, source: "pdf", ocrQuality: "low" };
     }
 
-    return textFromOcr;
+    return { content: textFromOcr, source: "pdf", ocrQuality: "ok" };
   }
 
   const text = await file.text();
@@ -584,14 +815,14 @@ async function extractCourseContent(file: File) {
       throw new Error("No course content found in JSON.");
     }
 
-    return content;
+    return { content, source: "json", ocrQuality: "unknown" };
   }
 
-  return text;
+  return { content: text, source: "text", ocrQuality: "unknown" };
 }
 
-function ensureMinimumContentLength(courseContent: string) {
-  if (!courseContent || courseContent.trim().length < MIN_CONTENT_LENGTH) {
+function ensureMinimumContentLength(courseContent: string, minLength: number) {
+  if (!courseContent || courseContent.trim().length < minLength) {
     throw new Error("Course content is too short or missing.");
   }
 }
@@ -774,10 +1005,12 @@ export async function generateQuestionsFromUploadedFile(
   options: UploadQuizGenerationOptions = {},
 ) {
   ensureAcceptedFile(file);
-  const courseContent = await extractCourseContent(file);
-  ensureMinimumContentLength(courseContent);
+  const extracted = await extractCourseContent(file);
+  const minLength =
+    extracted.source === "pdf" && extracted.ocrQuality === "low" ? 1 : MIN_CONTENT_LENGTH;
+  ensureMinimumContentLength(extracted.content, minLength);
   return generateQuestionsFromCourseContent(
-    prepareCourseContentForGeneration(courseContent),
+    prepareCourseContentForGeneration(extracted.content),
     {
       ...options,
       sourceName: options.sourceName || file.name || "Uploaded document",
