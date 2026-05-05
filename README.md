@@ -166,11 +166,3 @@ See `src/server/services/uploadQuizGenerationService.ts` for the concrete implem
 - GitHub: https://github.com/wzwzDev
 
 ---
-
-## Credits & Acknowledgements
-This project is part of my Master’s thesis (TFM). Big thanks to:
-- OpenAI — model for generating high-quality questions
-- Google Cloud Vision — reliable OCR for scanned documents
-- Next.js and the Vercel team for shaping the platform
-
----
