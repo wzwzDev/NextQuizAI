@@ -183,5 +183,3 @@ This project is part of my Master’s thesis (TFM). Big thanks to:
 - Next.js and the Vercel team for shaping the platform
 
 ---
-
-*If you want, I can also produce a minimal `README-short.md` for the GitHub landing page, or extract the deployment and env var checklist into `DEPLOYMENT.md`.*
