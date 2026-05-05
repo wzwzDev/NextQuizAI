@@ -715,60 +715,41 @@ npm run test:coverage
 
 **Solution:** Already implemented! The app detects serverless and routes to Google Vision async OCR automatically.
 
-### Google OAuth Callback Fails
-**Symptom:** `[next-auth][error][OAUTH_CALLBACK_HANDLER_ERROR] Missing OWNER_EMAIL`
+2. Google OAuth callback failing
+   - Symptom: `[next-auth][error][OAUTH_CALLBACK_HANDLER_ERROR] Missing OWNER_EMAIL environment variable`
+   - Fix: Add `OWNER_EMAIL` and other auth envs to Vercel (or your production host). Ensure `NEXTAUTH_URL` matches deployment domain and Google OAuth redirect URIs are configured.
 
-**Solution:** Add `OWNER_EMAIL` and `NEXTAUTH_URL` to Vercel environment variables.
-
-### GCS Credentials Not Working
-**Symptom:** Vision OCR fails silently.
-
-**Solution:**
-- Ensure service account has `roles/storage.objectAdmin` on the OCR bucket
-- Ensure Vision API is enabled in Google Cloud
-- Format JSON as single-line escaped string or base64-encode it
-
-### Database Connection Errors
-**Symptom:** `Error: connect ECONNREFUSED`
-
-**Solution:**
-- Check `DATABASE_URL` in `.env.local`
-- Ensure MySQL is running (local) or network accessible (cloud)
-- Verify credentials and database name
+3. GCS service account credentials
+   - Use `GOOGLE_APPLICATION_CREDENTIALS_JSON` as single-line escaped JSON or store as base64 and decode on startup. Ensure the service account has `roles/storage.objectAdmin` on the OCR bucket and that the Vision API is enabled.
 
 ---
 
-## 📈 Performance Optimization
+## How PDF → Question generation works (high level)
+1. File uploaded via frontend.
+2. Server attempts fast extraction (text PDFs with `pdfjs`) when running on Node with canvas available.
+3. If the PDF is image-only or server environment lacks canvas, the file is uploaded to GCS and a Google Vision async job is submitted.
+4. OCR results are read from GCS, extracted text is cleaned and paginated.
+5. Text chunks are sent to an OpenAI generation pipeline which returns structured question objects.
+6. Questions are stored via Prisma and surfaced in the UI.
 
-### Implemented
-- ✅ Next.js Image optimization
-- ✅ Dynamic imports for large components
-- ✅ Database query optimization (Prisma)
-- ✅ Caching strategies (client-side)
-- ✅ Async OCR (non-blocking)
-
-### Metrics
-- **Lighthouse Performance**: 85+
-- **FCP (First Contentful Paint)**: <1.5s
-- **LCP (Largest Contentful Paint)**: <2.5s
-- **CLS (Cumulative Layout Shift)**: <0.1
+See `src/server/services/uploadQuizGenerationService.ts` for the concrete implementation.
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Write tests for new behavior
-4. Commit with clear message: `git commit -m 'feat: add amazing feature'`
-5. Push: `git push origin feature/amazing-feature`
-6. Open a Pull Request
+## Testing & Quality
+- Unit & integration tests: Jest (run `npm run test`)
+- E2E: Playwright (run `npx playwright test`)
+- Linting: ESLint + Prettier
+- Coverage: scripts produce coverage reports in `coverage/` and `coverage-frontend/`
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+## Contributing
+Contributions are welcome. Please follow these steps:
+1. Fork and create a feature branch
+2. Add tests for new behavior
+3. Keep PRs small and focused
+4. Describe architectural trade-offs in PR description
 
 ---
 
@@ -782,19 +763,12 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ---
 
-## 🙏 Acknowledgments
-
-- **OpenAI** — GPT models for intelligent question generation
-- **Google Cloud** — Vision API for robust OCR on serverless
-- **Vercel** — Seamless Next.js deployment
-- **Next.js Team** — Framework excellence
-- **Prisma** — Type-safe database ORM
-- **All Contributors** — Community support and feedback
+## Credits & Acknowledgements
+This project is part of my Master’s thesis (TFM). Big thanks to:
+- OpenAI — model for generating high-quality questions
+- Google Cloud Vision — reliable OCR for scanned documents
+- Next.js and the Vercel team for shaping the platform
 
 ---
 
-**Built with ❤️ for educational excellence as part of Master's Thesis (TFM) at Polytechnic University of Madrid**
-
----
-
-*Last Updated: May 2026 | TFM Project | Web Engineering Master's*
+*If you want, I can also produce a minimal `README-short.md` for the GitHub landing page, or extract the deployment and env var checklist into `DEPLOYMENT.md`.*
