@@ -160,15 +160,6 @@ See `src/server/services/uploadQuizGenerationService.ts` for the concrete implem
 
 ---
 
-## Contributing
-Contributions are welcome. Please follow these steps:
-1. Fork and create a feature branch
-2. Add tests for new behavior
-3. Keep PRs small and focused
-4. Describe architectural trade-offs in PR description
-
----
-
 ## Contact
 - Wael Louati — waelluati@gmail.com
 - Portfolio: https://wael-louati-portfolio.vercel.app
