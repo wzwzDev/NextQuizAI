@@ -507,6 +507,12 @@ function isLikelyReadableOcrText(text: string) {
 }
 
 async function extractTextFromPdf(file: File): Promise<string> {
+  // In Vercel serverless, canvas APIs are unavailable and pdfjs warnings occur.
+  // Skip pdfjs parsing and let Vision OCR handle all PDFs on production.
+  if (process.env.VERCEL) {
+    return "";
+  }
+
   try {
     const pdfJs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     const loadingTask = pdfJs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });

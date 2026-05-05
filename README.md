@@ -1,288 +1,187 @@
-# 🧠 QuizUPM - AI-Powered Quiz Platform
+# NextQuizAI — AI-powered quiz generation (TFM)
 
-QuizUPM is an intelligent quiz platform that leverages AI to create, manage, and deliver personalized quiz experiences. Built with Next.js, the platform offers both multiple-choice and open-ended questions, comprehensive analytics, and powerful administrative tools.
+A resilient Next.js quiz platform that generates quizzes from uploaded study materials using AI and OCR. This repository is my TFM (Master's thesis) project: it combines a production-grade Next.js app with server-side processing, AI integration, analytics, and deployment-ready configuration.
 
-![QuizUPM Homepage](screenshots/homepage.png)
-*Homepage - Welcome screen with Google authentication*
+---
 
-## ✨ Features
+## TL;DR
+- Upload a PDF (text or image-based) and the system generates multiple-choice and open-ended questions automatically.
+- Scanned/low-quality PDFs are handled by an async Google Vision OCR fallback; otherwise the app uses client/server parsing + OpenAI to generate questions.
+- Auth via NextAuth (Google + credentials), persistent storage with Prisma + MySQL, and deployment targeted at Vercel.
 
-### 🎯 Core Functionality
-- **AI-Generated Quizzes**: Automatic quiz creation using OpenAI integration
-- **Multiple Question Types**: Support for MCQ and open-ended questions
-- **Real-time Scoring**: Instant feedback and performance tracking
-- **Smart Answer Validation**: Advanced similarity checking for open-ended answers
-- **Topic-based Organization**: Categorized quizzes across various subjects
+---
 
-![Quiz Creation](screenshots/quiz-creation.png)
-*Admin Quiz Creation Interface*
+## Highlights
+- Robust AI-driven question generation using OpenAI with strict output adapters.
+- Multi-layer OCR: fast local parsing for text PDFs, and reliable Google Vision async OCR for image-only or scanned PDFs.
+- Role-based access, admin moderation tools, and analytics dashboards.
+- Comprehensive test coverage and CI-friendly scripts.
 
-### 📊 Analytics & Statistics
-- **Detailed Performance Metrics**: Individual and aggregate quiz statistics
-- **Visual Charts**: Interactive data visualization using Recharts
-- **Word Clouds**: Visual representation of quiz topics and trends
-- **Historical Tracking**: Complete quiz attempt history
+---
 
-![Dashboard Analytics](screenshots/dashboard-analytics.png)
-*User Dashboard with Performance Analytics*
+## Features
+- AI-generated quizzes (MCQ + open-ended)
+- PDF upload handling (text & scanned image PDFs)
+- Google Vision async OCR integration for high-quality OCR on serverless
+- Authentication with Google OAuth + email/password (NextAuth)
+- Admin dashboard: quiz management, user moderation, analytics
+- Similarity-based answer scoring for open-ended responses
+- Responsive UI (Next.js + Tailwind), accessible components (Radix)
 
-### 👥 User Management
-- **Role-Based Access**: Admin and regular user permissions
-- **Flexible Authentication**: Google OAuth and email/password sign-in
-- **Email Verification**: New email/password accounts must verify via email link
-- **User Banning/Revoking**: Comprehensive user moderation tools
-- **Online Status Tracking**: Real-time user activity monitoring
-- **Session Management**: Secure authentication with NextAuth.js
+---
 
-![Admin Dashboard](screenshots/admin-dashboard.png)
-*Admin Dashboard with User Management*
+## Architecture overview
+- Frontend: Next.js 15 (App Router) + React + TypeScript + Tailwind
+- Serverless API: Next.js API routes / server components for business logic
+- DB: Prisma ORM with MySQL
+- AI: OpenAI for question generation and content summarization
+- OCR: pdfjs for client/local text extraction; Google Vision async OCR via GCS for image PDFs
 
-### 🎮 Interactive Quiz Experience
-- **Progress Tracking**: Real-time quiz completion indicators
-- **Timed Sessions**: Configurable time limits for quiz attempts
-- **Immediate Feedback**: Instant answer validation and explanations
-- **Responsive Design**: Optimized for desktop and mobile devices
+Key server files:
+- `src/server/services/uploadQuizGenerationService.ts` — PDF handling, OCR fallback chain, and question generation orchestration
+- `src/server/core/auth.ts` & `src/server/core/roles.ts` — NextAuth setup and production safety checks
 
-![Quiz Playing Interface](screenshots/quiz-playing.png)
-*Interactive Quiz Playing Interface*
+---
 
-## 🛠️ Tech Stack
+## Getting started (developer)
 
-### Frontend
-- **[Next.js 15.3.2](https://nextjs.org/)** - React framework with App Router
-- **[React 18.3.1](https://react.dev/)** - UI library
-- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
-- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[Radix UI](https://www.radix-ui.com/)** - Headless component library
-- **[Lucide React](https://lucide.dev/)** - Beautiful icons
-
-### Backend & Database
-- **[Prisma](https://www.prisma.io/)** - Next-generation ORM
-- **[MySQL](https://www.mysql.com/)** - Relational database
-- **[NextAuth.js](https://next-auth.js.org/)** - Authentication solution
-
-### AI & Data Processing
-- **[OpenAI API](https://openai.com/api/)** - AI-powered quiz generation
-- **[PDF.js](https://mozilla.github.io/pdf.js/)** - PDF processing for content extraction
-- **[String Similarity](https://www.npmjs.com/package/string-similarity)** - Answer matching algorithms
-
-### Development & Testing
-- **[Jest](https://jestjs.io/)** - Testing framework
-- **[Playwright](https://playwright.dev/)** - End-to-end testing
-- **[ESLint](https://eslint.org/)** - Code linting
-- **[@testing-library/react](https://testing-library.com/)** - Component testing
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18.x or later
-- MySQL database
+Prerequisites
+- Node.js 18+ (recommended)
+- npm or pnpm
+- MySQL (local or remote)
 - OpenAI API key
-- Google OAuth credentials (optional for Google authentication)
-- SMTP credentials (recommended for email verification in production)
+- (Optional for production testing) Google Cloud project with Vision API & a GCS bucket
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/wzwzDev/TFM.git
-   cd TFM
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
-   ```env
-   DATABASE_URL="mysql://username:password@localhost:3306/quizupm"
-   NEXTAUTH_SECRET="your-nextauth-secret"
-   NEXTAUTH_URL="http://localhost:3000"
-   
-   GOOGLE_CLIENT_ID="your-google-client-id"
-   GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-   SMTP_HOST="smtp.your-provider.com"
-   SMTP_PORT="587"
-   SMTP_USER="smtp-user"
-   SMTP_PASS="smtp-password"
-   EMAIL_FROM="QuizUPM <no-reply@your-domain.com>"
-   
-   OPENAI_API_KEY="your-openai-api-key"
-   ```
-
-4. **Set up the database**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-6. **Open the application**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-![Installation Success](screenshots/local-setup.png)
-*Successful local development setup*
-
-## 📱 Application Structure
-
-### User Journey
-1. **Authentication**: Google OAuth or email/password sign-in
-2. **Registration**: New users can register with name, email, and password
-3. **Email Verification**: Verify account with a link sent to email
-4. **Dashboard**: Personal analytics and quiz history
-5. **Quiz Selection**: Browse available quizzes by category
-6. **Quiz Playing**: Interactive quiz experience
-7. **Results**: Detailed performance feedback
-
-### Admin Features
-- Quiz creation and management
-- User moderation tools
-- System analytics
-- Content approval workflow
-
-![User Flow](screenshots/user-flow.png)
-*Complete user experience flow*
-
-## 🧪 Testing
-
-The project includes comprehensive testing coverage:
+Quick start
 
 ```bash
-# Run frontend tests
-npm run test:frontend
+# clone
+git clone https://github.com/wzwzDev/TFM.git nextquizai
+cd nextquizai
 
-# Run backend tests
-npm run test:backend
+# install
+author: npm install
 
-# Run all tests
-npm run test
+# env (see next section for vars)
+cp .env.example .env.local
+# edit .env.local with your values
 
-# Run e2e tests with Playwright
-npx playwright test
+# prisma
+npx prisma generate
+npx prisma db push
+
+# run
+npm run dev
 ```
 
-![Test Coverage](screenshots/test-coverage.png)
-*Test coverage report showing 90%+ coverage*
+Environment variables (essential)
+- `DATABASE_URL` — Prisma connection string
+- `NEXTAUTH_URL` — e.g. `http://localhost:3000` (and production domain)
+- `NEXTAUTH_SECRET` — secure secret for NextAuth
+- `OPENAI_API_KEY` — OpenAI key
+- `OWNER_EMAIL` — (production) owner account used by admin checks
 
-## 📊 Project Statistics
+OCR & GCS (production)
+- `GOOGLE_VISION_GCS_BUCKET` — bucket name used for async Vision jobs
+- `GOOGLE_APPLICATION_CREDENTIALS_JSON` — service account JSON (single-line escaped JSON or base64 encoded). See Troubleshooting > GCS credentials.
+- `GOOGLE_VISION_API_KEY` — optional REST fallback key
 
-- **Total Components**: 40+ React components
-- **API Endpoints**: 15+ REST API routes
-- **Database Models**: 10 Prisma models
-- **Test Coverage**: 90%+ across frontend and backend
-- **Supported Categories**: Mathematics, Science, History, Geography, and more
-
-## 🔧 Configuration
-
-### Database Schema
-The application uses a comprehensive schema with the following key models:
-- **User**: Authentication and profile management
-- **Game**: Quiz session tracking
-- **Question**: Individual quiz questions with answers
-- **Quiz**: Admin-managed quiz collections
-- **UserQuizAttempt**: Performance tracking
-
-### AI Integration
-- OpenAI GPT integration for question generation
-- Intelligent answer similarity checking
-- Automated content categorization
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- OpenAI for AI-powered quiz generation
-- Vercel for deployment platform
-- The Next.js team for the amazing framework
-- All contributors who helped build this platform
+Notes: never commit secrets. Use Vercel/GCP secret management for production.
 
 ---
 
-## 📸 Screenshots Gallery
+## Local development and useful commands
 
-### Authentication Flow
-![Sign In](screenshots/signin.png)
-*Google OAuth authentication*
+```bash
+# dev server
+npm run dev
 
-### User Dashboard
-![User Dashboard](screenshots/user-dashboard.png)
-*Personal dashboard with quiz history and statistics*
+# build
+npm run build
+npm start
 
-### Quiz Categories
-![Quiz Categories](screenshots/quiz-categories.png)
-*Available quiz categories with visual icons*
+# tests
+npm run test        # runs both frontend & backend suites
+npx playwright test  # e2e
 
-### Live Quiz Session
-![Quiz Session](screenshots/quiz-session.png)
-*Active quiz with progress tracking*
-
-### Results & Analytics
-![Quiz Results](screenshots/quiz-results.png)
-*Detailed results with performance breakdown*
-
-### Admin Panel
-![Admin Panel](screenshots/admin-panel.png)
-*Administrative interface for quiz and user management*
-
-### Mobile Responsive
-![Mobile View](screenshots/mobile-view.png)
-*Responsive design on mobile devices*
+# lint & format
+npm run lint
+npm run format
+```
 
 ---
 
-**Built with ❤️ for educational excellence**
+## Deployment notes (Vercel)
+1. Set the environment variables in the Vercel dashboard for both Preview and Production.
+2. For `GOOGLE_APPLICATION_CREDENTIALS_JSON`, either:
+   - Paste the service key JSON as a single-line escaped string (replace newlines with `\n`), or
+   - Base64-encode the JSON locally and set `GOOGLE_APPLICATION_CREDENTIALS_BASE64`, then decode it at runtime inside the app.
+3. Add this redirect to Google Cloud OAuth credentials for production:
+   - `https://<your-vercel-domain>/api/auth/callback/google`
+4. Required production envs: `OWNER_EMAIL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, any Google/OpenAI keys.
 
-## 🏗️ Architecture
+Important: Vercel serverless instances do not provide native canvas or browser DOM APIs. See Troubleshooting: PDF canvas warnings — the app short-circuits `pdfjs` parsing on serverless and routes files to Google Vision OCR.
 
-```mermaid
-flowchart TD
-    User[👤 User] --> FE[🌐 Frontend Next.js/React]
-    FE --> API[🔌 API Routes Next.js]
-    API --> DB[🗄️ MySQL Database Prisma]
-    API --> AI[🤖 OpenAI API]
-    
-    subgraph "Frontend Layer"
-        FE --> Auth[🔐 NextAuth.js]
-        FE --> UI[🎨 Radix UI + Tailwind]
-        FE --> Charts[📊 Recharts]
-    end
-    
-    subgraph "Backend Layer"
-        API --> Validation[✅ Zod Validation]
-        API --> Processing[⚙️ Data Processing]
-    end
-    
-    subgraph "Data Layer"
-        DB --> Models[📋 User, Quiz, Game Models]
-        AI --> Generation[🧠 Quiz Generation]
-    end
-```
+---
 
-### Backend Folder Structure
+## Troubleshooting (common issues)
 
-```text
-src/
-   server/
-      core/                 # auth and database bootstrap
-      ai/                   # OpenAI clients and strict output adapters
-      repositories/         # Prisma-only data access
-      services/             # business/application logic
-      question-generation/  # question parsing/generation helpers
-```
+1. Canvas / `pdfjs-dist` warnings on Vercel
+   - Symptoms: logs contain `Cannot load "@napi-rs/canvas"`, and polyfill warnings for `DOMMatrix`, `ImageData`, `Path2D`.
+   - Cause: `pdfjs` tries to use native canvas bindings which are not available in serverless environments.
+   - Fix: Production builds skip server-side `pdfjs` parsing and use the Google Vision async OCR fallback. Locally you can run the full pdfjs flow.
+
+2. Google OAuth callback failing
+   - Symptom: `[next-auth][error][OAUTH_CALLBACK_HANDLER_ERROR] Missing OWNER_EMAIL environment variable`
+   - Fix: Add `OWNER_EMAIL` and other auth envs to Vercel (or your production host). Ensure `NEXTAUTH_URL` matches deployment domain and Google OAuth redirect URIs are configured.
+
+3. GCS service account credentials
+   - Use `GOOGLE_APPLICATION_CREDENTIALS_JSON` as single-line escaped JSON or store as base64 and decode on startup. Ensure the service account has `roles/storage.objectAdmin` on the OCR bucket and that the Vision API is enabled.
+
+---
+
+## How PDF → Question generation works (high level)
+1. File uploaded via frontend.
+2. Server attempts fast extraction (text PDFs with `pdfjs`) when running on Node with canvas available.
+3. If the PDF is image-only or server environment lacks canvas, the file is uploaded to GCS and a Google Vision async job is submitted.
+4. OCR results are read from GCS, extracted text is cleaned and paginated.
+5. Text chunks are sent to an OpenAI generation pipeline which returns structured question objects.
+6. Questions are stored via Prisma and surfaced in the UI.
+
+See `src/server/services/uploadQuizGenerationService.ts` for the concrete implementation.
+
+---
+
+## Testing & Quality
+- Unit & integration tests: Jest (run `npm run test`)
+- E2E: Playwright (run `npx playwright test`)
+- Linting: ESLint + Prettier
+- Coverage: scripts produce coverage reports in `coverage/` and `coverage-frontend/`
+
+---
+
+## Contributing
+Contributions are welcome. Please follow these steps:
+1. Fork and create a feature branch
+2. Add tests for new behavior
+3. Keep PRs small and focused
+4. Describe architectural trade-offs in PR description
+
+---
+
+## Contact
+- Wael Louati — waelluati@gmail.com
+- Portfolio: https://wael-louati-portfolio.vercel.app
+- GitHub: https://github.com/wzwzDev
+
+---
+
+## Credits & Acknowledgements
+This project is part of my Master’s thesis (TFM). Big thanks to:
+- OpenAI — model for generating high-quality questions
+- Google Cloud Vision — reliable OCR for scanned documents
+- Next.js and the Vercel team for shaping the platform
+
+---
+
+*If you want, I can also produce a minimal `README-short.md` for the GitHub landing page, or extract the deployment and env var checklist into `DEPLOYMENT.md`.*
