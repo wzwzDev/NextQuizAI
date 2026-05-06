@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -80,14 +81,37 @@ type QuizListProps = {
 export default function QuizList({ refreshKey = 0 }: QuizListProps) {
   const [allQuizzes, setAllQuizzes] = useState<AdminQuizDraft[]>([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
+  const [pageInput, setPageInput] = useState("1");
   const [total, setTotal] = useState(0);
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [quizType, setQuizType] = useState("");
   const [selectedQuiz, setSelectedQuiz] = useState<AdminQuizDraft | null>(null);
+  const [quizToDelete, setQuizToDelete] = useState<AdminQuizDraft | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
+  const [deleteSelectedError, setDeleteSelectedError] = useState<string | null>(null);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = window.localStorage.getItem("adminQuizListPageSize");
+    const parsed = Number(stored);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setLimit(parsed);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -155,6 +179,18 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
     };
   }, [refreshKey, page, limit, category, difficulty]);
 
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem("adminQuizListPageSize", String(limit));
+  }, [limit]);
+
   const categories = React.useMemo(() => {
     return Array.from(
       new Set(
@@ -215,6 +251,26 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
     });
   }, [allQuizzes, category, difficulty, quizType]);
 
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setSelectedIds((current) =>
+      current.filter((id) => filteredQuizzes.some((quiz) => quiz.id === id)),
+    );
+  }, [filteredQuizzes]);
+
+  const pageQuizIds = filteredQuizzes.flatMap((quiz) => (quiz.id ? [quiz.id] : []));
+  const allSelectedOnPage =
+    pageQuizIds.length > 0 &&
+    pageQuizIds.every((id) => selectedIds.includes(id));
+  const selectedCount = selectedIds.length;
+
   const formatQuizTypeLabel = (value?: string) => {
     const normalized = normalizeFilterValue(value);
     if (normalized === "mcq") {
@@ -228,27 +284,177 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
     return "Unknown";
   };
 
-  const handleDelete = async (quiz: AdminQuizDraft) => {
-    if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
-      try {
-        const res = await fetch(`/api/quiz-review?id=${quiz.id}`, {
-          method: "DELETE",
-        });
-        if (res.ok) {
-          setAllQuizzes((qs) => qs.filter((q) => q.id !== quiz.id));
-        } else {
-          const data = await res.json();
-          alert(data.error || "Failed to delete quiz.");
-        }
-      } catch {
-        alert("Failed to delete quiz.");
-      }
+  const handleDeleteRequest = (quiz: AdminQuizDraft) => {
+    setDeleteError(null);
+    setQuizToDelete(quiz);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!quizToDelete || isDeleting) {
+      return;
     }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch(`/api/quiz-review?id=${quizToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to delete quiz.");
+      }
+
+      const shouldMoveBack = page > 1 && allQuizzes.length === 1;
+      setAllQuizzes((qs) => qs.filter((q) => q.id !== quizToDelete.id));
+      setTotal((current) => Math.max(0, current - 1));
+      setQuizToDelete(null);
+
+      if (shouldMoveBack) {
+        setPage((current) => Math.max(1, current - 1));
+      }
+    } catch (deleteError) {
+      setDeleteError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete quiz.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDeleteRequest = () => {
+    setBulkDeleteError(null);
+    setBulkDeleteOpen(true);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (isBulkDeleting) {
+      return;
+    }
+
+    const idsToDelete = filteredQuizzes.map((quiz) => quiz.id);
+    if (idsToDelete.length === 0) {
+      setBulkDeleteOpen(false);
+      return;
+    }
+
+    setIsBulkDeleting(true);
+    setBulkDeleteError(null);
+
+    try {
+      const results = await Promise.all(
+        idsToDelete.map((quizId) =>
+          fetch(`/api/quiz-review?id=${quizId}`, { method: "DELETE" }),
+        ),
+      );
+
+      const failed = results.filter((res) => !res.ok);
+      if (failed.length > 0) {
+        throw new Error(`${failed.length} quiz(es) failed to delete.`);
+      }
+
+      const shouldMoveBack = page > 1 && filteredQuizzes.length === idsToDelete.length;
+      setAllQuizzes((qs) => qs.filter((q) => !idsToDelete.includes(q.id)));
+      setTotal((current) => Math.max(0, current - idsToDelete.length));
+      setBulkDeleteOpen(false);
+
+      if (shouldMoveBack) {
+        setPage((current) => Math.max(1, current - 1));
+      }
+    } catch (deleteError) {
+      setBulkDeleteError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete quizzes.",
+      );
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        pageQuizIds.forEach((id) => next.add(id));
+      } else {
+        pageQuizIds.forEach((id) => next.delete(id));
+      }
+      return Array.from(next);
+    });
+  };
+
+  const handleToggleSelect = (quizId: string) => {
+    setSelectedIds((current) =>
+      current.includes(quizId)
+        ? current.filter((id) => id !== quizId)
+        : [...current, quizId],
+    );
+  };
+
+  const handleDeleteSelectedRequest = () => {
+    setDeleteSelectedError(null);
+    setDeleteSelectedOpen(true);
+  };
+
+  const handleConfirmDeleteSelected = async () => {
+    if (isDeletingSelected || selectedIds.length === 0) {
+      return;
+    }
+
+    setIsDeletingSelected(true);
+    setDeleteSelectedError(null);
+
+    try {
+      const results = await Promise.all(
+        selectedIds.map((quizId) =>
+          fetch(`/api/quiz-review?id=${quizId}`, { method: "DELETE" }),
+        ),
+      );
+
+      const failed = results.filter((res) => !res.ok);
+      if (failed.length > 0) {
+        throw new Error(`${failed.length} quiz(es) failed to delete.`);
+      }
+
+      const shouldMoveBack = page > 1 && filteredQuizzes.length <= selectedIds.length;
+      setAllQuizzes((qs) => qs.filter((q) => (q.id ? !selectedIds.includes(q.id) : true)));
+      setTotal((current) => Math.max(0, current - selectedIds.length));
+      setSelectedIds([]);
+      setDeleteSelectedOpen(false);
+
+      if (shouldMoveBack) {
+        setPage((current) => Math.max(1, current - 1));
+      }
+    } catch (deleteError) {
+      setDeleteSelectedError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete quizzes.",
+      );
+    } finally {
+      setIsDeletingSelected(false);
+    }
+  };
+
+  const handleGoToPage = () => {
+    const parsed = Number(pageInput);
+    if (!Number.isFinite(parsed)) {
+      return;
+    }
+
+    const nextPage = Math.min(Math.max(1, Math.floor(parsed)), totalPages);
+    setPage(nextPage);
+    setPageInput(String(nextPage));
   };
 
   return (
     <div className="p-4 bg-white dark:bg-black rounded-xl shadow border">
-      <div className="mb-4 flex gap-4 items-center">
+      <div className="mb-4 flex flex-wrap gap-4 items-center">
         <select
           className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
           value={category}
@@ -285,6 +491,22 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+          onClick={handleBulkDeleteRequest}
+          disabled={filteredQuizzes.length === 0 || loading}
+        >
+          Delete page
+        </button>
+        <button
+          type="button"
+          className="bg-rose-600 text-white px-3 py-1 rounded hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+          onClick={handleDeleteSelectedRequest}
+          disabled={selectedCount === 0 || loading}
+        >
+          Delete selected
+        </button>
       </div>
       {loading && <div>Loading quizzes...</div>}
       {error && <div className="text-red-500">{error}</div>}
@@ -294,6 +516,14 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           <table className="min-w-full border rounded-lg">
             <thead>
               <tr className="bg-blue-100 dark:bg-blue-900">
+                <th className="p-2 border text-center">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all quizzes on this page"
+                    checked={allSelectedOnPage}
+                    onChange={(event) => handleToggleSelectAll(event.target.checked)}
+                  />
+                </th>
                 <th className="p-2 border">#</th>
                 <th className="p-2 border text-left">Title</th>
                 <th className="p-2 border text-left">Category</th>
@@ -307,6 +537,18 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
             <tbody>
               {filteredQuizzes.map((quiz: AdminQuizDraft, idx: number) => (
                 <tr key={quiz.id} className="hover:bg-blue-50">
+                  <td className="p-2 border text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${quiz.title}`}
+                      checked={selectedIds.includes(quiz.id ?? "")}
+                      onChange={() => {
+                        if (quiz.id) {
+                          handleToggleSelect(quiz.id);
+                        }
+                      }}
+                    />
+                  </td>
                   <td className="p-2 border text-center">{idx + 1}</td>
                   <td className="p-2 border">{quiz.title}</td>
                   <td className="p-2 border">{quiz.category}</td>
@@ -328,7 +570,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
                     </button>
                     <button
                       className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                      onClick={() => handleDelete(quiz)}
+                      onClick={() => handleDeleteRequest(quiz)}
                     >
                       Delete
                     </button>
@@ -341,8 +583,8 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
       )}
 
       {/* Pagination controls */}
-      <div className="mt-4 flex items-center justify-between">
-        <div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
           <button
             className="px-3 py-1 mr-2 rounded border"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -352,14 +594,50 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           </button>
           <button
             className="px-3 py-1 rounded border"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page * limit >= total}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
           >
             Next
           </button>
+          <span>
+            Page {page} — {Math.min(page * limit, total)} of {total}
+          </span>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Page {page} — {Math.min(page * limit, total)} of {total}
+        <div className="flex items-center gap-2">
+          <label htmlFor="quiz-list-page-size">Rows:</label>
+          <select
+            id="quiz-list-page-size"
+            className="border rounded px-2 py-1 bg-white dark:bg-black text-gray-900 dark:text-white"
+            value={limit}
+            onChange={(event) => {
+              setLimit(Number(event.target.value));
+              setPage(1);
+            }}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={30}>30</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="quiz-list-go-page">Go to:</label>
+          <input
+            id="quiz-list-go-page"
+            type="number"
+            min={1}
+            max={totalPages}
+            value={pageInput}
+            onChange={(event) => setPageInput(event.target.value)}
+            className="w-20 rounded border px-2 py-1"
+          />
+          <button
+            type="button"
+            className="px-3 py-1 rounded border"
+            onClick={handleGoToPage}
+          >
+            Go
+          </button>
         </div>
       </div>
 
@@ -429,6 +707,162 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
               )}
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={quizToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setQuizToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          {quizToDelete && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Delete quiz</DialogTitle>
+                <DialogDescription>
+                  This action permanently removes the quiz and cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete
+                <span className="font-semibold"> {quizToDelete.title}</span>?
+                This action cannot be undone.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You are deleting 1 quiz.
+              </p>
+              {deleteError && (
+                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {deleteError}
+                </div>
+              )}
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-3 py-1 rounded border"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setQuizToDelete(null);
+                    setDeleteError(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                >
+                  {isDeleting ? "Deleting..." : "Delete quiz"}
+                </button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={bulkDeleteOpen}
+        onOpenChange={(open) => {
+          if (!open && !isBulkDeleting) {
+            setBulkDeleteOpen(false);
+            setBulkDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete quizzes on this page</DialogTitle>
+            <DialogDescription>
+              This will delete every quiz currently listed on this page.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            You are about to delete {filteredQuizzes.length} quiz
+            {filteredQuizzes.length === 1 ? "" : "zes"}.
+          </p>
+          {bulkDeleteError && (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {bulkDeleteError}
+            </div>
+          )}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              className="px-3 py-1 rounded border"
+              disabled={isBulkDeleting}
+              onClick={() => {
+                setBulkDeleteOpen(false);
+                setBulkDeleteError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={isBulkDeleting}
+              onClick={handleConfirmBulkDelete}
+            >
+              {isBulkDeleting ? "Deleting..." : "Delete page"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteSelectedOpen}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingSelected) {
+            setDeleteSelectedOpen(false);
+            setDeleteSelectedError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete selected quizzes</DialogTitle>
+            <DialogDescription>
+              This will delete only the quizzes you selected.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            You are about to delete {selectedCount} quiz
+            {selectedCount === 1 ? "" : "zes"}.
+          </p>
+          {deleteSelectedError && (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {deleteSelectedError}
+            </div>
+          )}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              className="px-3 py-1 rounded border"
+              disabled={isDeletingSelected}
+              onClick={() => {
+                setDeleteSelectedOpen(false);
+                setDeleteSelectedError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={isDeletingSelected || selectedCount === 0}
+              onClick={handleConfirmDeleteSelected}
+            >
+              {isDeletingSelected ? "Deleting..." : "Delete selected"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

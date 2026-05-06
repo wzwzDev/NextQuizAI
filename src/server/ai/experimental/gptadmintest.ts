@@ -26,9 +26,7 @@ let cachedApiKey: string | null = null;
 function getOrCreateClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      "The OPENAI_API_KEY environment variable is missing or empty."
-    );
+    throw new Error("The OPENAI_API_KEY environment variable is missing or empty.");
   }
 
   if (cachedClient && cachedApiKey === apiKey) {
@@ -41,7 +39,22 @@ function getOrCreateClient(): OpenAI {
 }
 
 /**
- * Refactored strict_output function now accepts an optional OpenAI client instance.\n * If not provided, uses cached client or creates new one with env var.\n */\nexport async function strict_output(\n  system_prompt: string,\n  user_prompt: string | string[],\n  output_format: OutputFormat,\n  default_category: string = \"\",\n  output_value_only: boolean = false,\n  model: string = \"gpt-3.5-turbo\",\n  temperature: number = 1,\n  num_tries: number = 3,\n  verbose: boolean = false,\n  openaiClient?: OpenAI, // <-- injected client\n): Promise<{ question: string; answer: string }[]> {\n  // Use provided client, cached client, or create new one\n  const openai = openaiClient ?? getOrCreateClient();
+ * Refactored strict_output function now accepts an optional OpenAI client instance.
+ * If not provided, uses cached client or creates new one with env var.
+ */
+export async function strict_output(
+  system_prompt: string,
+  user_prompt: string | string[],
+  output_format: OutputFormat,
+  default_category: string = "",
+  output_value_only: boolean = false,
+  model: string = "gpt-3.5-turbo",
+  temperature: number = 1,
+  num_tries: number = 3,
+  verbose: boolean = false,
+  openaiClient?: OpenAI,
+): Promise<{ question: string; answer: string }[]> {
+  const openai = openaiClient ?? getOrCreateClient();
 
   const isListInput = Array.isArray(user_prompt);
   const formatJson = JSON.stringify(output_format);
@@ -74,9 +87,7 @@ function getOrCreateClient(): OpenAI {
         },
         {
           role: "user",
-          content: isListInput
-            ? JSON.stringify(user_prompt)
-            : String(user_prompt),
+          content: isListInput ? JSON.stringify(user_prompt) : String(user_prompt),
         },
       ],
     });
@@ -84,10 +95,7 @@ function getOrCreateClient(): OpenAI {
     const content = response.choices[0].message?.content ?? "";
 
     if (verbose) {
-      console.log(
-        "=== System prompt ===\n",
-        system_prompt + formatPrompt + errorMsg,
-      );
+      console.log("=== System prompt ===\n", system_prompt + formatPrompt + errorMsg);
       console.log("=== User prompt ===\n", user_prompt);
       console.log("=== GPT raw output ===\n", content);
     }
@@ -98,14 +106,14 @@ function getOrCreateClient(): OpenAI {
 
       for (let item of outputArray) {
         for (const key in output_format) {
-          if (hasDelimitedPlaceholder(key, "<", ">")) continue; // skip dynamic keys
+          if (hasDelimitedPlaceholder(key, "<", ">")) continue;
 
           if (!(key in item)) throw new Error(`Missing key: ${key}`);
 
           if (Array.isArray(output_format[key])) {
             const allowed = output_format[key] as string[];
             if (Array.isArray(item[key])) {
-              item[key] = item[key][0]; // pick first if array
+              item[key] = item[key][0];
             }
             if (!allowed.includes(item[key]) && default_category) {
               item[key] = default_category;

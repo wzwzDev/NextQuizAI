@@ -12,6 +12,14 @@ import { buildVerificationUrl, sendVerificationEmail } from "@/server/mailer/ema
 describe("server mailer email", () => {
   const OLD_ENV = process.env;
 
+  const setNodeEnv = (value: string) => {
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value,
+      configurable: true,
+      writable: true,
+    });
+  };
+
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...OLD_ENV };
@@ -34,7 +42,7 @@ describe("server mailer email", () => {
   });
 
   it("throws in production when SMTP is missing", async () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     delete process.env.SMTP_HOST;
     delete process.env.SMTP_PORT;
     delete process.env.SMTP_USER;
@@ -49,7 +57,7 @@ describe("server mailer email", () => {
   });
 
   it("does not throw when SMTP variables are configured", async () => {
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     process.env.SMTP_HOST = "smtp.example.com";
     process.env.SMTP_PORT = "465";
     process.env.SMTP_USER = "user";

@@ -25,7 +25,11 @@ jest.mock("@radix-ui/react-dropdown-menu", () => {
     __esModule: true,
     Root: ({ children }: any) => <div data-testid="dropdown-root">{children}</div>,
     Trigger: React.forwardRef((props: any, ref: any) => <button ref={ref} data-testid="dropdown-trigger" {...props} />),
-    Content: React.forwardRef((props: any, ref: any) => <div ref={ref} data-testid="dropdown-content" {...props} />),
+    Content: React.forwardRef((props: any, ref: any) => {
+      const { sideOffset, ...rest } = props;
+      void sideOffset;
+      return <div ref={ref} data-testid="dropdown-content" {...rest} />;
+    }),
     Item: React.forwardRef((props: any, ref: any) => <div ref={ref} data-testid="dropdown-item" {...props} />),
     CheckboxItem: React.forwardRef((props: any, ref: any) => <div ref={ref} data-testid="dropdown-checkbox-item" {...props} />),
     RadioItem: React.forwardRef((props: any, ref: any) => <div ref={ref} data-testid="dropdown-radio-item" {...props} />),

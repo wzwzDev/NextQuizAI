@@ -95,7 +95,7 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
     }
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
       const droppedFile = event.dataTransfer.files[0];

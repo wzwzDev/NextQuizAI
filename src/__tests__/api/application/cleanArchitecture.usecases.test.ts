@@ -14,8 +14,8 @@ describe("application use-cases", () => {
         findUserByEmail: jest.fn().mockResolvedValue({ id: "u1" }),
         createUserWithPassword: jest.fn(),
       },
-      { hash: jest.fn() },
-      { createToken: jest.fn() },
+      { hash: jest.fn(), verify: jest.fn() },
+      { createToken: jest.fn(), verifyToken: jest.fn() },
       { buildVerificationUrl: jest.fn() },
       { sendVerification: jest.fn() },
     );
@@ -30,8 +30,11 @@ describe("application use-cases", () => {
       findUserByEmail: jest.fn().mockResolvedValue(null),
       createUserWithPassword: jest.fn().mockResolvedValue(undefined),
     };
-    const hasher = { hash: jest.fn().mockResolvedValue("hash") };
-    const tokenPort = { createToken: jest.fn().mockResolvedValue({ token: "tok" }) };
+    const hasher = { hash: jest.fn().mockResolvedValue("hash"), verify: jest.fn() };
+    const tokenPort = {
+      createToken: jest.fn().mockResolvedValue({ token: "tok" }),
+      verifyToken: jest.fn(),
+    };
     const urlBuilder = { buildVerificationUrl: jest.fn().mockReturnValue("http://verify") };
     const emailSender = { sendVerification: jest.fn().mockResolvedValue(undefined) };
 
@@ -62,7 +65,11 @@ describe("application use-cases", () => {
         saveMcqResult: jest.fn(),
         saveOpenEndedResult: jest.fn(),
       },
-      { canUserAccessResource: jest.fn().mockReturnValue(true) },
+      {
+        canUserAccessResource: jest.fn().mockReturnValue(true),
+        isUserBanned: jest.fn().mockReturnValue(false),
+        isUserRevoked: jest.fn().mockReturnValue(false),
+      },
       { execute: jest.fn() } as any,
     );
 
@@ -83,7 +90,11 @@ describe("application use-cases", () => {
         saveMcqResult: jest.fn(),
         saveOpenEndedResult: jest.fn(),
       },
-      { canUserAccessResource: jest.fn().mockReturnValue(false) },
+      {
+        canUserAccessResource: jest.fn().mockReturnValue(false),
+        isUserBanned: jest.fn().mockReturnValue(false),
+        isUserRevoked: jest.fn().mockReturnValue(false),
+      },
       { execute: jest.fn() } as any,
     );
 
@@ -105,7 +116,11 @@ describe("application use-cases", () => {
     };
     const uc = new CheckAnswerUseCase(
       repo,
-      { canUserAccessResource: jest.fn().mockReturnValue(true) },
+      {
+        canUserAccessResource: jest.fn().mockReturnValue(true),
+        isUserBanned: jest.fn().mockReturnValue(false),
+        isUserRevoked: jest.fn().mockReturnValue(false),
+      },
       { execute: jest.fn() } as any,
     );
 
@@ -132,7 +147,11 @@ describe("application use-cases", () => {
 
     const uc = new CheckAnswerUseCase(
       repo,
-      { canUserAccessResource: jest.fn().mockReturnValue(true) },
+      {
+        canUserAccessResource: jest.fn().mockReturnValue(true),
+        isUserBanned: jest.fn().mockReturnValue(false),
+        isUserRevoked: jest.fn().mockReturnValue(false),
+      },
       gradeUseCase as any,
     );
 

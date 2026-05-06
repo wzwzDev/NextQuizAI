@@ -1,3 +1,24 @@
+// Prevent tests from attempting real Google Cloud auth by mocking clients
+jest.mock("@google-cloud/vision", () => ({
+  ImageAnnotatorClient: jest.fn().mockImplementation(() => ({
+    batchAnnotateFiles: jest.fn().mockResolvedValue([{ responses: [] }]),
+    asyncBatchAnnotateFiles: jest.fn().mockResolvedValue([{}]),
+  })),
+  protos: { google: { cloud: { vision: { v1: {} } } } },
+}));
+
+jest.mock("@google-cloud/storage", () => ({
+  Storage: jest.fn().mockImplementation(() => ({
+    bucket: jest.fn().mockReturnValue({
+      file: jest.fn().mockReturnThis(),
+      save: jest.fn().mockResolvedValue(undefined),
+      getFiles: jest.fn().mockResolvedValue([[]]),
+      deleteFiles: jest.fn().mockResolvedValue(undefined),
+      download: jest.fn().mockResolvedValue([Buffer.from("")]),
+    }),
+  })),
+}));
+
 import { existsSync, readFileSync } from "fs";
 import { createServer } from "http";
 import path from "path";

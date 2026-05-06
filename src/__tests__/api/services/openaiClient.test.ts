@@ -33,7 +33,7 @@ describe("openaiClient", () => {
     process.env.OPENAI_API_KEY = "key-1";
     process.env.OPENAI_BASE_URL = "https://example.openai.local";
 
-    const OpenAI = (await import("openai")).default as jest.Mock;
+    const OpenAI = (await import("openai")).default as unknown as jest.Mock;
     const mod = await import("@/server/ai/openaiClient");
     const first = mod.getOpenAIClient();
     const second = mod.getOpenAIClient();
@@ -65,7 +65,7 @@ describe("openaiClient", () => {
   it("returns embedding and throws if embedding is missing", async () => {
     process.env.OPENAI_API_KEY = "k";
     const mod = await import("@/server/ai/openaiClient");
-    const OpenAI = (await import("openai")).default as jest.Mock;
+    const OpenAI = (await import("openai")).default as unknown as jest.Mock;
 
     const embedding = await mod.getEmbedding("hello");
     expect(embedding).toEqual([0.1, 0.2, 0.3]);

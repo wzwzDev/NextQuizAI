@@ -10,9 +10,9 @@
     "type-check": "tsc --noEmit",
     "db:seed": "node prisma/seed.js",
     "db:reset": "npx prisma migrate reset --force --skip-generate && npm run db:seed",
-    "test:frontend": "jest --config jest.frontend.config.js",
-    "test:backend": "jest --config jest.backend.config.js",
-    "test:backend:watch": "jest --config jest.backend.config.js --watch",
+    "test:frontend": "node --no-deprecation ./node_modules/jest/bin/jest.js --config jest.frontend.config.js",
+    "test:backend": "node --no-deprecation ./node_modules/jest/bin/jest.js --config jest.backend.config.js",
+    "test:backend:watch": "node --no-deprecation ./node_modules/jest/bin/jest.js --config jest.backend.config.js --watch",
     "test": "npm run test:frontend && npm run test:backend",
     "coverage:merge": "npx lcov-result-merger \"coverage*/lcov.info\" -o coverage/lcov.info",
     "sonar:prepare": "npm run coverage:merge"

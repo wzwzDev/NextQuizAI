@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import QuizStatistics from "../../components/admin/QuizStatistics";
 
 const mockStats = [
@@ -25,6 +25,7 @@ describe("QuizStatistics", () => {
     global.fetch = jest.fn().mockResolvedValue({
       json: async () => mockStats,
     });
+    window.localStorage.clear();
   });
 
   afterEach(() => {
@@ -44,11 +45,11 @@ describe("QuizStatistics", () => {
       expect(screen.getByText("Math Quiz")).toBeInTheDocument();
       expect(screen.getByText("Science Quiz")).toBeInTheDocument();
       expect(screen.getByText("10")).toBeInTheDocument();
-      expect(screen.getByText("5")).toBeInTheDocument();
       expect(screen.getByText("85")).toBeInTheDocument();
       expect(screen.getByText("70")).toBeInTheDocument();
       expect(screen.getByText("90%")).toBeInTheDocument();
       expect(screen.getByText("N/A")).toBeInTheDocument();
+      expect(screen.getAllByText("5").length).toBeGreaterThan(0);
     });
   });
 
@@ -64,5 +65,90 @@ describe("QuizStatistics", () => {
       );
     });
     errorSpy.mockRestore();
+  });
+
+  it("paginates statistics when there are many entries", async () => {
+    const manyStats = Array.from({ length: 12 }, (_, index) => ({
+      quizId: String(index + 1),
+      quizTitle: `Quiz ${index + 1}`,
+      attempts: index + 1,
+      averageScore: 70,
+      completionRate: 80,
+    }));
+
+    (global.fetch as jest.Mock).mockImplementation(async () => ({
+      json: async () => manyStats,
+    }));
+
+    render(<QuizStatistics />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Quiz 1")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
+    expect(screen.getByText("Quiz 12")).toBeInTheDocument();
+  });
+
+  it("allows changing page size and jumping to a page", async () => {
+    const manyStats = Array.from({ length: 12 }, (_, index) => ({
+      quizId: String(index + 1),
+      quizTitle: `Quiz ${index + 1}`,
+      attempts: index + 1,
+      averageScore: 70,
+      completionRate: 80,
+    }));
+
+    (global.fetch as jest.Mock).mockImplementation(async () => ({
+      json: async () => manyStats,
+    }));
+
+    render(<QuizStatistics />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Quiz 1")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("Rows:"), {
+      target: { value: "5" },
+    });
+
+    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Go to:"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Go" }));
+
+    expect(screen.getByText("Page 3 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Quiz 12")).toBeInTheDocument();
+  });
+
+  it("persists page size in localStorage", async () => {
+    const manyStats = Array.from({ length: 12 }, (_, index) => ({
+      quizId: String(index + 1),
+      quizTitle: `Quiz ${index + 1}`,
+      attempts: index + 1,
+      averageScore: 70,
+      completionRate: 80,
+    }));
+
+    (global.fetch as jest.Mock).mockImplementation(async () => ({
+      json: async () => manyStats,
+    }));
+
+    window.localStorage.setItem("adminQuizStatsPageSize", "5");
+
+    render(<QuizStatistics />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Quiz 1")).toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText("Rows:")).toHaveValue("5");
   });
 });

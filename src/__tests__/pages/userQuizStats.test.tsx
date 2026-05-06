@@ -1,13 +1,14 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import UserQuizStats from "../../components/UserQuizStats";
 
-// Mocks
+let mockSessionState: { data: { user: { name: string } } | null; status: "loading" | "authenticated" | "unauthenticated" } = {
+  data: null,
+  status: "loading",
+};
+
 jest.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: { user: { name: "Test User" } },
-    status: "authenticated",
-  }),
+  useSession: () => mockSessionState,
 }));
 
 jest.mock("../../components/LoadingStats", () => () => <div>Loading...</div>);
@@ -52,28 +53,43 @@ const mockStats = [
   },
 ];
 
-beforeEach(() => {
-  // @ts-ignore
-  global.fetch = jest.fn().mockResolvedValue({
-    json: async () => ({ quizStats: mockStats }),
-  });
-});
-
-afterEach(() => {
-  // @ts-ignore
-  global.fetch = undefined;
-});
-
 describe("UserQuizStats", () => {
+  beforeEach(() => {
+    mockSessionState = {
+      data: { user: { name: "Test User" } },
+      status: "authenticated",
+    };
+
+    global.fetch = jest.fn().mockResolvedValue({
+      json: async () => ({ quizStats: mockStats }),
+    }) as jest.Mock;
+  });
+
+  afterEach(() => {
+    // @ts-expect-error cleanup in jsdom test environment
+    global.fetch = undefined;
+  });
+
   it("renders loading state", () => {
-    jest.mock("next-auth/react", () => ({
-      useSession: () => ({
-        data: null,
-        status: "loading",
-      }),
-    }));
+    mockSessionState = { data: null, status: "loading" };
+
     render(<UserQuizStats />);
+
     expect(screen.getByText(/Loading/i)).toBeInTheDocument();
   });
-  
+
+  it("fetches and renders quiz stats when authenticated", async () => {
+    render(<UserQuizStats />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test User")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Recent Attempt")).toBeInTheDocument();
+    expect(screen.getByText("Total Attempts")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getByText("Total Completed")).toBeInTheDocument();
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
 });

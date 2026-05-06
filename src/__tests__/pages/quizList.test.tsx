@@ -84,7 +84,6 @@ describe("QuizList", () => {
   });
 
   it("calls handleDelete and removes quiz from table", async () => {
-    window.confirm = jest.fn(() => true);
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
@@ -98,6 +97,7 @@ describe("QuizList", () => {
               questions: [{}, {}],
             },
           ],
+          total: 1,
         }),
       })
       .mockResolvedValueOnce({ ok: true }); // For DELETE
@@ -107,9 +107,105 @@ describe("QuizList", () => {
       expect(screen.getByText("Math Quiz")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getAllByText("Delete")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Delete quiz" }));
     await waitFor(() => {
       expect(screen.queryByText("Math Quiz")).not.toBeInTheDocument();
+    });
+  });
+
+  it("deletes all quizzes on the current page", async () => {
+    (global.fetch as jest.Mock).mockImplementation((input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes("/api/quiz-review?") && !url.includes("id=")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            quizzes: [
+              {
+                id: "1",
+                title: "Math Quiz",
+                category: "Math",
+                difficulty: "easy",
+                questions: [{}, {}],
+              },
+              {
+                id: "2",
+                title: "Science Quiz",
+                category: "Science",
+                difficulty: "medium",
+                questions: [{}],
+              },
+            ],
+            total: 2,
+          }),
+        } as any);
+      }
+
+      return Promise.resolve({ ok: true } as any);
+    });
+
+    render(<QuizList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Math Quiz")).toBeInTheDocument();
+      expect(screen.getByText("Science Quiz")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete page" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete page" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Math Quiz")).not.toBeInTheDocument();
+      expect(screen.queryByText("Science Quiz")).not.toBeInTheDocument();
+    });
+  });
+
+  it("deletes selected quizzes", async () => {
+    (global.fetch as jest.Mock).mockImplementation((input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes("/api/quiz-review?") && !url.includes("id=")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            quizzes: [
+              {
+                id: "1",
+                title: "Math Quiz",
+                category: "Math",
+                difficulty: "easy",
+                questions: [{}, {}],
+              },
+              {
+                id: "2",
+                title: "Science Quiz",
+                category: "Science",
+                difficulty: "medium",
+                questions: [{}],
+              },
+            ],
+            total: 2,
+          }),
+        } as any);
+      }
+
+      return Promise.resolve({ ok: true } as any);
+    });
+
+    render(<QuizList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Math Quiz")).toBeInTheDocument();
+      expect(screen.getByText("Science Quiz")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText("Select Math Quiz"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete selected" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete selected" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Math Quiz")).not.toBeInTheDocument();
+      expect(screen.getByText("Science Quiz")).toBeInTheDocument();
     });
   });
 });
