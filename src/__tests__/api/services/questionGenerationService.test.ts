@@ -86,30 +86,62 @@ describe("questionGenerationService", () => {
     ]);
   });
 
-  it("prompts open-ended generation for code or script execution results", async () => {
+  it("prompts open-ended generation as a code-and-general mix", async () => {
     const strictOutputSpy = jest
       .spyOn(gpt, "strict_output")
       .mockResolvedValueOnce([
         {
-          question: "Run this script and type the exact output:\n\nconsole.log(\"react\".toUpperCase());",
+          question: "What does console.log(\"react\".toUpperCase()) print?",
           answer: "REACT",
+        },
+        {
+          question: "What does console.log(1 + 1) print?",
+          answer: "2",
+        },
+        {
+          question: "What is React mainly used for?",
+          answer: "Building user interfaces",
+        },
+        {
+          question: "Name one concept React relies on.",
+          answer: "Components",
         },
       ]);
 
     await generateQuestionsByTopic({
-      amount: 1,
+      amount: 4,
       topic: "react",
       type: "open_ended",
     });
 
     expect(strictOutputSpy).toHaveBeenCalled();
     const [systemPrompt, prompts, outputFormat] = strictOutputSpy.mock.calls[0];
-    expect(String(systemPrompt)).toContain("code-style quiz pairs");
-    expect(String(systemPrompt)).toContain("balanced mix");
-    expect(String(prompts[0])).toContain("code-or-script question");
-    expect(String(prompts[0])).toContain("exact execution result");
+    expect(String(systemPrompt)).toContain("open-ended quiz pairs");
+    expect(String(systemPrompt)).toContain("exact mix requested by each prompt");
+    expect(String(prompts[0])).toContain("code-style question");
+    expect(String(prompts[1])).toContain("code-style question");
+    expect(String(prompts[2])).toContain("general knowledge question");
+    expect(String(prompts[3])).toContain("general knowledge question");
     expect(String(prompts[0])).toContain("[FILL_BLANK]");
+    expect(String(prompts[1])).toContain("exact execution result");
+    expect(String(prompts[2])).toContain("concise factual answer");
+    expect(String(prompts[3])).toContain("concise factual answer");
     expect(outputFormat).toHaveProperty("question");
     expect(outputFormat).toHaveProperty("answer");
+  });
+
+  it("falls back to a mixed set when open-ended generation fails", async () => {
+    jest.spyOn(gpt, "strict_output").mockRejectedValueOnce(new Error("boom"));
+
+    const result = await generateQuestionsByTopic({
+      amount: 3,
+      topic: "react",
+      type: "open_ended",
+    });
+
+    expect(result).toHaveLength(3);
+    expect(result[0].question).toContain("console.log");
+    expect(result[1].question).toContain("What is react mainly used for?");
+    expect(result[2].question).toContain("Name one core principle of react.");
   });
 });
