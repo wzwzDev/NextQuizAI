@@ -673,6 +673,52 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
   throw new Error(`OpenAI OCR failed: ${joinedErrors}`);
 }
 
+/**
+ * Robust retry wrapper for OCR extraction to handle transient rate limits.
+ * Uses exponential backoff with jitter. Returns the first successful result
+ * or rethrows the last error after exhausting retries.
+ */
+async function extractTextFromPdfWithOcrRetry(
+  file: File,
+  opts?: { maxRetries?: number; initialDelayMs?: number; maxDelayMs?: number },
+): Promise<string> {
+  const maxRetries = opts?.maxRetries ?? 5;
+  const initialDelayMs = opts?.initialDelayMs ?? 500; // 0.5s
+  const maxDelayMs = opts?.maxDelayMs ?? 30000; // 30s cap
+
+  let attempt = 0;
+  let lastError: unknown = null;
+
+  while (attempt <= maxRetries) {
+    try {
+      return await extractTextFromPdfWithOcr(file);
+    } catch (err: any) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
+      if (!isRateLimitMessage(message) || attempt === maxRetries) {
+        // Not a rate-limit or we've exhausted retries: rethrow
+        throw err;
+      }
+
+      const backoff = Math.min(initialDelayMs * 2 ** attempt, maxDelayMs);
+      const jitter = Math.floor(Math.random() * Math.min(1000, backoff));
+      const waitMs = backoff + jitter;
+
+      try {
+        console.warn(
+          `OCR rate-limited (attempt ${attempt + 1}/${maxRetries}). Retrying in ${waitMs}ms. Error: ${message}`,
+        );
+      } catch {}
+
+      await delay(waitMs);
+      attempt += 1;
+    }
+  }
+
+  // If we get here, rethrow the last error
+  throw lastError;
+}
+
 async function extractTextFromPdfWithGoogleVision(file: File): Promise<string> {
   if (GOOGLE_VISION_API_KEY) {
     return extractTextFromPdfWithGoogleVisionApiKey(file);
@@ -845,7 +891,7 @@ async function extractCourseContent(file: File): Promise<ExtractedCourseContent>
       return { content: textFromPdf, source: "pdf", ocrQuality: "unknown" };
     }
 
-    const textFromOcr = await extractTextFromPdfWithOcr(file);
+    const textFromOcr = await extractTextFromPdfWithOcrRetry(file);
     // Debug: log a truncated version of OCR text to help diagnose production issues
     try {
       console.warn("DEBUG OCR TEXT (truncated):", (textFromOcr || "").slice(0, 1000));
