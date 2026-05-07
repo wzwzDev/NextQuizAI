@@ -1,5 +1,7 @@
 require('dotenv').config({ path: '.env.test' });
 
+const shouldCollectCoverage = process.env.CI === "true" || process.env.JEST_COLLECT_COVERAGE === "true";
+
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "jsdom",
@@ -9,7 +11,7 @@ module.exports = {
   },
   rootDir: ".",
   setupFilesAfterEnv: ["<rootDir>/src/__tests__/jest.setup.ts"],
-  collectCoverage: true,
+  collectCoverage: shouldCollectCoverage,
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-frontend",
   coverageThreshold: {
@@ -36,13 +38,15 @@ module.exports = {
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"
   ],
-  reporters: [
-    "default",
-    ["jest-html-reporter", {
-      "pageTitle": "Test Report",
-      "outputPath": "test-report.html"
-    }]
-  ],
+  reporters: shouldCollectCoverage
+    ? [
+        "default",
+        ["jest-html-reporter", {
+          "pageTitle": "Test Report",
+          "outputPath": "test-report.html"
+        }]
+      ]
+    : ["default"],
   transform: {
     "^.+\\.(ts|tsx)$": ["babel-jest", { configFile: "./babel.jest.config.js" }]
   }

@@ -1,3 +1,5 @@
+const shouldCollectCoverage = process.env.CI === "true" || process.env.JEST_COLLECT_COVERAGE === "true";
+
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
@@ -8,7 +10,7 @@ module.exports = {
   },
   modulePathIgnorePatterns: ["<rootDir>/.next/"],
   rootDir: ".",
-  collectCoverage: true,
+  collectCoverage: shouldCollectCoverage,
   coverageReporters: ["lcov", "text"],
   coverageDirectory: "coverage-backend",
   coverageThreshold: {
@@ -49,13 +51,15 @@ module.exports = {
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"
   ],
-  reporters: [
-    "default",
-    ["jest-html-reporter", {
-      "pageTitle": "Backend Test Report",
-      "outputPath": "test-report-backend.html"
-    }]
-  ],
+  reporters: shouldCollectCoverage
+    ? [
+        "default",
+        ["jest-html-reporter", {
+          "pageTitle": "Backend Test Report",
+          "outputPath": "test-report-backend.html"
+        }]
+      ]
+    : ["default"],
   transform: {
     "^.+\\.(ts|tsx)$": "ts-jest"
   }

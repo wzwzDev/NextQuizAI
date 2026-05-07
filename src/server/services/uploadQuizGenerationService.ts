@@ -184,6 +184,12 @@ function isRateLimitMessage(message: string) {
   );
 }
 
+function delay(milliseconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
 function isRefusalLikeText(text: string) {
   const normalized = text.toLowerCase().replace(/\s+/g, " ").trim();
   if (!normalized) {
@@ -971,21 +977,33 @@ Do not include markdown or extra commentary.
 
   async function requestNormalizedQuestions(prompt: string) {
     let generated: unknown;
-    try {
-      generated = await strict_output(
-        prompt,
-        "",
-        outputFormat,
-        "",
-        false,
-        DEFAULT_UPLOAD_MODEL,
-        0,
-        3,
-        false,
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown OpenAI error";
-      throw new Error(`OpenAI generation failed: ${message}`);
+    let lastErrorMessage = "Unknown OpenAI error";
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        generated = await strict_output(
+          prompt,
+          "",
+          outputFormat,
+          "",
+          false,
+          DEFAULT_UPLOAD_MODEL,
+          0,
+          3,
+          false,
+        );
+        break;
+      } catch (error) {
+        lastErrorMessage = error instanceof Error ? error.message : "Unknown OpenAI error";
+        if (!isRateLimitMessage(lastErrorMessage) || attempt === 1) {
+          throw new Error(`OpenAI generation failed: ${lastErrorMessage}`);
+        }
+
+        console.warn(
+          "OpenAI rate limit encountered during question generation; retrying once after a short delay.",
+        );
+        await delay(1200);
+      }
     }
 
     // Debug: log raw AI output so we can see why normalization may drop results

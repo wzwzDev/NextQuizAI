@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import {
   AdminQuestion,
   AdminQuizDraft,
@@ -79,6 +79,7 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
   const [quizType, setQuizType] = useState<AdminQuizType>("open_ended");
   const [questionCount, setQuestionCount] = useState(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadAbortControllerRef = useRef<AbortController | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -114,6 +115,11 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       setError("Please select a JSON, TXT, or PDF file to upload.");
       return;
     }
+
+    uploadAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    uploadAbortControllerRef.current = abortController;
+
     setUploading(true);
     setError(null);
     try {
@@ -127,6 +133,7 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
       const res = await fetch("/api/upload-and-generate", {
         method: "POST",
         body: formData,
+        signal: abortController.signal,
       });
       const data: UploadAndGenerateResponse = await res.json();
 
@@ -188,12 +195,33 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
             "No valid question/answer pairs were generated. Please try another file.",
         );
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setError("Upload cancelled.");
+        return;
+      }
+
       setError("Failed to generate quiz from file.");
     } finally {
+      if (uploadAbortControllerRef.current === abortController) {
+        uploadAbortControllerRef.current = null;
+      }
       setUploading(false);
     }
   };
+
+  const handleCancelUpload = () => {
+    uploadAbortControllerRef.current?.abort();
+    uploadAbortControllerRef.current = null;
+    setUploading(false);
+    setError("Upload cancelled.");
+  };
+
+  useEffect(() => {
+    return () => {
+      uploadAbortControllerRef.current?.abort();
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-4 bg-white dark:bg-black rounded-xl shadow p-6">
@@ -225,19 +253,35 @@ const QuizUpload = ({ onQuizReady }: QuizUploadProps) => {
           Only .json, .txt, or .pdf files are accepted.
         </span>
       </label>
-      <button
-        onClick={handleUpload}
-        disabled={uploading || !file}
-        className={`w-full max-w-md py-2 rounded-lg font-bold transition-colors
-          ${
-            uploading || !file
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-500 to-green-500 text-white hover:from-blue-600 hover:to-green-600"
-          }
-        `}
-      >
-        {uploading ? "Uploading..." : "Upload & Generate"}
-      </button>
+      <div className="w-full max-w-md flex gap-2">
+        <button
+          onClick={handleUpload}
+          disabled={uploading || !file}
+          className={`flex-1 py-2 rounded-lg font-bold transition-colors
+            ${
+              uploading || !file
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-500 to-green-500 text-white hover:from-blue-600 hover:to-green-600"
+            }
+          `}
+        >
+          {uploading ? "Uploading..." : "Upload & Generate"}
+        </button>
+
+        <button
+          onClick={handleCancelUpload}
+          disabled={!uploading}
+          className={`px-4 py-2 rounded-lg font-bold transition-colors border
+            ${
+              uploading
+                ? "border-red-500 text-red-600 hover:bg-red-50"
+                : "border-gray-300 text-gray-400 cursor-not-allowed"
+            }
+          `}
+        >
+          Cancel
+        </button>
+      </div>
       <div className="w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor={categorySelectId} className="text-xs font-semibold text-gray-600">Category</label>
