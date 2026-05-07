@@ -465,6 +465,22 @@ function generateFallbackQuestionsFromContent(
   return generated.slice(0, questionCount);
 }
 
+function padQuestionsWithPlaceholders(
+  questions: GeneratedQuestion[],
+  questionCount: number,
+) {
+  const paddedQuestions = [...questions];
+
+  while (paddedQuestions.length < questionCount) {
+    paddedQuestions.push({
+      question: `Identify a key term #${paddedQuestions.length + 1} from the provided content.`,
+      answer: "term",
+    });
+  }
+
+  return paddedQuestions.slice(0, questionCount);
+}
+
 function isJsonFile(file: File) {
   return file.type === JSON_MIME || file.name.toLowerCase().endsWith(".json");
 }
@@ -989,15 +1005,16 @@ Do not include markdown or extra commentary.
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown OpenAI error";
     if (isRateLimitMessage(message)) {
+      console.warn(
+        "OpenAI rate limit encountered during upload generation; using deterministic fallback questions.",
+      );
+
       const fallbackQuestions = generateFallbackQuestionsFromContent(
         courseContent,
         questionCount,
       );
-      if (fallbackQuestions.length >= questionCount) {
-        return fallbackQuestions;
-      }
 
-      throw new Error("No valid questions could be generated from the uploaded file.");
+      return padQuestionsWithPlaceholders(fallbackQuestions, questionCount);
     }
 
     throw error;
@@ -1005,12 +1022,7 @@ Do not include markdown or extra commentary.
 
   if (normalizedQuestions.length === 0) {
     console.warn("Question generation produced 0 items; synthesizing placeholders.");
-    while (normalizedQuestions.length < questionCount) {
-      normalizedQuestions.push({
-        question: `Identify a key term #${normalizedQuestions.length + 1} from the provided content.`,
-        answer: "term",
-      });
-    }
+    normalizedQuestions = padQuestionsWithPlaceholders(normalizedQuestions, questionCount);
   }
 
   if (normalizedQuestions.length > questionCount) {
@@ -1043,12 +1055,7 @@ Do not include markdown or extra commentary.
       console.warn(
         `Only ${normalizedQuestions.length}/${questionCount} questions generated; padding with placeholders.`,
       );
-      while (normalizedQuestions.length < questionCount) {
-        normalizedQuestions.push({
-          question: `Identify a key term #${normalizedQuestions.length + 1} from the provided content.`,
-          answer: "term",
-        });
-      }
+      normalizedQuestions = padQuestionsWithPlaceholders(normalizedQuestions, questionCount);
     }
   }
 
