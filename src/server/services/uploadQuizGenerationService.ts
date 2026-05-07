@@ -551,10 +551,20 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
   if (GOOGLE_VISION_GCS_BUCKET) {
     try {
       const textFromVision = await extractTextFromPdfWithGoogleVisionGcs(file);
-      if (textFromVision.trim()) {
-        return textFromVision;
+      const trimmed = textFromVision.trim();
+      if (trimmed) {
+        if (isRefusalLikeText(trimmed)) {
+          errors.push("Google Vision GCS OCR returned refusal-like text.");
+          console.warn(
+            "DEBUG OCR PROVIDER: Google Vision GCS returned refusal-like text (truncated):",
+            trimmed.slice(0, 200),
+          );
+        } else {
+          return trimmed;
+        }
+      } else {
+        errors.push("Google Vision GCS OCR returned empty text.");
       }
-      errors.push("Google Vision GCS OCR returned empty text.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown Vision OCR error.";
       errors.push(`Google Vision GCS OCR failed: ${message}`);
@@ -563,10 +573,20 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
 
   try {
     const textFromVision = await extractTextFromPdfWithGoogleVision(file);
-    if (textFromVision.trim()) {
-      return textFromVision;
+    const trimmed = textFromVision.trim();
+    if (trimmed) {
+      if (isRefusalLikeText(trimmed)) {
+        errors.push("Google Vision OCR returned refusal-like text.");
+        console.warn(
+          "DEBUG OCR PROVIDER: Google Vision API returned refusal-like text (truncated):",
+          trimmed.slice(0, 200),
+        );
+      } else {
+        return trimmed;
+      }
+    } else {
+      errors.push("Google Vision OCR returned empty text.");
     }
-    errors.push("Google Vision OCR returned empty text.");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown Vision OCR error.";
     errors.push(`Google Vision OCR failed: ${message}`);
@@ -604,7 +624,22 @@ async function extractTextFromPdfWithOcr(file: File): Promise<string> {
         ],
       });
 
-      return response.output_text?.trim() || "";
+      const ocrText = response.output_text?.trim() || "";
+      if (!ocrText) {
+        errors.push(`${model}: returned empty OCR text.`);
+        continue;
+      }
+
+      if (isRefusalLikeText(ocrText)) {
+        errors.push(`${model}: OCR returned refusal-like text.`);
+        console.warn(
+          `DEBUG OCR PROVIDER: ${model} returned refusal-like text (truncated):`,
+          ocrText.slice(0, 200),
+        );
+        continue;
+      }
+
+      return ocrText;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown OCR provider error.";
