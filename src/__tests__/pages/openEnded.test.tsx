@@ -128,8 +128,8 @@ describe("OpenEnded", () => {
 
     render(<OpenEnded game={fillBlankCodeGame as any} />);
 
-    expect(screen.getByText(/\[FILL_BLANK\]/)).toBeInTheDocument();
-    expect(screen.getByTestId("blank-input")).toBeInTheDocument();
+    expect(screen.getByText(/Code Output Challenge/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Type exact output/i)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/output here/i)).not.toBeInTheDocument();
   });
 });

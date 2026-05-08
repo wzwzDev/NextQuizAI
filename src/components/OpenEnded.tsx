@@ -13,6 +13,7 @@ import {
 import { Button, buttonVariants } from "./ui/button";
 import OpenEndedPercentage from "./OpenEndedPercentage";
 import BlankAnswerInput from "./BlankAnswerInput";
+import CodeOutputChallenge from "./CodeOutputChallenge";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { checkAnswerSchema, endGameSchema } from "@/schemas/questions";
@@ -96,7 +97,9 @@ const OpenEnded = ({ game }: Props) => {
     mutationFn: async () => {
       let filledAnswer = blankAnswer;
 
-      if (!codeQuestion || fillBlankScriptQuestion) {
+      if (fillBlankScriptQuestion) {
+        filledAnswer = blankAnswer.trim();
+      } else if (!codeQuestion) {
         document
           .querySelectorAll('[data-blank-answer-input="true"]')
           .forEach((input) => {
@@ -276,6 +279,12 @@ const OpenEnded = ({ game }: Props) => {
               placeholder="Paste or type the output here"
             />
           </div>
+        ) : fillBlankScriptQuestion ? (
+          <CodeOutputChallenge
+            question={currentQuestion?.question ?? ""}
+            value={blankAnswer}
+            onChange={setBlankAnswer}
+          />
         ) : (
           <BlankAnswerInput
             setBlankAnswer={setBlankAnswer}

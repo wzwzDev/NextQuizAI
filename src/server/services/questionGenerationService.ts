@@ -83,7 +83,7 @@ function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
         : "Ask for a concise factual answer, definition, or concept-level explanation in 1 to 8 words.",
       isCodeQuestion
         ? useFillBlankMode
-          ? "The question must contain exactly one visible blank marker: _____."
+          ? "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'."
           : "Do not include blank markers in the question text."
         : "Do not ask the user to run or inspect code.",
       isCodeQuestion
@@ -219,7 +219,7 @@ function buildFallbackOpenEndedQuestions(input: TopicQuestionInput): OpenEndedQu
     },
     {
       question:
-        "What does this print?\n\nconsole.log(\"" + topic + " ready\");",
+        "[FILL_BLANK] What is the exact runtime output?\n\nconsole.log(\"" + topic + " ready\");\nOutput: _____",
       answer: `${topic} ready`,
     },
     {
@@ -229,14 +229,14 @@ function buildFallbackOpenEndedQuestions(input: TopicQuestionInput): OpenEndedQu
     },
     {
       question:
-        "What is the output of this snippet?\n\nfunction greet(name) {\n  return \"Hello, \" + name + \"!\";\n}\nconsole.log(greet(\"" +
+        "[FILL_BLANK] What is the output of this function call?\n\nfunction greet(name) {\n  return \"Hello, \" + name + \"!\";\n}\nconsole.log(greet(\"" +
         topic +
-        "\"));",
+        "\"));\nOutput: _____",
       answer: `Hello, ${topic}!`,
     },
     {
       question:
-        "What does this program print?\n\nfor (let index = 1; index <= 3; index += 1) {\n  console.log(index);\n}",
+        "[FILL_BLANK] What does this loop print?\n\nfor (let index = 1; index <= 3; index += 1) {\n  console.log(index);\n}\nOutput: _____",
       answer: "1\n2\n3",
     },
     {
@@ -336,6 +336,39 @@ function buildFallbackMcqQuestions(input: TopicQuestionInput): McqQuestion[] {
   });
 }
 
+function isCodeLikeContent(text: string): boolean {
+  const codePatterns = /\b(?:function|const|let|var|return|if|else|for|while|switch|class|async|await|import|export|console\.log|=>|\{|\}|\[|\]|;)\b/i;
+  const hasCodeKeywords = codePatterns.test(text);
+  const hasMultipleLines = text.includes('\n');
+  const hasCodeSymbols = /[{}\[\]()=>:;]/.test(text);
+  const startsWithBackticks = text.trim().startsWith('```');
+  
+  return hasCodeKeywords || (hasMultipleLines && hasCodeSymbols) || startsWithBackticks;
+}
+
+function ensureCodeQuestionWrapper(question: string, answer: string): OpenEndedQuestion {
+  const hasWrapper = /\[fill_blank\]|output:\s*_{3,}/i.test(question);
+  
+  if (hasWrapper) {
+    return { question, answer };
+  }
+  
+  // Auto-wrap code questions that don't have wrapper format
+  if (isCodeLikeContent(question)) {
+    const normalized = question.replace(/\r\n/g, '\n').trim();
+    const alreadyHasOutput = /output:\s*_+/i.test(normalized);
+    
+    if (!alreadyHasOutput) {
+      return {
+        question: `[FILL_BLANK] Complete the missing output.\n\n${normalized}\nOutput: _____`,
+        answer: answer.trim(),
+      };
+    }
+  }
+  
+  return { question, answer };
+}
+
 function normalizeOpenEndedQuestions(generated: unknown) {
   const seen = new Set<string>();
   const parsed = Array.isArray(generated)
@@ -357,7 +390,12 @@ function normalizeOpenEndedQuestions(generated: unknown) {
             return null;
           }
 
-          return { question, answer };
+          // Auto-normalize code questions into wrapper format if needed
+          const normalized = isCodeLikeContent(question) 
+            ? ensureCodeQuestionWrapper(question, answer)
+            : { question, answer };
+
+          return normalized;
         })
         .filter((item): item is OpenEndedQuestion => {
           if (!item) {
