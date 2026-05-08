@@ -81,8 +81,14 @@ export async function findApprovedQuizzesForLibrary() {
 }
 
 export async function deleteAdminQuizById(id: string) {
-  return prisma.adminQuiz.delete({
-    where: { id },
+  return prisma.$transaction(async (tx) => {
+    await tx.adminQuizQuestion.deleteMany({
+      where: { quizId: id },
+    });
+
+    return tx.adminQuiz.delete({
+      where: { id },
+    });
   });
 }
 

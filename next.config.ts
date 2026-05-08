@@ -5,17 +5,22 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    domains: ["lh3.googleusercontent.com", "avatars.githubusercontent.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   output: "standalone",
   webpack(config: any) {
-    // <-- añade ': any' aquí para evitar el warning
     config.module.rules.push({
       test: /\.svg$/,
       issuer: /\.[jt]sx?$/,

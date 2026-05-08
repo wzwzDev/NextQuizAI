@@ -6,6 +6,8 @@ import {
   removeAdminQuiz,
 } from "@/server/admin/services/adminQuizService";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
   if (!session?.user?.isAdmin) {
@@ -92,7 +94,14 @@ export async function GET(req: NextRequest) {
   const start = (page - 1) * limit;
   const pageItems = Array.isArray(allQuizzes) ? allQuizzes.slice(start, start + limit) : [];
 
-  return NextResponse.json({ quizzes: pageItems, total });
+  return NextResponse.json(
+    { quizzes: pageItems, total },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    },
+  );
 }
 
 export async function DELETE(req: NextRequest) {
