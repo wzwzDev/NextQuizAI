@@ -53,6 +53,23 @@ describe("answerEvaluationService", () => {
       expect(result.percentageSimilar).toBe(100);
     });
 
+    it("accepts output-label variants for fill-blank answers", async () => {
+      const result = await evaluateOpenEndedSimilarity(
+        "Output: PYTHON",
+        "PYTHON",
+      );
+
+      expect(result.gradingMethod).toBe("exact_match");
+      expect(result.percentageSimilar).toBe(100);
+    });
+
+    it("accepts quoted output values", async () => {
+      const result = await evaluateOpenEndedSimilarity('"PYTHON"', "PYTHON");
+
+      expect(result.gradingMethod).toBe("exact_match");
+      expect(result.percentageSimilar).toBe(100);
+    });
+
     it("rejects unrelated answers", async () => {
       const result = await evaluateOpenEndedSimilarity(
         "forEach",

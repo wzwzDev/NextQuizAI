@@ -26,6 +26,43 @@ function normalizeExecutionOutput(value: string) {
   return lines.map((line) => line.trimEnd()).join("\n").trimEnd();
 }
 
+function unwrapQuotedValue(value: string) {
+  const trimmed = value.trim();
+  if (trimmed.length < 2) {
+    return trimmed;
+  }
+
+  const first = trimmed[0];
+  const last = trimmed[trimmed.length - 1];
+  const isMatchingQuotePair =
+    (first === '"' && last === '"') ||
+    (first === "'" && last === "'") ||
+    (first === "`" && last === "`");
+
+  if (!isMatchingQuotePair) {
+    return trimmed;
+  }
+
+  return trimmed.slice(1, -1).trim();
+}
+
+function normalizeAnswerArtifact(value: string) {
+  let normalized = normalizeExecutionOutput(value).trim();
+  if (!normalized) {
+    return "";
+  }
+
+  normalized = normalized.replace(/^```[a-z]*\s*/i, "").replace(/```$/i, "").trim();
+  normalized = normalized
+    .replace(/^(output|answer|result)\s*[:=-]\s*/i, "")
+    .replace(/^the\s+output\s+is\s+/i, "")
+    .replace(/^it\s+prints\s+/i, "")
+    .trim();
+
+  normalized = unwrapQuotedValue(normalized);
+  return normalized.toLowerCase();
+}
+
 function containsLineSequence(expectedLines: string[], userLines: string[]) {
   if (
     !expectedLines.length ||
@@ -77,10 +114,24 @@ export class OpenEndedAnswer {
   grade(similarityPort: StringSimilarityPort): OpenEndedGradeResult {
     const expectedExecutionOutput = normalizeExecutionOutput(this.expectedRaw);
     const userExecutionOutput = normalizeExecutionOutput(this.userInputRaw);
+    const normalizedExpectedArtifact = normalizeAnswerArtifact(this.expectedRaw);
+    const normalizedUserArtifact = normalizeAnswerArtifact(this.userInputRaw);
     const shouldCompareExecutionOutput = usesExecutionOutputComparison(
       this.expectedRaw,
       this.userInputRaw,
     );
+
+    if (
+      normalizedExpectedArtifact.length > 0 &&
+      normalizedExpectedArtifact === normalizedUserArtifact
+    ) {
+      return {
+        percentageSimilar: 100,
+        gradingMethod: "exact_match",
+        rawScore: 1,
+        isAccepted: true,
+      };
+    }
 
     if (shouldCompareExecutionOutput && !expectedExecutionOutput && !userExecutionOutput) {
       return {
