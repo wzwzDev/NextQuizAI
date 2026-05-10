@@ -96,14 +96,20 @@ function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
 }
 
 function buildMcqPrompts(input: TopicQuestionInput, batchToken: string) {
+  const focusAreas = buildMcqFocusAreas(input.topic, input.amount);
+
   return Array.from({ length: input.amount }, (_, index) => {
+    const focusArea = focusAreas[index];
+
     return [
       `Generate one challenging MCQ question about ${input.topic}.`,
       `Question position: ${index + 1}/${input.amount}.`,
       `Batch token: ${batchToken}-${index + 1}.`,
+      `Focus area: ${focusArea}.`,
       "Keep the correct answer and all options under 15 words.",
       "Avoid repeated question stems and avoid generic beginner phrasing.",
       "Each question in this batch must cover a distinct concept.",
+      "Do not use generic framing like 'associated with' or 'generally true' unless it is clearly topic-specific.",
     ].join(" ");
   });
 }
@@ -111,6 +117,142 @@ function buildMcqPrompts(input: TopicQuestionInput, batchToken: string) {
 function normalizeTopic(topic: string) {
   const trimmed = topic.trim();
   return trimmed.length > 0 ? trimmed : "General Knowledge";
+}
+
+function isProgrammingTopic(topic: string) {
+  return /\b(java|javascript|typescript|python|react|node|sql|html|css|c\+\+|c#|rust|go|kotlin|swift|php|ruby|dart|scala|vue|angular|git|docker|linux|api|database|mongodb|postgres|mysql)\b/i.test(
+    topic,
+  );
+}
+
+function buildMcqFocusAreas(topic: string, amount: number) {
+  const normalizedTopic = normalizeTopic(topic);
+  const topicKey = normalizedTopic.toLowerCase();
+
+  const focusAreas = isProgrammingTopic(topicKey)
+    ? [
+        `${normalizedTopic} syntax`,
+        `${normalizedTopic} runtime behavior`,
+        `${normalizedTopic} type system`,
+        `${normalizedTopic} packages or modules`,
+        `${normalizedTopic} functions or methods`,
+        `${normalizedTopic} error handling`,
+        `${normalizedTopic} data structures`,
+        `${normalizedTopic} best practices`,
+      ]
+    : [
+        `${normalizedTopic} definition`,
+        `${normalizedTopic} purpose`,
+        `${normalizedTopic} common use cases`,
+        `${normalizedTopic} key features`,
+        `${normalizedTopic} comparisons`,
+        `${normalizedTopic} practical examples`,
+        `${normalizedTopic} common mistakes`,
+        `${normalizedTopic} best practices`,
+      ];
+
+  return Array.from({ length: amount }, (_, index) => focusAreas[index % focusAreas.length]);
+}
+
+function buildMcqQuestionStem(topic: string, focusArea: string, index: number) {
+  const variants = [
+    `Which statement best describes ${focusArea}?`,
+    `Which option is most accurate about ${focusArea}?`,
+    `In ${topic}, what is the role of ${focusArea}?`,
+    `Which choice best matches ${focusArea}?`,
+    `What is the main purpose of ${focusArea}?`,
+    `Which answer best describes how ${focusArea} works?`,
+    `Which statement about ${focusArea} is correct?`,
+    `Which option best fits ${focusArea}?`,
+  ];
+
+  return variants[index % variants.length];
+}
+
+function buildMcqCorrectAnswer(topic: string, focusArea: string) {
+  const normalizedFocus = focusArea.toLowerCase();
+
+  if (normalizedFocus.includes("syntax")) {
+    return `${topic} syntax defines how code is written`;
+  }
+
+  if (normalizedFocus.includes("runtime behavior")) {
+    return `${topic} runtime behavior describes what happens when code runs`;
+  }
+
+  if (normalizedFocus.includes("type system")) {
+    return `${topic} uses types to represent and validate values`;
+  }
+
+  if (normalizedFocus.includes("packages or modules")) {
+    return `${topic} packages or modules organize reusable code`;
+  }
+
+  if (normalizedFocus.includes("functions or methods")) {
+    return `${topic} functions or methods encapsulate reusable logic`;
+  }
+
+  if (normalizedFocus.includes("error handling")) {
+    return `${topic} error handling helps manage failures safely`;
+  }
+
+  if (normalizedFocus.includes("data structures")) {
+    return `${topic} data structures store and organize information`;
+  }
+
+  if (normalizedFocus.includes("best practices")) {
+    return `${topic} best practices improve readability and maintainability`;
+  }
+
+  if (normalizedFocus.includes("definition")) {
+    return `${topic} is a foundational concept in the subject area`;
+  }
+
+  if (normalizedFocus.includes("purpose")) {
+    return `${topic} helps solve related practical problems`;
+  }
+
+  if (normalizedFocus.includes("common use cases")) {
+    return `${topic} is often used in real-world applications`;
+  }
+
+  if (normalizedFocus.includes("key features")) {
+    return `${topic} has distinguishing characteristics that matter`;
+  }
+
+  if (normalizedFocus.includes("comparisons")) {
+    return `${topic} differs from related topics in important ways`;
+  }
+
+  if (normalizedFocus.includes("practical examples")) {
+    return `${topic} can be applied in practical scenarios`;
+  }
+
+  if (normalizedFocus.includes("common mistakes")) {
+    return `${topic} is often confused with similar ideas`;
+  }
+
+  return `${topic} is best understood through its practical use`;
+}
+
+function buildMcqDistractors(topic: string, focusArea: string) {
+  const normalizedTopic = normalizeTopic(topic);
+  const normalizedFocus = focusArea.toLowerCase();
+  const normalizedTopicKey = normalizedTopic.toLowerCase();
+  const shortFocus = normalizedFocus.startsWith(normalizedTopicKey)
+    ? normalizedFocus.slice(normalizedTopicKey.length).trim()
+    : normalizedFocus;
+
+  const distractors = [
+    `${normalizedTopic} ignores ${shortFocus} entirely`,
+    `${normalizedTopic} makes ${shortFocus} unnecessary`,
+    `${normalizedTopic} treats ${shortFocus} as random`,
+    `${normalizedTopic} uses ${shortFocus} only after completion`,
+    `${normalizedTopic} never applies ${shortFocus} in practice`,
+    `The correct idea is unrelated to ${normalizedTopic}`,
+  ];
+
+  return shuffleCopy(distractors).slice(0, 3);
 }
 
 function getOpenEndedQuestionKey(question: OpenEndedQuestion) {
@@ -282,56 +424,19 @@ function buildFallbackOpenEndedQuestions(input: TopicQuestionInput): OpenEndedQu
 
 function buildFallbackMcqQuestions(input: TopicQuestionInput): McqQuestion[] {
   const topic = normalizeTopic(input.topic);
-
-  const templates = shuffleCopy([
-    `Which statement about ${topic} is generally true?`,
-    `Which option is a plausible use case for ${topic}?`,
-    `What is most likely associated with ${topic}?`,
-    `Which choice best aligns with ${topic} fundamentals?`,
-    `Which statement best reflects practical work in ${topic}?`,
-    `Which option best matches a valid ${topic} principle?`,
-  ]);
-
-  const correctAnswers = shuffleCopy([
-    `${topic} supports practical problem solving`,
-    `${topic} relies on consistent concepts and patterns`,
-    `${topic} has real production use cases`,
-    `${topic} benefits from best-practice workflows`,
-    `${topic} is useful when applied with clear goals`,
-  ]);
-
-  const distractorOption1 = shuffleCopy([
-    `${topic} never requires structure or planning`,
-    `${topic} cannot be applied in real projects`,
-    `${topic} has no practical value`,
-    `${topic} works only in theory and not in practice`,
-    `${topic} is unrelated to solving real problems`,
-  ]);
-
-  const distractorOption2 = shuffleCopy([
-    `${topic} has no standards or conventions`,
-    `${topic} is always random and unstructured`,
-    `${topic} has no repeatable techniques`,
-    `${topic} cannot be improved through practice`,
-    `${topic} is detached from real-world requirements`,
-  ]);
-
-  const distractorOption3 = shuffleCopy([
-    `${topic} is useful only without any constraints`,
-    `${topic} should ignore reliability and correctness`,
-    `${topic} does not involve trade-offs or decisions`,
-    `${topic} prevents measurable outcomes`,
-    `${topic} cannot be evaluated in real scenarios`,
-  ]);
+  const focusAreas = buildMcqFocusAreas(topic, input.amount);
 
   return Array.from({ length: input.amount }, (_, index) => {
-    const answer = correctAnswers[index % correctAnswers.length];
+    const focusArea = focusAreas[index];
+    const answer = buildMcqCorrectAnswer(topic, focusArea);
+    const [option1, option2, option3] = buildMcqDistractors(topic, focusArea);
+
     return {
-      question: templates[index % templates.length],
+      question: buildMcqQuestionStem(topic, focusArea, index),
       answer,
-      option1: distractorOption1[index % distractorOption1.length],
-      option2: distractorOption2[index % distractorOption2.length],
-      option3: distractorOption3[index % distractorOption3.length],
+      option1,
+      option2,
+      option3,
     };
   });
 }

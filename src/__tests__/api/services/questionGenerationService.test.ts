@@ -38,10 +38,14 @@ describe("questionGenerationService", () => {
       const first = result[0] as Record<string, unknown>;
       expect(typeof first.question).toBe("string");
       expect(String(first.question).toLowerCase()).toContain("react");
+      expect(String(first.question).toLowerCase()).not.toContain("associated with");
+      expect(String(first.question).toLowerCase()).not.toContain("generally true");
+      expect(String(first.question).toLowerCase()).toMatch(
+        /syntax|runtime behavior|type system|packages or modules|functions or methods|error handling|data structures|best practices/,
+      );
       expect(typeof first.option1).toBe("string");
       expect(typeof first.option2).toBe("string");
-      expect(String(first.option1).toLowerCase()).not.toContain("myth");
-      expect(String(first.option2).toLowerCase()).not.toContain("pattern");
+      expect(typeof first.option3).toBe("string");
     } finally {
       if (previousApiKey) {
         process.env.OPENAI_API_KEY = previousApiKey;
@@ -128,6 +132,31 @@ describe("questionGenerationService", () => {
     expect(String(prompts[3])).toContain("concise factual answer");
     expect(outputFormat).toHaveProperty("question");
     expect(outputFormat).toHaveProperty("answer");
+  });
+
+  it("prompts mcq generation with topic-specific focus areas", async () => {
+    const strictOutputSpy = jest.spyOn(gpt, "strict_output").mockResolvedValueOnce([
+      {
+        question: "Which statement best describes Java syntax?",
+        answer: "Java syntax defines how code is written",
+        option1: "Java syntax ignores structure",
+        option2: "Java syntax is unrelated to code",
+        option3: "Java syntax only applies to databases",
+      },
+    ]);
+
+    await generateQuestionsByTopic({
+      amount: 1,
+      topic: "Java",
+      type: "mcq",
+    });
+
+    expect(strictOutputSpy).toHaveBeenCalled();
+    const [systemPrompt, prompts] = strictOutputSpy.mock.calls[0];
+    expect(String(systemPrompt)).toContain("generate 1 mcq questions and answers about Java");
+    expect(String(prompts[0])).toContain("Focus area:");
+    expect(String(prompts[0])).toContain("Java syntax");
+    strictOutputSpy.mockRestore();
   });
 
   it("falls back to a mixed set when open-ended generation fails", async () => {
