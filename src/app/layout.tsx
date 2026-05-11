@@ -7,6 +7,9 @@ import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/toaster";
 import { ensureSystemUsers } from "@/server/core/systemUsers";
 
+// Server-level cache: ensure system users only once per server lifetime
+let systemUsersEnsured = false;
+
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-body",
@@ -27,7 +30,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await ensureSystemUsers();
+  // Only ensure system users on first app startup, not on every request
+  if (!systemUsersEnsured) {
+    await ensureSystemUsers();
+    systemUsersEnsured = true;
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
