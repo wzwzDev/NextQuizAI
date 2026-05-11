@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import SignInButton from "@/components/SignInButton";
 
 function SignInInner() {
@@ -10,11 +10,13 @@ function SignInInner() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const error = searchParams.get("error");
+  const shouldSwitchAccount = searchParams.get("logout") === "1";
   const [userEmail, setUserEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [showUserPassword, setShowUserPassword] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+  const [isClearingSession, setIsClearingSession] = useState(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +25,23 @@ function SignInInner() {
   const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
 
   useEffect(() => {
+    if (shouldSwitchAccount && status === "authenticated") {
+      setIsClearingSession(true);
+      signOut({ redirect: false })
+        .then(() => {
+          router.replace("/auth/signin");
+          router.refresh();
+        })
+        .catch(() => {
+          router.replace("/auth/signin");
+          router.refresh();
+        })
+        .finally(() => {
+          setIsClearingSession(false);
+        });
+      return;
+    }
+
     if (status !== "authenticated") {
       return;
     }
@@ -30,7 +49,7 @@ function SignInInner() {
     const destination = session?.user?.isAdmin ? "/admin" : "/dashboard";
     router.replace(destination);
     router.refresh();
-  }, [router, session?.user?.isAdmin, status]);
+  }, [router, session?.user?.isAdmin, shouldSwitchAccount, status]);
 
   let errorMessage = "";
   if (error === "AccessDenied") {
@@ -101,7 +120,17 @@ function SignInInner() {
     }
   };
 
-  if (status === "authenticated") {
+  if (isClearingSession) {
+    return (
+      <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-8">
+        <div className="section-shell rounded-2xl p-6 text-sm text-muted-foreground">
+          Switching accounts...
+        </div>
+      </main>
+    );
+  }
+
+  if (status === "authenticated" && !shouldSwitchAccount) {
     return (
       <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-8">
         <div className="section-shell rounded-2xl p-6 text-sm text-muted-foreground">
