@@ -59,7 +59,7 @@ async function sendWithResend({
 
   const data = (await response.json()) as { id?: string };
   if (!data.id) {
-    throw new Error("Resend API did not return an email ID.");
+    throw new Error("Resend API did not return an email ID!");
   }
 
   return { messageId: data.id };
