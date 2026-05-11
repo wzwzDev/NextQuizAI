@@ -166,6 +166,8 @@ export type UploadQuizGenerationOptions = {
   sourceName?: string;
 };
 
+type DifficultyLevel = "easy" | "medium" | "hard" | "mixed";
+
 type RawGeneratedQuestion = {
   question?: unknown;
   answer?: unknown;
@@ -338,6 +340,45 @@ function normalizeQuestionCount(value?: number) {
 
   const roundedValue = Math.round(Number(value));
   return Math.max(MIN_QUESTION_COUNT, Math.min(MAX_QUESTION_COUNT, roundedValue));
+}
+
+function normalizeDifficultyLevel(value?: string): DifficultyLevel {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (normalized === "easy" || normalized === "medium" || normalized === "hard") {
+    return normalized;
+  }
+
+  return "mixed";
+}
+
+function getDifficultyInstructions(level: DifficultyLevel) {
+  switch (level) {
+    case "easy":
+      return [
+        "Prefer direct recall questions from a single sentence or clearly stated fact.",
+        "Use simple wording and avoid multi-step reasoning.",
+        "Keep answers very short, ideally 1 to 3 words when possible.",
+        "Ask for obvious terms, names, definitions, or values explicitly present in the content.",
+      ].join(" ");
+    case "medium":
+      return [
+        "Mix direct recall with light inference or comparison.",
+        "Questions may require connecting two nearby ideas from the content.",
+        "Keep answers concise, usually 2 to 5 words.",
+      ].join(" ");
+    case "hard":
+      return [
+        "Prefer questions that require multi-step reasoning across the content.",
+        "Ask for relationships, implications, distinctions, or combined concepts.",
+        "Keep the answer exact but slightly more demanding, usually 3 to 6 words.",
+        "Do not make the answer a paragraph; it must still be concise and directly supported by the content.",
+      ].join(" ");
+    default:
+      return [
+        "Balance direct recall and light inference based on the provided content.",
+        "Aim for a mixed difficulty set when no specific level is selected.",
+      ].join(" ");
+  }
 }
 
 function trimTokenDelimiters(token: string) {
@@ -980,13 +1021,15 @@ export async function generateQuestionsFromCourseContent(
   options: UploadQuizGenerationOptions = {},
 ): Promise<GeneratedQuestion[]> {
   const questionCount = normalizeQuestionCount(options.questionCount);
-  const difficultyHint = options.difficulty?.trim() || "mixed";
+  const difficultyLevel = normalizeDifficultyLevel(options.difficulty);
   const categoryHint = options.category?.trim() || "content-derived";
   const quizTypeHint = options.quizType === "mcq" ? "mcq-ready" : "open-ended";
+  const difficultyInstructions = getDifficultyInstructions(difficultyLevel);
 
   const systemPrompt = `
 You are a quiz generator. Given the following course content, generate exactly ${questionCount} short-answer questions and answers.
-Difficulty target: ${difficultyHint}
+Difficulty target: ${difficultyLevel}
+Difficulty requirements: ${difficultyInstructions}
 Category focus: ${categoryHint}
 Target style: ${quizTypeHint}
 Each answer must be an exact, concise target (for example: code output, exact syntax, keyword, identifier, number, or short phrase), 1 to 6 words max.
@@ -1005,7 +1048,8 @@ Every object must include a non-empty "question" and a non-empty concise "answer
 
   const fallbackSystemPrompt = `
 You are a quiz generator. Create exactly ${questionCount} high-confidence short-answer question/answer pairs from the course content below.
-Difficulty target: ${difficultyHint}
+Difficulty target: ${difficultyLevel}
+Difficulty requirements: ${difficultyInstructions}
 Category focus: ${categoryHint}
 Target style: ${quizTypeHint}
 Use only facts that are explicitly present in the content.

@@ -1,12 +1,16 @@
 import { SubmitQuizAttemptUseCase } from "@/application/use-cases/quiz/SubmitQuizAttemptUseCase";
 import { ReviewQuizAttemptUseCase } from "@/application/use-cases/quiz/ReviewQuizAttemptUseCase";
 import { QuizAttemptRepositoryAdapter } from "@/infrastructure/quiz/QuizAttemptRepositoryAdapter";
+import { prisma } from "@/server/core/db";
 import {
   listUserQuizAttemptsByUserId,
   listUserQuizAttemptsByUserIdAndQuizIds,
   findUserQuizAttemptByUserAndQuiz,
   createUserQuizAttempt,
   createPendingUserQuizAttempt,
+  countCompletedUserQuizAttempts,
+  getLastAttemptNumber,
+  findPendingUserQuizAttempt,
 } from "@/server/repositories/userQuizAttemptRepository";
 
 export class UserQuizAttemptAlreadyCompletedError extends Error {
@@ -20,6 +24,13 @@ export class UserQuizAttemptNotStartedError extends Error {
   constructor() {
     super("Quiz attempt was not started.");
     this.name = "UserQuizAttemptNotStartedError";
+  }
+}
+
+export class UserQuizAttemptLimitExceededError extends Error {
+  constructor(message: string = "You have reached the maximum number of attempts for this quiz.") {
+    super(message);
+    this.name = "UserQuizAttemptLimitExceededError";
   }
 }
 
@@ -74,22 +85,56 @@ export async function ensurePendingQuizAttempt(params: {
   userId: string;
   quizId: string;
   quizTitle: string;
+  allowedAttempts?: number;
 }) {
+  const completedCount = await countCompletedUserQuizAttempts(
+    params.userId,
+    params.quizId,
+  );
+
+  const allowedAttempts = params.allowedAttempts ?? 1;
+  if (completedCount >= allowedAttempts) {
+    throw new UserQuizAttemptLimitExceededError(
+      `You have completed ${completedCount} of ${allowedAttempts} allowed attempt(s) for this quiz.`,
+    );
+  }
+
+  // Check if there's already a pending attempt
+  const existingPending = await findPendingUserQuizAttempt(
+    params.userId,
+    params.quizId,
+  );
+
+  if (existingPending) {
+    return existingPending;
+  }
+
   const existingAttempt = await findUserQuizAttemptByUserAndQuiz(
     params.userId,
     params.quizId,
   );
 
-  if (existingAttempt?.status === "completed") {
-    throw new UserQuizAttemptAlreadyCompletedError();
-  }
-
   if (existingAttempt?.status === "pending") {
     return existingAttempt;
   }
 
-  // Create a new pending attempt
+  // Create a new pending attempt with the next attemptNumber
+  const lastAttemptNumber = await getLastAttemptNumber(
+    params.userId,
+    params.quizId,
+  );
+  const nextAttemptNumber = lastAttemptNumber + 1;
+
   const pendingAttempt = await createPendingUserQuizAttempt(params);
+  
+  // Update with the attempt number
+  if (pendingAttempt) {
+    await prisma.userQuizAttempt.update({
+      where: { id: pendingAttempt.id },
+      data: { attemptNumber: nextAttemptNumber },
+    });
+  }
+
   if (!pendingAttempt) {
     throw new UserQuizAttemptNotStartedError();
   }

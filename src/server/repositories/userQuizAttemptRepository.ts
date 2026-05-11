@@ -76,6 +76,52 @@ export async function ensurePendingUserQuizAttempt(params: {
   }
 }
 
+export async function countCompletedUserQuizAttempts(
+  userId: string,
+  quizId: string,
+) {
+  const count = await prisma.userQuizAttempt.count({
+    where: {
+      userId,
+      quizId,
+      status: "completed",
+    },
+  });
+  return count;
+}
+
+export async function getLastAttemptNumber(
+  userId: string,
+  quizId: string,
+) {
+  const lastAttempt = await prisma.userQuizAttempt.findFirst({
+    where: {
+      userId,
+      quizId,
+    },
+    orderBy: {
+      attemptNumber: "desc",
+    },
+    select: {
+      attemptNumber: true,
+    },
+  });
+  return lastAttempt?.attemptNumber ?? 0;
+}
+
+export async function findPendingUserQuizAttempt(
+  userId: string,
+  quizId: string,
+) {
+  return prisma.userQuizAttempt.findFirst({
+    where: {
+      userId,
+      quizId,
+      status: "pending",
+    },
+  });
+}
+
 export async function completePendingUserQuizAttempt(params: {
   userId: string;
   quizId: string;

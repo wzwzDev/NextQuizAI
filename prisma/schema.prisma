@@ -132,6 +132,7 @@ model AdminQuiz {
   difficulty  String
   quizType    GameType         @default(open_ended)
   status      String           @default("pending") // e.g. "pending", "approved", "rejected"
+  allowedAttempts Int          @default(2)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   questions   AdminQuizQuestion[]
@@ -153,12 +154,13 @@ model UserQuizAttempt {
   quizTitle  String
   answers    Json
   score      Float    @default(0)
+  attemptNumber Int    @default(1)
   status     UserQuizAttemptStatus @default(pending)
   startedAt  DateTime @default(now())
   completedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([userId, quizId], name: "user_quiz_attempt_unique")
   @@index([userId, status], name: "user_quiz_attempt_user_status_idx")
+  @@index([userId, quizId, status], name: "user_quiz_attempt_composite_idx")
 }

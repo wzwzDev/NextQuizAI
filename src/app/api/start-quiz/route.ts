@@ -11,7 +11,9 @@ import {
   UserQuizAttemptNotStartedError,
   ensurePendingQuizAttempt,
   getUserQuizAttempt,
+  UserQuizAttemptLimitExceededError,
 } from "@/server/services/userQuizAttemptService";
+import { countCompletedUserQuizAttempts } from "@/server/repositories/userQuizAttemptRepository";
 import { ZodError } from "zod";
 import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
 
@@ -41,11 +43,22 @@ export async function GET(req: NextRequest) {
       userId: session.user.id,
       quizId: quiz.id,
       quizTitle: quiz.title,
+      allowedAttempts: quiz.allowedAttempts,
     });
+
+    const completedAttempts = await countCompletedUserQuizAttempts(
+      session.user.id,
+      quiz.id,
+    );
 
     return NextResponse.json({
       attemptStatus: pendingAttempt.status,
       startedAt: pendingAttempt.startedAt,
+      attempts: {
+        completed: completedAttempts,
+        allowed: quiz.allowedAttempts,
+        remaining: quiz.allowedAttempts - completedAttempts,
+      },
       quiz: {
         id: quiz.id,
         title: quiz.title,
@@ -65,6 +78,16 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof UserQuizAttemptLimitExceededError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          attemptStatus: "limit_exceeded",
+        },
+        { status: 403 },
+      );
+    }
+
     if (error instanceof UserQuizAttemptAlreadyCompletedError) {
       const existingAttempt = await getUserQuizAttempt(session.user.id, quizId);
       return NextResponse.json(
