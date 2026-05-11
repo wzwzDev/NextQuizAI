@@ -35,20 +35,20 @@ async function sendWithResend({
           <h2>Welcome to <strong>QuizUPM</strong></h2>
           <p>Thank you for signing up. Please verify your email address to activate your account.</p>
           <p>
-            <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
+            <a href="${verificationUrl}" target="_blank" rel="noreferrer noopener" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
               Verify Your Email
             </a>
           </p>
           <p style="color: #666; font-size: 12px;">
-            Or copy and paste this link in your browser:<br />
-            <code>${verificationUrl}</code>
+            Or open this direct link in your browser:<br />
+            <a href="${verificationUrl}" target="_blank" rel="noreferrer noopener" style="color: #2563eb; word-break: break-all;">${verificationUrl}</a>
           </p>
           <p style="color: #999; font-size: 12px; margin-top: 20px;">
             This link expires in 24 hours.
           </p>
         </div>
       `,
-      text: `Welcome to QuizUPM.\n\nVerify your account by visiting: ${verificationUrl}\n\nThis link expires in 24 hours.`,
+      text: `Welcome to QuizUPM.\n\nVerify your account by visiting: ${verificationUrl}\n\nIf the link is not clickable, copy and paste it into your browser.`,
     }),
   });
 
