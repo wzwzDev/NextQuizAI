@@ -101,6 +101,29 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
     );
   };
 
+  const handleDeleteUser = async (user: User) => {
+    const confirmed = window.confirm(
+      `Delete user ${user.email}? This action cannot be undone.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const response = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Failed to delete user.",
+      );
+      return;
+    }
+
+    setUsers((prev) => prev.filter((candidate) => candidate.id !== user.id));
+    setTotal((prev) => Math.max(0, prev - 1));
+  };
+
   const isUserOnline = (lastSeen?: string) => {
     if (!lastSeen) return false;
     return new Date().getTime() - new Date(lastSeen).getTime() < 2 * 60 * 1000;
@@ -222,6 +245,12 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
                           Ban
                         </button>
                       )}
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="bg-rose-700 text-white px-2 py-1 rounded hover:bg-rose-800"
+                      >
+                        Delete
+                      </button>
                     </>
                   )}
                 </td>

@@ -5,6 +5,7 @@ import { Manrope, Sora } from "next/font/google";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/toaster";
+import { ensureSystemUsers } from "@/server/core/systemUsers";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -21,11 +22,13 @@ export const metadata: Metadata = {
   description: "Quiz yourself!",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await ensureSystemUsers();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body

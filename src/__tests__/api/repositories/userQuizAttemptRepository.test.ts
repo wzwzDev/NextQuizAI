@@ -4,24 +4,24 @@ import {
 } from "@/server/repositories/userQuizAttemptRepository";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
 describe("userQuizAttemptRepository", () => {
   let user: User;
+  const userEmail = uniqueEmail("repo-attempt-user");
 
   beforeAll(async () => {
     await prisma.userQuizAttempt.deleteMany({ where: { quizId: "repo-quiz-1" } });
-    await prisma.user.deleteMany({ where: { email: "repo-attempt-user@example.com" } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
 
-    user = await prisma.user.create({
-      data: { email: "repo-attempt-user@example.com" },
-    });
+    user = await createTestUser(prisma, { email: userEmail });
   });
 
   afterAll(async () => {
     await prisma.userQuizAttempt.deleteMany({ where: { userId: user.id } });
-    await prisma.user.deleteMany({ where: { id: user.id } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

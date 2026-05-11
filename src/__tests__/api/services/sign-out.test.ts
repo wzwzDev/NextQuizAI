@@ -1,25 +1,21 @@
 import { POST } from "@/app/api/sign-out/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
 describe("POST /api/sign-out", () => {
   let user: User;
+  const userEmail = uniqueEmail("signout-test");
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: "signout-test@example.com" },
-    });
-    user = await prisma.user.create({
-      data: { email: "signout-test@example.com", isAdmin: false },
-    });
+    await cleanupUsersByEmail(prisma, [userEmail]);
+    user = await createTestUser(prisma, { email: userEmail });
   });
 
   afterAll(async () => {
-    if (user?.id) {
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

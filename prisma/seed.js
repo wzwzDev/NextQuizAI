@@ -1,70 +1,46 @@
 void (async () => {
   const { PrismaClient } = await import('@prisma/client');
-  const { randomBytes, scryptSync } = await import('crypto');
 
   const prisma = new PrismaClient();
 
-  const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-  const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin1234';
-  const DEFAULT_OWNER_EMAIL = process.env.OWNER_EMAIL || 'waelwzwz@gmail.com';
-  const DEFAULT_OWNER_PASSWORD = process.env.OWNER_PASSWORD || DEFAULT_ADMIN_PASSWORD;
-  const KEY_LENGTH = 64;
+  const DEFAULT_OWNER_EMAIL = (process.env.OWNER_EMAIL || 'waelwzwz@gmail.com').trim().toLowerCase();
+  const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_LOGIN_EMAIL || 'tutormiw@gmail.com').trim().toLowerCase();
 
-  function hashPasswordSync(password) {
-    const salt = randomBytes(16).toString('hex');
-    const derived = scryptSync(password, salt, KEY_LENGTH);
-    return `${salt}:${derived.toString('hex')}`;
+  async function upsertUser({ email, name }) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (!existing) {
+      await prisma.user.create({
+        data: {
+          email,
+          name,
+          isAdmin: true,
+          banned: false,
+          revoked: false,
+        },
+      });
+      console.log(`Created user: ${email}`);
+      return;
+    }
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        name,
+        isAdmin: true,
+        banned: false,
+        revoked: false,
+      },
+    });
+    console.log(`Updated user: ${email}`);
   }
 
   async function upsertAdmin() {
-    const existing = await prisma.user.findUnique({ where: { email: DEFAULT_ADMIN_EMAIL } });
-    const passwordHash = hashPasswordSync(DEFAULT_ADMIN_PASSWORD);
-
-    if (!existing) {
-      await prisma.user.create({
-        data: {
-          email: DEFAULT_ADMIN_EMAIL,
-          name: 'Admin',
-          isAdmin: true,
-          banned: false,
-          revoked: false,
-          passwordHash,
-        },
-      });
-      console.log(`Created admin user: ${DEFAULT_ADMIN_EMAIL} (password: ${DEFAULT_ADMIN_PASSWORD})`);
-    } else {
-      await prisma.user.update({
-        where: { email: DEFAULT_ADMIN_EMAIL },
-        data: { isAdmin: true, passwordHash },
-      });
-      console.log(`Updated admin user: ${DEFAULT_ADMIN_EMAIL} (password: ${DEFAULT_ADMIN_PASSWORD})`);
-    }
+    await upsertUser({ email: DEFAULT_ADMIN_EMAIL, name: process.env.ADMIN_DISPLAY_NAME || 'Admin Account' });
   }
 
   async function upsertOwner() {
-    const ownerEmail = DEFAULT_OWNER_EMAIL;
-    const ownerPasswordHash = hashPasswordSync(DEFAULT_OWNER_PASSWORD);
-
-    const existing = await prisma.user.findUnique({ where: { email: ownerEmail } });
-    if (!existing) {
-      await prisma.user.create({
-        data: {
-          email: ownerEmail,
-          name: 'Owner',
-          isAdmin: true,
-          banned: false,
-          revoked: false,
-          passwordHash: ownerPasswordHash,
-        },
-      });
-      console.log(`Created owner user: ${ownerEmail} (password: ${DEFAULT_OWNER_PASSWORD})`);
-    } else {
-      await prisma.user.update({
-        where: { email: ownerEmail },
-        data: { isAdmin: true, passwordHash: ownerPasswordHash },
-      });
-      console.log(`Updated owner user: ${ownerEmail} (password: ${DEFAULT_OWNER_PASSWORD})`);
-    }
+    await upsertUser({ email: DEFAULT_OWNER_EMAIL, name: 'Owner' });
   }
 
   async function ensureSampleQuiz() {

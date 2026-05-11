@@ -1,23 +1,21 @@
 import { POST } from "@/app/api/questions/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 
 jest.setTimeout(45000);
 
 describe("/api/questions Route Handler", () => {
   let user: User;
+  const userEmail = uniqueEmail("questions-user");
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({ where: { email: "questions-user@example.com" } });
-    user = await prisma.user.create({
-      data: { email: "questions-user@example.com", isAdmin: false },
-    });
+    await cleanupUsersByEmail(prisma, [userEmail]);
+    user = await createTestUser(prisma, { email: userEmail });
   });
 
   afterAll(async () => {
-    if (user?.id) {
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

@@ -1,20 +1,19 @@
 import { POST } from "@/app/api/sign-out/route";
 import { prisma } from "@/server/core/db";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 jest.setTimeout(30000);
 
 describe("/api/sign-out Route Handler", () => {
   let user: any;
+  const userEmail = uniqueEmail("signoutuser");
 
   beforeAll(async () => {
-    user = await prisma.user.create({
-      data: { email: "signoutuser@example.com", isOnline: true },
-    });
+    await cleanupUsersByEmail(prisma, [userEmail]);
+    user = await createTestUser(prisma, { email: userEmail, isOnline: true });
   });
 
   afterAll(async () => {
-    if (user?.id) {
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

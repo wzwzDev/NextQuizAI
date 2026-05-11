@@ -35,6 +35,12 @@ export async function updateUserAdmin(userId: string, isAdmin: boolean) {
   });
 }
 
+export async function deleteUserById(userId: string) {
+  return prisma.user.delete({
+    where: { id: userId },
+  });
+}
+
 export async function findUserIdentityById(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },

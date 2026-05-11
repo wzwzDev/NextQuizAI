@@ -4,6 +4,11 @@ import {
   verifyEmailToken,
 } from "@/server/auth/emailVerification";
 import { prisma } from "@/server/core/db";
+import {
+  cleanupUsersByEmail,
+  createTestUser,
+  uniqueEmail,
+} from "../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
@@ -48,19 +53,17 @@ describe("Email verification token utilities", () => {
   let testEmail: string;
 
   beforeAll(async () => {
-    testEmail = `token-test-${Date.now()}@example.com`;
-    await prisma.user.deleteMany({ where: { email: testEmail } });
-    await prisma.emailVerificationToken.deleteMany({ where: { email: testEmail } });
+    testEmail = uniqueEmail("token-test");
+    await cleanupUsersByEmail(prisma, [testEmail]);
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { email: testEmail } });
-    await prisma.emailVerificationToken.deleteMany({ where: { email: testEmail } });
+    await cleanupUsersByEmail(prisma, [testEmail]);
     await prisma.$disconnect();
   });
 
   it("should create and verify valid token", async () => {
-    await prisma.user.create({ data: { email: testEmail } });
+    await createTestUser(prisma, { email: testEmail });
 
     const { token } = await createEmailVerificationToken(testEmail);
     expect(token).toMatch(/^[a-f0-9]{64}$/);
@@ -84,9 +87,9 @@ describe("Email verification token utilities", () => {
   });
 
   it("should replace previous unclaimed tokens", async () => {
-    const multiEmail = `multi-token-${Date.now()}@example.com`;
-    await prisma.user.deleteMany({ where: { email: multiEmail } });
-    await prisma.user.create({ data: { email: multiEmail } });
+    const multiEmail = uniqueEmail("multi-token");
+    await cleanupUsersByEmail(prisma, [multiEmail]);
+    await createTestUser(prisma, { email: multiEmail });
 
     const { token: token1 } = await createEmailVerificationToken(multiEmail);
     const { token: token2 } = await createEmailVerificationToken(multiEmail);
@@ -98,14 +101,13 @@ describe("Email verification token utilities", () => {
     const result2 = await verifyEmailToken(token2);
     expect(result2.ok).toBe(true);
 
-    await prisma.user.deleteMany({ where: { email: multiEmail } });
-    await prisma.emailVerificationToken.deleteMany({ where: { email: multiEmail } });
+    await cleanupUsersByEmail(prisma, [multiEmail]);
   });
 
   it("should mark token as consumed after verification", async () => {
-    const consumeEmail = `consume-token-${Date.now()}@example.com`;
-    await prisma.user.deleteMany({ where: { email: consumeEmail } });
-    await prisma.user.create({ data: { email: consumeEmail } });
+    const consumeEmail = uniqueEmail("consume-token");
+    await cleanupUsersByEmail(prisma, [consumeEmail]);
+    await createTestUser(prisma, { email: consumeEmail });
 
     const { token } = await createEmailVerificationToken(consumeEmail);
 
@@ -117,14 +119,13 @@ describe("Email verification token utilities", () => {
     const result2 = await verifyEmailToken(token);
     expect(result2.ok).toBe(false);
 
-    await prisma.user.deleteMany({ where: { email: consumeEmail } });
-    await prisma.emailVerificationToken.deleteMany({ where: { email: consumeEmail } });
+    await cleanupUsersByEmail(prisma, [consumeEmail]);
   });
 
   it("should set user emailVerified timestamp", async () => {
-    const verifyEmail = `verify-timestamp-${Date.now()}@example.com`;
-    await prisma.user.deleteMany({ where: { email: verifyEmail } });
-    const user = await prisma.user.create({ data: { email: verifyEmail } });
+    const verifyEmail = uniqueEmail("verify-timestamp");
+    await cleanupUsersByEmail(prisma, [verifyEmail]);
+    const user = await createTestUser(prisma, { email: verifyEmail });
     
     expect(user.emailVerified).toBeNull();
 
@@ -135,7 +136,6 @@ describe("Email verification token utilities", () => {
     expect(updatedUser?.emailVerified).toBeTruthy();
     expect(updatedUser!.emailVerified!.getTime()).toBeLessThanOrEqual(Date.now());
 
-    await prisma.user.deleteMany({ where: { email: verifyEmail } });
-    await prisma.emailVerificationToken.deleteMany({ where: { email: verifyEmail } });
+    await cleanupUsersByEmail(prisma, [verifyEmail]);
   });
 });

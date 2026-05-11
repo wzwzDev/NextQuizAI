@@ -46,3 +46,6 @@ src/generated/prisma/schema.prisma
 *.tsbuildinfo
 next-env.d.ts
 .env.test
+
+# generated transcript exports
+/docs/chatcopilot/chat.json

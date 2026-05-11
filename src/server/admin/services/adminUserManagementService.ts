@@ -1,4 +1,5 @@
 import {
+  deleteUserById,
   findUserIdentityById,
   findUserBanStatus,
   findUserRevokeStatus,
@@ -13,6 +14,13 @@ export class OwnerProtectedError extends Error {
   constructor() {
     super("Owner account is protected.");
     this.name = "OwnerProtectedError";
+  }
+}
+
+export class SelfDeleteNotAllowedError extends Error {
+  constructor() {
+    super("You cannot delete your own account.");
+    this.name = "SelfDeleteNotAllowedError";
   }
 }
 
@@ -44,6 +52,15 @@ export async function setUserRevoked(userId: string, revoked: boolean) {
 export async function setUserAdmin(userId: string, isAdmin: boolean) {
   await assertTargetIsNotOwner(userId);
   return updateUserAdmin(userId, isAdmin);
+}
+
+export async function deleteUserForAdmin(actorUserId: string, targetUserId: string) {
+  if (actorUserId === targetUserId) {
+    throw new SelfDeleteNotAllowedError();
+  }
+
+  await assertTargetIsNotOwner(targetUserId);
+  return deleteUserById(targetUserId);
 }
 
 export async function getUserBanStatus(userId: string) {

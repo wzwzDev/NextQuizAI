@@ -1,7 +1,10 @@
 import {
+  deleteUserForAdmin,
   getUserBanStatus,
   getUserRevokeStatus,
   getUsersForAdmin,
+  OwnerProtectedError,
+  SelfDeleteNotAllowedError,
   setUserAdmin,
   setUserBanned,
   setUserRevoked,
@@ -9,27 +12,52 @@ import {
 import { markUserOfflineByEmail } from "@/server/services/userService";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import {
+  cleanupUsersByEmail,
+  createTestUser,
+  uniqueEmail,
+} from "../../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
 describe("userService", () => {
   let user: User;
+  let actor: User;
+  let owner: User;
+  const previousOwnerEmail = process.env.OWNER_EMAIL;
+  const ownerEmail = uniqueEmail("owner-service");
+  const actorEmail = uniqueEmail("service-actor");
+  const userEmail = uniqueEmail("service-user");
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({ where: { email: "service-user@example.com" } });
-    user = await prisma.user.create({
-      data: {
-        email: "service-user@example.com",
-        banned: false,
-        revoked: false,
-        isAdmin: false,
-        isOnline: true,
-      },
+    process.env.OWNER_EMAIL = ownerEmail;
+    await cleanupUsersByEmail(prisma, [userEmail, actorEmail, ownerEmail]);
+
+    actor = await createTestUser(prisma, {
+      email: actorEmail,
+      isAdmin: true,
+    });
+
+    user = await createTestUser(prisma, {
+      email: userEmail,
+      isOnline: true,
+    });
+
+    owner = await createTestUser(prisma, {
+      email: ownerEmail,
+      isAdmin: true,
     });
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { id: user.id } });
+    await prisma.user.deleteMany({ where: { id: { in: [user.id, actor.id, owner.id] } } });
+
+    if (typeof previousOwnerEmail === "string") {
+      process.env.OWNER_EMAIL = previousOwnerEmail;
+    } else {
+      delete process.env.OWNER_EMAIL;
+    }
+
     await prisma.$disconnect();
   });
 
@@ -61,5 +89,28 @@ describe("userService", () => {
     await markUserOfflineByEmail(user.email);
     const updated = await prisma.user.findUnique({ where: { id: user.id } });
     expect(updated?.isOnline).toBe(false);
+  });
+
+  it("deletes a target user for admin", async () => {
+    const deletable = await createTestUser(prisma, {
+      email: uniqueEmail("service-delete"),
+    });
+
+    await deleteUserForAdmin(actor.id, deletable.id);
+
+    const deleted = await prisma.user.findUnique({ where: { id: deletable.id } });
+    expect(deleted).toBeNull();
+  });
+
+  it("blocks deleting owner account", async () => {
+    await expect(deleteUserForAdmin(actor.id, owner.id)).rejects.toBeInstanceOf(
+      OwnerProtectedError,
+    );
+  });
+
+  it("blocks deleting self", async () => {
+    await expect(deleteUserForAdmin(actor.id, actor.id)).rejects.toBeInstanceOf(
+      SelfDeleteNotAllowedError,
+    );
   });
 });

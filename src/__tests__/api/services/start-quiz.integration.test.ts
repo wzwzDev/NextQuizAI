@@ -1,18 +1,18 @@
 import { GET, POST } from "@/app/api/start-quiz/route";
 import { prisma } from "@/server/core/db";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 jest.setTimeout(30000);
 describe("/api/start-quiz Route Handler", () => {
   let quiz: any;
   let user: { id: string; email: string };
-  const quizTitle = "startquiz-suite-sample-quiz";
+  const quizTitle = `startquiz-suite-sample-quiz-${Date.now()}`;
+  const userEmail = uniqueEmail("startquiz-user");
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({ where: { email: "startquiz-user@example.com" } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.adminQuiz.deleteMany({ where: { title: quizTitle } });
-    user = await prisma.user.create({
-      data: { email: "startquiz-user@example.com", isAdmin: false },
-      select: { id: true, email: true },
-    });
+    const createdUser = await createTestUser(prisma, { email: userEmail });
+    user = { id: createdUser.id, email: createdUser.email };
 
     quiz = await prisma.adminQuiz.create({
       data: {
@@ -38,7 +38,7 @@ describe("/api/start-quiz Route Handler", () => {
       },
     });
     await prisma.adminQuiz.deleteMany({ where: { title: quizTitle } });
-    await prisma.user.deleteMany({ where: { id: user.id } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

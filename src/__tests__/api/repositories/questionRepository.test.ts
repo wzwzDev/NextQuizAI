@@ -6,6 +6,7 @@ import {
 } from "@/server/repositories/questionRepository";
 import { prisma } from "@/server/core/db";
 import type { Game, Question, User } from "@prisma/client";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
@@ -13,10 +14,11 @@ describe("questionRepository", () => {
   let user: User;
   let game: Game;
   let question: Question;
+  const userEmail = uniqueEmail("question-repo-user");
 
   beforeAll(async () => {
-    await prisma.user.deleteMany({ where: { email: "question-repo-user@example.com" } });
-    user = await prisma.user.create({ data: { email: "question-repo-user@example.com" } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
+    user = await createTestUser(prisma, { email: userEmail });
     game = await prisma.game.create({
       data: {
         userId: user.id,
@@ -38,7 +40,7 @@ describe("questionRepository", () => {
   afterAll(async () => {
     await prisma.question.deleteMany({ where: { gameId: game.id } });
     await prisma.game.deleteMany({ where: { id: game.id } });
-    await prisma.user.deleteMany({ where: { id: user.id } });
+    await cleanupUsersByEmail(prisma, [userEmail]);
     await prisma.$disconnect();
   });
 

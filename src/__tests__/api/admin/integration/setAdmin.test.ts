@@ -1,6 +1,11 @@
 import { POST } from "@/app/api/(admin)/setAdmin/route";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import {
+  cleanupUsersByEmail,
+  createTestUser,
+  uniqueEmail,
+} from "../../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
@@ -10,52 +15,23 @@ describe("/api/setAdmin Route Handler", () => {
   let targetUser: User;
   let ownerUser: User;
   const previousOwnerEmail = process.env.OWNER_EMAIL;
-  const ownerEmail = `setadmin-owner-${Date.now()}@example.com`;
+  const ownerEmail = uniqueEmail("setadmin-owner");
+  const adminEmail = uniqueEmail("setadmin-admin");
+  const userEmail = uniqueEmail("setadmin-user");
+  const targetEmail = uniqueEmail("setadmin-target");
 
   beforeAll(async () => {
     process.env.OWNER_EMAIL = ownerEmail;
+    await cleanupUsersByEmail(prisma, [adminEmail, userEmail, targetEmail, ownerEmail]);
 
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: [
-            "setadmin-admin@example.com",
-            "setadmin-user@example.com",
-            "setadmin-target@example.com",
-            ownerEmail,
-          ],
-        },
-      },
-    });
-
-    adminUser = await prisma.user.create({
-      data: { email: "setadmin-admin@example.com", isAdmin: true },
-    });
-    normalUser = await prisma.user.create({
-      data: { email: "setadmin-user@example.com", isAdmin: false },
-    });
-    targetUser = await prisma.user.create({
-      data: { email: "setadmin-target@example.com", isAdmin: false },
-    });
-
-    ownerUser = await prisma.user.create({
-      data: { email: ownerEmail, isAdmin: true },
-    });
+    adminUser = await createTestUser(prisma, { email: adminEmail, isAdmin: true });
+    normalUser = await createTestUser(prisma, { email: userEmail });
+    targetUser = await createTestUser(prisma, { email: targetEmail });
+    ownerUser = await createTestUser(prisma, { email: ownerEmail, isAdmin: true });
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: [
-            "setadmin-admin@example.com",
-            "setadmin-user@example.com",
-            "setadmin-target@example.com",
-            ownerEmail,
-          ],
-        },
-      },
-    });
+    await cleanupUsersByEmail(prisma, [adminEmail, userEmail, targetEmail, ownerEmail]);
 
     if (typeof previousOwnerEmail === "string") {
       process.env.OWNER_EMAIL = previousOwnerEmail;

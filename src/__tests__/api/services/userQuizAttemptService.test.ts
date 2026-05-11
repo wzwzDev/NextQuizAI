@@ -11,6 +11,7 @@ import {
 } from "@/server/services/userQuizAttemptService";
 import { prisma } from "@/server/core/db";
 import type { User } from "@prisma/client";
+import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 
 jest.setTimeout(30000);
 
@@ -19,18 +20,15 @@ describe("userQuizAttemptService", () => {
   let adminUser: User;
   let quizId: string;
   let quiz2Id: string;
+  const userEmail = uniqueEmail("service-attempt-user");
+  const adminEmail = uniqueEmail("service-admin");
 
   beforeAll(async () => {
     await prisma.userQuizAttempt.deleteMany({ where: { quizId: { in: ["service-q1", "service-q2", "service-q3"] } } });
-    await prisma.user.deleteMany({ where: { email: { in: ["service-attempt-user@example.com", "service-admin@example.com"] } } });
+    await cleanupUsersByEmail(prisma, [userEmail, adminEmail]);
 
-    user = await prisma.user.create({
-      data: { email: "service-attempt-user@example.com" },
-    });
-
-    adminUser = await prisma.user.create({
-      data: { email: "service-admin@example.com", isAdmin: true },
-    });
+    user = await createTestUser(prisma, { email: userEmail });
+    adminUser = await createTestUser(prisma, { email: adminEmail, isAdmin: true });
 
     const quiz = await prisma.adminQuiz.create({
       data: {
@@ -57,7 +55,7 @@ describe("userQuizAttemptService", () => {
     await prisma.userQuizAttempt.deleteMany({ where: { userId: user.id } });
     await prisma.userQuizAttempt.deleteMany({ where: { userId: adminUser.id } });
     await prisma.adminQuiz.deleteMany({ where: { id: { in: [quizId, quiz2Id] } } });
-    await prisma.user.deleteMany({ where: { id: { in: [user.id, adminUser.id] } } });
+    await cleanupUsersByEmail(prisma, [userEmail, adminEmail]);
     await prisma.$disconnect();
   });
 

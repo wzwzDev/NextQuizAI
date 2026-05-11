@@ -54,6 +54,14 @@ afterEach(() => {
 });
 
 describe("UserManagement", () => {
+  beforeEach(() => {
+    jest.spyOn(window, "confirm").mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("renders loading and then user table", async () => {
     render(<UserManagement />);
     expect(screen.getByText(/Loading users/i)).toBeInTheDocument();
@@ -101,6 +109,46 @@ describe("UserManagement", () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith("/api/users");
     });
+  });
+
+  it("deletes a non-owner user", async () => {
+    // @ts-ignore
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ json: async () => mockUsers })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
+
+    render(<UserManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1@example.com")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/users/1", { method: "DELETE" });
+    });
+
+    expect(screen.queryByText("user1@example.com")).not.toBeInTheDocument();
+  });
+
+  it("does not delete when confirm is cancelled", async () => {
+    (window.confirm as jest.Mock).mockReturnValue(false);
+
+    // @ts-ignore
+    global.fetch = jest.fn().mockResolvedValue({ json: async () => mockUsers });
+
+    render(<UserManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1@example.com")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+
+    // Only initial users fetch should happen
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(1);
   });
 
  

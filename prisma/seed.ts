@@ -1,38 +1,28 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "@/server/auth/password";
 
 const prisma = new PrismaClient();
 
-const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin1234";
+const DEFAULT_OWNER_EMAIL = (process.env.OWNER_EMAIL || "waelwzwz@gmail.com").trim().toLowerCase();
+const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_LOGIN_EMAIL || "tutormiw@gmail.com").trim().toLowerCase();
 
-async function upsertAdmin() {
-  const existing = await prisma.user.findUnique({ where: { email: DEFAULT_ADMIN_EMAIL } });
-  const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
-
-  if (!existing) {
-    await prisma.user.create({
-      data: {
-        email: DEFAULT_ADMIN_EMAIL,
-        name: "Admin",
-        isAdmin: true,
-        banned: false,
-        revoked: false,
-        passwordHash,
-      },
-    });
-    console.log(`Created admin user: ${DEFAULT_ADMIN_EMAIL} (password: ${DEFAULT_ADMIN_PASSWORD})`);
-  } else {
-    // ensure admin flag and password
-    await prisma.user.update({
-      where: { email: DEFAULT_ADMIN_EMAIL },
-      data: {
-        isAdmin: true,
-        passwordHash,
-      },
-    });
-    console.log(`Updated admin user: ${DEFAULT_ADMIN_EMAIL} (password: ${DEFAULT_ADMIN_PASSWORD})`);
-  }
+async function upsertUser(email: string, name: string) {
+  await prisma.user.upsert({
+    where: { email },
+    update: {
+      name,
+      isAdmin: true,
+      banned: false,
+      revoked: false,
+    },
+    create: {
+      email,
+      name,
+      isAdmin: true,
+      banned: false,
+      revoked: false,
+    },
+  });
+  console.log(`Ensured user: ${email}`);
 }
 
 async function ensureSampleQuiz() {
@@ -64,7 +54,8 @@ async function ensureSampleQuiz() {
 
 async function main() {
   console.log("Seeding minimal data...");
-  await upsertAdmin();
+  await upsertUser(DEFAULT_OWNER_EMAIL, "Owner");
+  await upsertUser(DEFAULT_ADMIN_EMAIL, process.env.ADMIN_DISPLAY_NAME || "Admin Account");
   await ensureSampleQuiz();
   console.log("Seeding complete.");
 }

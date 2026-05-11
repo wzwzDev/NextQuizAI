@@ -12,6 +12,7 @@ import {
   getAdminCredentialsConfig,
   isOwnerEmail,
 } from "@/server/core/roles";
+import { ensureSystemUsers } from "@/server/core/systemUsers";
 
 const resolvedAuthSecret =
   process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
@@ -298,6 +299,8 @@ async function getTestSessionFromRequest(req?: Request) {
 
 export const getAuthSession = async (req?: Request) => {
   try {
+    await ensureSystemUsers();
+
     const session = await getServerSession(authOptions);
     if (session?.user) {
       return session;
