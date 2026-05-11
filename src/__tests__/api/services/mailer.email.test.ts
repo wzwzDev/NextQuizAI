@@ -3,6 +3,8 @@ jest.mock("nodemailer", () => ({
   default: {
     createTransport: jest.fn(() => ({
       sendMail: jest.fn().mockResolvedValue({ messageId: "m-1" }),
+      verify: jest.fn().mockResolvedValue(true),
+      close: jest.fn().mockResolvedValue(undefined),
     })),
   },
 }));
@@ -53,7 +55,7 @@ describe("server mailer email", () => {
         to: "prod@example.com",
         verificationUrl: "https://example/verify",
       }),
-    ).rejects.toThrow(/SMTP is not configured in production/i);
+    ).rejects.toThrow(/SMTP configuration incomplete/i);
   });
 
   it("does not throw when SMTP variables are configured", async () => {

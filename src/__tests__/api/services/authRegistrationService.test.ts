@@ -1,3 +1,14 @@
+jest.mock("nodemailer", () => ({
+  __esModule: true,
+  default: {
+    createTransport: jest.fn(() => ({
+      sendMail: jest.fn().mockResolvedValue({ messageId: "m-1" }),
+      verify: jest.fn().mockResolvedValue(true),
+      close: jest.fn().mockResolvedValue(undefined),
+    })),
+  },
+}));
+
 import { registerUserWithEmailPassword, RegistrationConflictError } from "@/server/services/authRegistrationService";
 import { prisma } from "@/server/core/db";
 

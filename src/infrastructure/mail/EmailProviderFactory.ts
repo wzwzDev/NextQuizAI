@@ -7,17 +7,24 @@ export type EmailProvider = "resend" | "smtp";
 function getConfiguredProvider(): EmailProvider {
   const provider = (process.env.EMAIL_PROVIDER?.trim() || "").toLowerCase();
 
-  // Auto-detect based on configured credentials
-  if (provider === "resend" || process.env.RESEND_API_KEY?.trim()) {
+  // Explicit EMAIL_PROVIDER setting takes absolute priority
+  if (provider === "smtp") {
+    return "smtp";
+  }
+  if (provider === "resend") {
+    return "resend";
+  }
+
+  // Auto-detect: prefer Resend if key exists, else SMTP if credentials exist
+  if (process.env.RESEND_API_KEY?.trim()) {
     return "resend";
   }
 
   if (
-    provider === "smtp" ||
-    (process.env.SMTP_HOST?.trim() &&
-      process.env.SMTP_PORT?.trim() &&
-      process.env.SMTP_USER?.trim() &&
-      process.env.SMTP_PASS?.trim())
+    process.env.SMTP_HOST?.trim() &&
+    process.env.SMTP_PORT?.trim() &&
+    process.env.SMTP_USER?.trim() &&
+    process.env.SMTP_PASS?.trim()
   ) {
     return "smtp";
   }

@@ -32,6 +32,9 @@ function validateSmtpConfig() {
 function getSmtpTransporter() {
   const smtpPort = Number(process.env.SMTP_PORT?.trim() || 587);
 
+  const allowSelfSigned =
+    process.env.SMTP_ALLOW_SELF_SIGNED === "true" || process.env.NODE_ENV !== "production";
+
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST?.trim(),
     port: smtpPort,
@@ -39,6 +42,10 @@ function getSmtpTransporter() {
     auth: {
       user: process.env.SMTP_USER?.trim(),
       pass: process.env.SMTP_PASS?.trim(),
+    },
+    tls: {
+      // When developing or when explicitly allowed, accept self-signed certs.
+      rejectUnauthorized: !allowSelfSigned,
     },
   });
 }
@@ -55,11 +62,22 @@ async function sendWithSmtp({
   const transporter = getSmtpTransporter();
   const fromAddress = getFromAddress();
 
-  try {
-    await transporter.verify();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`SMTP connection verification failed: ${message}`);
+  // Skip verification in test environment to avoid actual SMTP connection attempts
+  if (process.env.NODE_ENV !== "test") {
+    const allowSelfSigned =
+      process.env.SMTP_ALLOW_SELF_SIGNED === "true" || process.env.NODE_ENV !== "production";
+
+    try {
+      await transporter.verify();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const isSelfSigned = /self[- ]?signed/i.test(message) || message.includes("self signed certificate");
+      if (allowSelfSigned && isSelfSigned) {
+        console.warn(`[SMTP] Ignoring self-signed certificate verification error: ${message}`);
+      } else {
+        throw new Error(`SMTP connection verification failed: ${message}`);
+      }
+    }
   }
 
   try {

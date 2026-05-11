@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -93,16 +93,16 @@
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
 <a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -110,44 +110,44 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { QuestionRepositoryPort } from "@/application/ports/out/QuestionRepositoryPort";
-import {
+<span class="cstat-no" title="statement not covered" >import {</span>
   findQuestionWithGameOwnerById,
   saveUserAnswer,
   saveMcqResult,
   saveOpenEndedResult,
 } from "@/server/repositories/questionRepository";
 &nbsp;
-export class QuestionRepositoryAdapter implements QuestionRepositoryPort {
-  async findById(questionId: string) {
-    return findQuestionWithGameOwnerById(questionId);
+<span class="cstat-no" title="statement not covered" >export class Q</span>uestionRepositoryAdapter implements QuestionRepositoryPort {
+<span class="fstat-no" title="function not covered" >  async </span>findById(questionId: string) {
+<span class="cstat-no" title="statement not covered" >    return findQuestionWithGameOwnerById(questionId);</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>findQuestionWithGameOwnerById(questionId: string) {
 <span class="cstat-no" title="statement not covered" >    return findQuestionWithGameOwnerById(questionId);</span>
   }
 &nbsp;
-  async saveUserAnswer(questionId: string, answer: string) {
-    await saveUserAnswer(questionId, answer);
+<span class="fstat-no" title="function not covered" >  async </span>saveUserAnswer(questionId: string, answer: string) {
+<span class="cstat-no" title="statement not covered" >    await saveUserAnswer(questionId, answer);</span>
   }
 &nbsp;
-  async saveMcqResult(questionId: string, isCorrect: boolean) {
-    await saveMcqResult(questionId, isCorrect);
+<span class="fstat-no" title="function not covered" >  async </span>saveMcqResult(questionId: string, isCorrect: boolean) {
+<span class="cstat-no" title="statement not covered" >    await saveMcqResult(questionId, isCorrect);</span>
   }
 &nbsp;
-  async saveOpenEndedResult(questionId: string, percentage: number) {
-    await saveOpenEndedResult(questionId, percentage);
+<span class="fstat-no" title="function not covered" >  async </span>saveOpenEndedResult(questionId: string, percentage: number) {
+<span class="cstat-no" title="statement not covered" >    await saveOpenEndedResult(questionId, percentage);</span>
   }
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -157,7 +157,7 @@ export class QuestionRepositoryAdapter implements QuestionRepositoryPort {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-07T13:56:02.414Z
+                at 2026-05-11T09:02:48.914Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

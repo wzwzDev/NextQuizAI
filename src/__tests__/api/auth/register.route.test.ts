@@ -1,3 +1,14 @@
+jest.mock("nodemailer", () => ({
+  __esModule: true,
+  default: {
+    createTransport: jest.fn(() => ({
+      sendMail: jest.fn().mockResolvedValue({ messageId: "m-1" }),
+      verify: jest.fn().mockResolvedValue(true),
+      close: jest.fn().mockResolvedValue(undefined),
+    })),
+  },
+}));
+
 import { POST } from "@/app/api/auth/register/route";
 import { prisma } from "@/server/core/db";
 import type { NextRequest } from "next/server";

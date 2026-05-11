@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>0/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">74.07% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>20/27</span>
+                <span class='fraction'>0/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -97,28 +97,28 @@
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
 <a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -130,34 +130,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { GameType } from "@/domain/value-objects/DomainEnums";
-import { Question } from "./Question";
+<span class="cstat-no" title="statement not covered" >import { Question } from "./Question";</span>
 &nbsp;
-export class Game {
-  constructor(
-    public readonly id: string,
-    public readonly userId: string,
-    public readonly timeStarted: Date,
-    public readonly topic: string,
-    public readonly timeEnded: Date | null,
-    public readonly gameType: GameType,
-    public readonly questions: Question[],
+<span class="cstat-no" title="statement not covered" >export class G</span>ame {
+<span class="fstat-no" title="function not covered" >  constructor(</span>
+    public readonly <span class="cstat-no" title="statement not covered" >id: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >userId: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >timeStarted: Date,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >topic: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >timeEnded: Date | null,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >gameType: GameType,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >questions: Question[],</span>
   ) {}
 &nbsp;
-  static fromPrisma(p: unknown) {
-    if (!p) return null;
-    const d = p as unknown as Record&lt;string, unknown&gt;;
-    const rawQuestions = (d["questions"] as unknown[]) ?? <span class="branch-1 cbranch-no" title="branch not covered" >[];</span>
-    const questions = rawQuestions
-      .map((q) =&gt; Question.fromPrisma(q))
-      .filter((q): q is Question =&gt; q !== null);
+<span class="fstat-no" title="function not covered" >  static </span>fromPrisma(p: unknown) {
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!p) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+    const d = <span class="cstat-no" title="statement not covered" >p as unknown as Record&lt;string, unknown&gt;;</span>
+    const rawQuestions = <span class="cstat-no" title="statement not covered" >(d["questions"] as unknown[]) ?? [];</span>
+    const questions = <span class="cstat-no" title="statement not covered" >rawQuestions</span>
+      .map(<span class="fstat-no" title="function not covered" >(q</span>) =&gt; <span class="cstat-no" title="statement not covered" >Question.fromPrisma(q))</span>
+      .filter(<span class="fstat-no" title="function not covered" >(q</span>): q is Question =&gt; <span class="cstat-no" title="statement not covered" >q !== null)</span>;
 &nbsp;
-    return new Game(
-      String(d["id"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      String(d["userId"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      new Date(String(d["timeStarted"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >Date.now())</span>),
-      String(d["topic"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      d["timeEnded"] ? <span class="branch-0 cbranch-no" title="branch not covered" >new Date(String(d["timeEnded"])) </span>: null,
-      (d["gameType"] as GameType) ?? (<span class="branch-1 cbranch-no" title="branch not covered" >"mcq" as GameType),</span>
+<span class="cstat-no" title="statement not covered" >    return new Game(</span>
+      String(d["id"] ?? ""),
+      String(d["userId"] ?? ""),
+      new Date(String(d["timeStarted"] ?? Date.now())),
+      String(d["topic"] ?? ""),
+      d["timeEnded"] ? new Date(String(d["timeEnded"])) : null,
+      (d["gameType"] as GameType) ?? ("mcq" as GameType),
       questions,
     );
   }
@@ -169,7 +169,7 @@ export class Game {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-07T13:56:02.414Z
+                at 2026-05-11T09:02:48.914Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
