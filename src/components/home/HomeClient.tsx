@@ -81,7 +81,7 @@ function getDifficultyChipClass(value?: string) {
 function getAttemptStatusChipClass(status?: string) {
   const normalized = normalizeFilterValue(status);
   if (normalized === "completed") {
-    return "bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900";
+    return "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/60 dark:text-fuchsia-200";
   }
 
   if (normalized === "pending") {
@@ -89,6 +89,14 @@ function getAttemptStatusChipClass(status?: string) {
   }
 
   return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200";
+}
+
+function getAttemptDisplayStatus(quiz: Quiz) {
+  if (quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0) {
+    return "pending";
+  }
+
+  return quiz.attemptStatus;
 }
 
 function getAttemptSummary(quiz: Quiz) {
@@ -534,8 +542,8 @@ export default function HomeClient() {
                   <Flame className="h-3.5 w-3.5" />
                   Difficulty: {quiz.difficulty}
                 </span>
-                <span className={`chip-pill ${getAttemptStatusChipClass(quiz.attemptStatus)}`}>
-                  Status: {quiz.attemptStatus === "completed" ? "Completed" : quiz.attemptStatus === "pending" ? "Pending" : "Available"}
+                <span className={`chip-pill ${getAttemptStatusChipClass(getAttemptDisplayStatus(quiz))}`}>
+                  Status: {getAttemptDisplayStatus(quiz) === "completed" ? "Completed" : getAttemptDisplayStatus(quiz) === "pending" ? "Pending" : "Available"}
                 </span>
                 <span className="chip-pill bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
                   Type: {formatQuizTypeLabel(quiz.quizType)}
@@ -575,7 +583,7 @@ export default function HomeClient() {
               ) : (
                 <div className="mt-auto space-y-2">
                   {quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0 && (
-                    <p className="text-center text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                    <p className="text-center text-xs font-medium text-blue-700 dark:text-blue-300">
                       {getAttemptSummary(quiz)}
                     </p>
                   )}
