@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomInt, randomUUID } from "crypto";
 import * as vision from "@google-cloud/vision";
 import { Storage } from "@google-cloud/storage";
 import { strict_output } from "@/server/ai/gptadmin";
@@ -742,7 +742,8 @@ async function extractTextFromPdfWithOcrRetry(
       }
 
       const backoff = Math.min(initialDelayMs * 2 ** attempt, maxDelayMs);
-      const jitter = Math.floor(Math.random() * Math.min(1000, backoff));
+      const jitterLimit = Math.max(1, Math.min(1000, backoff));
+      const jitter = randomInt(jitterLimit);
       const waitMs = backoff + jitter;
 
       try {

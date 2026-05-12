@@ -31,51 +31,266 @@ function detectLanguage(code: string): string {
   return "javascript"; // default
 }
 
+const KEYWORDS = new Set([
+  "function",
+  "const",
+  "let",
+  "var",
+  "return",
+  "if",
+  "else",
+  "for",
+  "while",
+  "do",
+  "switch",
+  "case",
+  "break",
+  "continue",
+  "try",
+  "catch",
+  "finally",
+  "throw",
+  "new",
+  "this",
+  "super",
+  "class",
+  "extends",
+  "interface",
+  "import",
+  "export",
+  "async",
+  "await",
+  "yield",
+  "delete",
+  "typeof",
+  "instanceof",
+  "in",
+  "of",
+  "void",
+  "null",
+  "undefined",
+  "true",
+  "false",
+  "NaN",
+  "Infinity",
+  "print",
+  "def",
+  "elif",
+  "with",
+  "except",
+  "raise",
+  "from",
+  "as",
+  "pass",
+  "lambda",
+  "and",
+  "or",
+  "not",
+  "is",
+]);
+
+function isWordCharacter(character: string) {
+  const code = character.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122) ||
+    character === "_"
+  );
+}
+
+function isDigitCharacter(character: string) {
+  const code = character.charCodeAt(0);
+  return code >= 48 && code <= 57;
+}
+
+function splitChallengeParagraphs(code: string) {
+  const paragraphs: string[] = [];
+  let current: string[] = [];
+
+  for (const line of code.split("\n")) {
+    if (line.trim().length === 0) {
+      if (current.length > 0) {
+        paragraphs.push(current.join("\n").trim());
+        current = [];
+      }
+      continue;
+    }
+
+    current.push(line);
+  }
+
+  if (current.length > 0) {
+    paragraphs.push(current.join("\n").trim());
+  }
+
+  return paragraphs;
+}
+
+type HighlightToken = {
+  text: string;
+  className?: string;
+};
+
+function tokenizeCodeLine(line: string, inBlockComment: boolean) {
+  const tokens: HighlightToken[] = [];
+  let index = 0;
+  let insideBlockComment = inBlockComment;
+
+  while (index < line.length) {
+    if (insideBlockComment) {
+      const blockEnd = line.indexOf("*/", index);
+      if (blockEnd === -1) {
+        tokens.push({ text: line.slice(index), className: "text-slate-500" });
+        return { tokens, nextInBlockComment: true };
+      }
+
+      tokens.push({ text: line.slice(index, blockEnd + 2), className: "text-slate-500" });
+      index = blockEnd + 2;
+      insideBlockComment = false;
+      continue;
+    }
+
+    const remaining = line.slice(index);
+    if (remaining.startsWith("//") || remaining.startsWith("#")) {
+      tokens.push({ text: remaining, className: "text-slate-500" });
+      return { tokens, nextInBlockComment: false };
+    }
+
+    if (remaining.startsWith("/*")) {
+      const blockEnd = line.indexOf("*/", index + 2);
+      if (blockEnd === -1) {
+        tokens.push({ text: remaining, className: "text-slate-500" });
+        return { tokens, nextInBlockComment: true };
+      }
+
+      tokens.push({ text: line.slice(index, blockEnd + 2), className: "text-slate-500" });
+      index = blockEnd + 2;
+      continue;
+    }
+
+    const character = line[index];
+
+    if (character === '"' || character === "'" || character === "`") {
+      let end = index + 1;
+
+      while (end < line.length) {
+        if (line[end] === "\\") {
+          end += 2;
+          continue;
+        }
+
+        if (line[end] === character) {
+          end += 1;
+          break;
+        }
+
+        end += 1;
+      }
+
+      tokens.push({
+        text: line.slice(index, Math.min(end, line.length)),
+        className: "text-green-300",
+      });
+      index = end;
+      continue;
+    }
+
+    if (isDigitCharacter(character)) {
+      let end = index + 1;
+      while (end < line.length && isDigitCharacter(line[end])) {
+        end += 1;
+      }
+
+      if (end < line.length && line[end] === ".") {
+        let decimalEnd = end + 1;
+        while (decimalEnd < line.length && isDigitCharacter(line[decimalEnd])) {
+          decimalEnd += 1;
+        }
+        if (decimalEnd > end + 1) {
+          end = decimalEnd;
+        }
+      }
+
+      tokens.push({ text: line.slice(index, end), className: "text-amber-300" });
+      index = end;
+      continue;
+    }
+
+    if (isWordCharacter(character)) {
+      let end = index + 1;
+      while (end < line.length && isWordCharacter(line[end])) {
+        end += 1;
+      }
+
+      const word = line.slice(index, end);
+      const className = KEYWORDS.has(word) ? "text-cyan-300 font-semibold" : undefined;
+      tokens.push({ text: word, className });
+      index = end;
+      continue;
+    }
+
+    tokens.push({ text: character });
+    index += 1;
+  }
+
+  return { tokens, nextInBlockComment: insideBlockComment };
+}
+
 function syntaxHighlight(code: string, language: string): React.ReactNode {
-  // Simple syntax highlighting - split by common patterns
-  const keywords = /\b(function|const|let|var|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|new|this|super|class|extends|interface|import|export|async|await|yield|delete|typeof|instanceof|in|of|void|null|undefined|true|false|NaN|Infinity|print|def|class|if|elif|else|for|while|with|try|except|finally|raise|return|import|from|as|pass|break|continue|lambda|and|or|not|is)\b/g;
-  const strings = /(["'`])(?:(?=(\\?))\2.)*?\1/g;
-  const numbers = /\b\d+(\.\d+)?\b/g;
-  const comments = /(\/\/.*$)|(\/\*[\s\S]*?\*\/)|(#.*$)/gm;
-  
-  let result = code;
-  
+  let inBlockComment = false;
+
   return (
     <div className="space-y-0">
-      {code.split('\n').map((line, i) => (
-        <div key={i} className="flex gap-3">
-          <span className="w-8 text-right text-slate-500 select-none text-xs">{i + 1}</span>
-          <span className="flex-1 font-mono text-sm">
-            {line.split(keywords).map((part, j) => {
-              if (keywords.test(part)) {
-                return <span key={j} className="text-cyan-300 font-semibold">{part}</span>;
-              }
-              if (strings.test(part)) {
-                return <span key={j} className="text-green-300">{part}</span>;
-              }
-              if (numbers.test(part)) {
-                return <span key={j} className="text-amber-300">{part}</span>;
-              }
-              return <span key={j}>{part}</span>;
-            })}
-          </span>
-        </div>
-      ))}
+      {code.split("\n").map((line, lineIndex) => {
+        const tokenized = tokenizeCodeLine(line, inBlockComment);
+        inBlockComment = tokenized.nextInBlockComment;
+
+        return (
+          <div key={lineIndex} className="flex gap-3">
+            <span className="w-8 text-right text-slate-500 select-none text-xs">{lineIndex + 1}</span>
+            <span className="flex-1 font-mono text-sm">
+              {tokenized.tokens.map((token, tokenIndex) => (
+                <span key={tokenIndex} className={token.className}>
+                  {token.text}
+                </span>
+              ))}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 function parseCodeChallengeQuestion(question: string) {
-  const withoutMarker = question.replace(/\[fill_blank\]/gi, "").trim();
-  const normalized = withoutMarker.replace(/\r\n/g, "\n");
+  const normalized = question.split("\r\n").join("\n").split("\r").join("\n");
+  const withoutMarker = normalized.split("[fill_blank]").join("");
+  const cleanedQuestion = withoutMarker.trim();
 
-  const outputSplit = normalized.split(/\n\s*output\s*:\s*_{3,}\s*$/i);
-  const body = outputSplit[0]?.trim() ?? normalized;
+  const lines = cleanedQuestion.split("\n");
+  const outputIndex = lines.findIndex((line) => {
+    const trimmedLine = line.trim().toLowerCase();
+    if (!trimmedLine.startsWith("output:")) {
+      return false;
+    }
 
-  const segments = body
-    .split(/\n\s*\n/)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
+    const suffix = trimmedLine.slice("output:".length).trim();
+    if (suffix.length < 3) {
+      return false;
+    }
+
+    for (const character of suffix) {
+      if (character !== "_") {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const body = (outputIndex >= 0 ? lines.slice(0, outputIndex) : lines).join("\n").trim();
+  const segments = splitChallengeParagraphs(body);
 
   if (segments.length <= 1) {
     return {
