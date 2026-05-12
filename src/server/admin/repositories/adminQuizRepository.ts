@@ -99,7 +99,18 @@ export async function findApprovedQuizById(id: string) {
       id,
       status: "approved",
     },
-    include: { questions: true },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      difficulty: true,
+      quizType: true,
+      status: true,
+      allowedAttempts: true,
+      createdAt: true,
+      updatedAt: true,
+      questions: true,
+    },
   });
 }
 

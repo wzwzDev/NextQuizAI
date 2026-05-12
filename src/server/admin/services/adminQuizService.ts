@@ -48,7 +48,16 @@ export async function removeAdminQuiz(id: string) {
 }
 
 export async function getApprovedQuiz(id: string) {
-  return findApprovedQuizById(id);
+  const quiz = await findApprovedQuizById(id);
+
+  if (!quiz) {
+    return null;
+  }
+
+  return {
+    ...quiz,
+    allowedAttempts: quiz.allowedAttempts ?? 2,
+  };
 }
 
 export async function getApprovedQuizLibrary() {
@@ -61,7 +70,7 @@ export async function getApprovedQuizLibrary() {
     difficulty: quiz.difficulty,
     quizType: quiz.quizType,
     status: quiz.status,
-    allowedAttempts: quiz.allowedAttempts,
+    allowedAttempts: quiz.allowedAttempts ?? 2,
     createdAt: quiz.createdAt,
     updatedAt: quiz.updatedAt,
     questionCount: quiz._count.questions,

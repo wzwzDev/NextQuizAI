@@ -3,8 +3,8 @@ import { prisma } from "@/server/core/db";
 import { cleanupUsersByEmail, createTestUser, uniqueEmail } from "../../utils/prismaUsers";
 jest.setTimeout(30000);
 describe("/api/start-quiz Route Handler", () => {
-  let quiz: any;
-  let user: { id: string; email: string };
+  let quiz;
+  let user;
   const quizTitle = `startquiz-suite-sample-quiz-${Date.now()}`;
   const userEmail = uniqueEmail("startquiz-user");
 
@@ -46,7 +46,7 @@ describe("/api/start-quiz Route Handler", () => {
     const req = new Request("http://localhost/api/start-quiz?id=nonexistentid", {
       method: "GET",
     });
-    const res = await GET(req as any);
+    const res = await GET(req);
     expect(res.status).toBe(401);
   });
 
@@ -55,7 +55,7 @@ describe("/api/start-quiz Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": user.email },
     });
-    const res = await GET(req as any);
+    const res = await GET(req);
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.error).toMatch(/Quiz ID is required/i);
@@ -66,7 +66,7 @@ describe("/api/start-quiz Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": user.email },
     });
-    const res = await GET(req as any);
+    const res = await GET(req);
     expect(res.status).toBe(404);
     const json = await res.json();
     expect(json.error).toMatch(/Quiz not found/i);
@@ -77,7 +77,7 @@ describe("/api/start-quiz Route Handler", () => {
       method: "GET",
       headers: { "x-test-user-email": user.email },
     });
-    const res = await GET(req as any);
+    const res = await GET(req);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.quiz).toBeDefined();
@@ -95,7 +95,7 @@ describe("/api/start-quiz Route Handler", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const res = await POST(req as any);
+    const res = await POST(req);
     expect(res.status).toBe(401);
   });
 
@@ -109,13 +109,13 @@ describe("/api/start-quiz Route Handler", () => {
       },
     });
 
-    const res = await POST(req as any);
+    const res = await POST(req);
     const json = await res.json();
     expect(res.status).toBe(400);
     expect(json.error).toBe("Invalid JSON");
   });
 
-  it("completes an attempt then blocks retake on POST", async () => {
+  it("allows a second attempt until the limit is reached", async () => {
     const firstReq = new Request("http://localhost/api/start-quiz", {
       method: "POST",
       body: JSON.stringify({
@@ -128,7 +128,7 @@ describe("/api/start-quiz Route Handler", () => {
       },
     });
 
-    const firstRes = await POST(firstReq as any);
+    const firstRes = await POST(firstReq);
     expect(firstRes.status).toBe(200);
 
     const secondReq = new Request("http://localhost/api/start-quiz", {
@@ -143,21 +143,62 @@ describe("/api/start-quiz Route Handler", () => {
       },
     });
 
-    const secondRes = await POST(secondReq as any);
-    expect(secondRes.status).toBe(409);
+    const secondRes = await POST(secondReq);
     const secondJson = await secondRes.json();
-    expect(secondJson.error).toMatch(/already completed/i);
+    expect(secondRes.status).toBe(200);
+
+    const thirdReq = new Request("http://localhost/api/start-quiz", {
+      method: "POST",
+      body: JSON.stringify({
+        quizId: quiz.id,
+        answers: ["A1", "A2"],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-test-user-email": user.email,
+      },
+    });
+
+    const thirdRes = await POST(thirdReq);
+    expect(thirdRes.status).toBe(403);
+    const thirdJson = await thirdRes.json();
+    expect(thirdJson.error).toMatch(/completed 2 of 2 allowed attempt/i);
   });
 
-  it("returns completed status on GET after quiz completion", async () => {
+  it("returns limit exceeded on GET after all attempts are used", async () => {
+    await prisma.userQuizAttempt.deleteMany({
+      where: { userId: user.id, quizId: quiz.id },
+    });
+
+    await prisma.userQuizAttempt.createMany({
+      data: [
+        {
+          userId: user.id,
+          quizId: quiz.id,
+          quizTitle: quizTitle,
+          status: "completed",
+          score: 90,
+          answers: {},
+        },
+        {
+          userId: user.id,
+          quizId: quiz.id,
+          quizTitle: quizTitle,
+          status: "completed",
+          score: 95,
+          answers: {},
+        },
+      ],
+    });
+
     const req = new Request(`http://localhost/api/start-quiz?id=${quiz.id}`, {
       method: "GET",
       headers: { "x-test-user-email": user.email },
     });
 
-    const res = await GET(req as any);
-    expect(res.status).toBe(409);
+    const res = await GET(req);
+    expect(res.status).toBe(403);
     const json = await res.json();
-    expect(json.attemptStatus).toBe("completed");
+    expect(json.attemptStatus).toBe("limit_exceeded");
   });
 });

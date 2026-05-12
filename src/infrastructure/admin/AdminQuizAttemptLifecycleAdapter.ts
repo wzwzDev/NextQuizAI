@@ -11,6 +11,7 @@ export class AdminQuizAttemptLifecycleAdapter
     userId: string;
     quizId: string;
     quizTitle: string;
+    allowedAttempts?: number;
   }): Promise<void> {
     await ensurePendingQuizAttempt(input);
   }

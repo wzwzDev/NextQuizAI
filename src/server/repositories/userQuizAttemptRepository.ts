@@ -27,6 +27,7 @@ export async function findUserQuizAttemptByUserAndQuiz(
 ) {
   return prisma.userQuizAttempt.findFirst({
     where: { userId, quizId },
+    orderBy: [{ createdAt: "desc" }, { attemptNumber: "desc" }],
   });
 }
 
@@ -119,6 +120,7 @@ export async function findPendingUserQuizAttempt(
       quizId,
       status: "pending",
     },
+    orderBy: [{ createdAt: "desc" }, { attemptNumber: "desc" }],
   });
 }
 
@@ -148,7 +150,14 @@ export async function completePendingUserQuizAttempt(params: {
     return null;
   }
 
-  return findUserQuizAttemptByUserAndQuiz(params.userId, params.quizId);
+  return prisma.userQuizAttempt.findFirst({
+    where: {
+      userId: params.userId,
+      quizId: params.quizId,
+      status: "completed",
+    },
+    orderBy: [{ createdAt: "desc" }, { attemptNumber: "desc" }],
+  });
 }
 
 export async function listUserQuizAttemptsByUserId(userId: string) {
@@ -171,6 +180,7 @@ export async function listUserQuizAttemptsByUserIdAndQuizIds(
       userId,
       quizId: { in: quizIds },
     },
+    orderBy: [{ createdAt: "desc" }, { attemptNumber: "desc" }],
   });
 }
 
@@ -214,5 +224,12 @@ export async function updateUserQuizAttemptAnswersById(params: {
       answers: params.answers as Prisma.InputJsonValue,
       ...(typeof params.score === "number" ? { score: params.score } : {}),
     },
+  });
+}
+
+export async function updateUserQuizAttemptNumber(attemptId: string, attemptNumber: number) {
+  return prisma.userQuizAttempt.update({
+    where: { id: attemptId },
+    data: { attemptNumber },
   });
 }

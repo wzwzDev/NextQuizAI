@@ -103,6 +103,7 @@ export class SubmitAndGradeAdminQuizUseCase {
       userId: input.userId,
       quizId: quiz.id,
       quizTitle: quiz.title,
+      allowedAttempts: quiz.allowedAttempts,
     });
 
     // Complete the attempt

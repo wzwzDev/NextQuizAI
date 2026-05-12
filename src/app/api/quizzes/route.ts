@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
 import { getApprovedQuizLibrary } from "@/server/admin/services/adminQuizService";
-import { countCompletedUserQuizAttempts } from "@/server/repositories/userQuizAttemptRepository";
+import { getCompletedAttemptsForUser } from "@/server/services/userQuizAttemptService";
 import {
   getAdaptiveQuizRecommendations,
   getUserQuizAttemptStatuses,
@@ -23,14 +23,9 @@ export async function GET(req: NextRequest) {
       session.user.id,
       quizzes,
     );
-    const attemptCounts = await Promise.all(
-      quizzes.map(async (quiz) => ({
-        quizId: quiz.id,
-        completedAttempts: await countCompletedUserQuizAttempts(
-          session.user.id,
-          quiz.id,
-        ),
-      })),
+    const attemptCounts = await getCompletedAttemptsForUser(
+      session.user.id,
+      quizzes.map((q) => q.id),
     );
 
     const statusByQuizId = new Map(
@@ -48,7 +43,7 @@ export async function GET(req: NextRequest) {
         const userAttempt = statusByQuizId.get(quiz.id);
         const attemptStatus = userAttempt?.status ?? "available";
         const recommendation = recommendationByQuizId.get(quiz.id);
-        const allowedAttempts = quiz.allowedAttempts ?? 1;
+        const allowedAttempts = quiz.allowedAttempts ?? 2;
         const completedAttempts = completedAttemptsByQuizId.get(quiz.id) ?? 0;
         const remainingAttempts = Math.max(allowedAttempts - completedAttempts, 0);
 

@@ -13,7 +13,7 @@ import {
   getUserQuizAttempt,
   UserQuizAttemptLimitExceededError,
 } from "@/server/services/userQuizAttemptService";
-import { countCompletedUserQuizAttempts } from "@/server/repositories/userQuizAttemptRepository";
+import { getCompletedAttemptsForUser } from "@/server/services/userQuizAttemptService";
 import { ZodError } from "zod";
 import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
 
@@ -46,10 +46,8 @@ export async function GET(req: NextRequest) {
       allowedAttempts: quiz.allowedAttempts,
     });
 
-    const completedAttempts = await countCompletedUserQuizAttempts(
-      session.user.id,
-      quiz.id,
-    );
+    const counts = await getCompletedAttemptsForUser(session.user.id, [quiz.id]);
+    const completedAttempts = Array.isArray(counts) && counts.length > 0 ? counts[0].completedAttempts : 0;
 
     return NextResponse.json({
       attemptStatus: pendingAttempt.status,
@@ -136,6 +134,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Invalid request payload", details: error.issues },
         { status: 400 },
+      );
+    }
+
+    if (error instanceof UserQuizAttemptLimitExceededError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          attemptStatus: "limit_exceeded",
+        },
+        { status: 403 },
       );
     }
 

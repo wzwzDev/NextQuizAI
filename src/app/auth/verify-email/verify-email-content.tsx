@@ -35,7 +35,7 @@ function VerifyEmailView({
 
         <div className="mt-5 flex gap-3">
           <Link
-            href="/auth/signin?logout=1"
+            href="/auth/signin"
             className="pulse-focus inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
           >
             Go to sign in

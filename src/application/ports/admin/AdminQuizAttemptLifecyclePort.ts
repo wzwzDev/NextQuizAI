@@ -3,6 +3,7 @@ export interface AdminQuizAttemptLifecyclePort {
     userId: string;
     quizId: string;
     quizTitle: string;
+    allowedAttempts?: number;
   }): Promise<void>;
 
   completePendingAttempt(input: {

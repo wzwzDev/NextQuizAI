@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 
 config({ path: ".env.test" });
+config({ path: ".env.test" });
 // Suppress known benign warnings during backend tests
 const originalConsoleWarn = console.warn.bind(console);
 const originalConsoleError = console.error.bind(console);

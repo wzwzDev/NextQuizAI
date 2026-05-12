@@ -1,7 +1,6 @@
 import { SubmitQuizAttemptUseCase } from "@/application/use-cases/quiz/SubmitQuizAttemptUseCase";
 import { ReviewQuizAttemptUseCase } from "@/application/use-cases/quiz/ReviewQuizAttemptUseCase";
 import { QuizAttemptRepositoryAdapter } from "@/infrastructure/quiz/QuizAttemptRepositoryAdapter";
-import { prisma } from "@/server/core/db";
 import {
   listUserQuizAttemptsByUserId,
   listUserQuizAttemptsByUserIdAndQuizIds,
@@ -11,6 +10,7 @@ import {
   countCompletedUserQuizAttempts,
   getLastAttemptNumber,
   findPendingUserQuizAttempt,
+  updateUserQuizAttemptNumber,
 } from "@/server/repositories/userQuizAttemptRepository";
 
 export class UserQuizAttemptAlreadyCompletedError extends Error {
@@ -127,12 +127,9 @@ export async function ensurePendingQuizAttempt(params: {
 
   const pendingAttempt = await createPendingUserQuizAttempt(params);
   
-  // Update with the attempt number
+  // Update with the attempt number via repository helper
   if (pendingAttempt) {
-    await prisma.userQuizAttempt.update({
-      where: { id: pendingAttempt.id },
-      data: { attemptNumber: nextAttemptNumber },
-    });
+    await updateUserQuizAttemptNumber(pendingAttempt.id, nextAttemptNumber);
   }
 
   if (!pendingAttempt) {
@@ -177,8 +174,15 @@ export async function getUserQuizAttemptStatuses(
   quizIds: string[],
 ) {
   const attempts = await listUserQuizAttemptsByUserIdAndQuizIds(userId, quizIds);
+  const latestAttemptsByQuizId = new Map<string, (typeof attempts)[number]>();
 
-  return attempts.map((attempt) => ({
+  for (const attempt of attempts) {
+    if (!latestAttemptsByQuizId.has(attempt.quizId)) {
+      latestAttemptsByQuizId.set(attempt.quizId, attempt);
+    }
+  }
+
+  return Array.from(latestAttemptsByQuizId.values()).map((attempt) => ({
     quizId: attempt.quizId,
     status: attempt.status,
     score: attempt.score,
@@ -358,4 +362,18 @@ export async function getAdaptiveQuizRecommendations(
         difficultyReadiness === null ? null : roundToTwo(difficultyReadiness),
     };
   });
+}
+
+export async function getCompletedAttemptsForUser(
+  userId: string,
+  quizIds: string[],
+) {
+  const counts = await Promise.all(
+    quizIds.map(async (quizId) => ({
+      quizId,
+      completedAttempts: await countCompletedUserQuizAttempts(userId, quizId),
+    })),
+  );
+
+  return counts;
 }

@@ -173,9 +173,9 @@ describe("userQuizAttemptService", () => {
         quizTitle: "Quiz 3",
       });
 
-      // Update to have correct userId/quizId
-      const actualAttempt = await prisma.userQuizAttempt.findUnique({
-        where: { user_quiz_attempt_unique: { userId: adminUser.id, quizId: "service-q3" } },
+      const actualAttempt = await prisma.userQuizAttempt.findFirst({
+        where: { userId: adminUser.id, quizId: "service-q3" },
+        orderBy: { createdAt: "desc" },
       });
 
       if (actualAttempt) {
@@ -236,15 +236,8 @@ describe("userQuizAttemptService", () => {
     });
 
     it("returns aligned/challenging reasons based on mastery and difficulty", async () => {
-      await prisma.userQuizAttempt.upsert({
-        where: { user_quiz_attempt_unique: { userId: adminUser.id, quizId } },
-        update: {
-          quizTitle: "Service Quiz 1",
-          status: "completed",
-          score: 100,
-          answers: { questionResults: [{ isAccepted: true }, { isAccepted: true }] },
-        },
-        create: {
+      await prisma.userQuizAttempt.create({
+        data: {
           userId: adminUser.id,
           quizId,
           quizTitle: "Service Quiz 1",

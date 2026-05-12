@@ -1,12 +1,11 @@
 import { GET } from "@/app/api/quizzes/route";
 import { prisma } from "@/server/core/db";
-import type { User } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
 jest.setTimeout(30000);
 
 describe("GET /api/quizzes", () => {
-  let user: User;
+  let user;
   const suitePrefix = `quizzes-suite-${Date.now()}`;
 
   beforeAll(async () => {
@@ -110,8 +109,9 @@ describe("GET /api/quizzes", () => {
       expect.objectContaining({
         id: quiz.id,
         attemptStatus: "completed",
-        isLocked: true,
+        isLocked: false,
         userScore: 85,
+        remainingAttempts: 1,
       }),
     );
   });
