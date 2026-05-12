@@ -31,7 +31,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // Only ensure system users on first app startup, not on every request
-  if (!systemUsersEnsured) {
+  if (
+    !systemUsersEnsured &&
+    process.env.NEXT_PHASE !== "phase-production-build"
+  ) {
     await ensureSystemUsers();
     systemUsersEnsured = true;
   }

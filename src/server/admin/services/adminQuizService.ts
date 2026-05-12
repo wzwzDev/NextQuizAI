@@ -61,6 +61,7 @@ export async function getApprovedQuizLibrary() {
     difficulty: quiz.difficulty,
     quizType: quiz.quizType,
     status: quiz.status,
+    allowedAttempts: quiz.allowedAttempts,
     createdAt: quiz.createdAt,
     updatedAt: quiz.updatedAt,
     questionCount: quiz._count.questions,

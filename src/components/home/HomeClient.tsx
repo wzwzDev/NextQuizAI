@@ -36,6 +36,9 @@ type Quiz = {
   updatedAt?: string | null;
   attemptStatus?: "available" | "pending" | "completed";
   isLocked?: boolean;
+  allowedAttempts?: number;
+  completedAttempts?: number;
+  remainingAttempts?: number;
   userScore?: number | null;
   userStartedAt?: string | null;
   userCompletedAt?: string | null;
@@ -86,6 +89,25 @@ function getAttemptStatusChipClass(status?: string) {
   }
 
   return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200";
+}
+
+function getAttemptSummary(quiz: Quiz) {
+  const completedAttempts = quiz.completedAttempts ?? 0;
+  const remainingAttempts = quiz.remainingAttempts ?? 0;
+
+  if (quiz.attemptStatus === "completed" && remainingAttempts > 0) {
+    return `${completedAttempts}/${quiz.allowedAttempts ?? completedAttempts + remainingAttempts} completed, ${remainingAttempts} left`;
+  }
+
+  if (quiz.attemptStatus === "pending") {
+    return "Attempt in progress";
+  }
+
+  if (quiz.attemptStatus === "completed") {
+    return "No attempts left";
+  }
+
+  return "Not started";
 }
 
 function toTimestamp(value?: string | null) {
@@ -187,11 +209,23 @@ export default function HomeClient() {
   });
 
   const availableFilteredQuizzes = filteredQuizzes
-    .filter((quiz) => !isCompletedAttempt(quiz.attemptStatus))
+    .filter((quiz) => {
+      if (isCompletedAttempt(quiz.attemptStatus)) {
+        // Only show completed quizzes in available if they have remaining attempts
+        return (quiz.remainingAttempts ?? 0) > 0;
+      }
+      return true;
+    })
     .sort(sortByCreatedAtDesc);
 
   const completedFilteredQuizzes = filteredQuizzes
-    .filter((quiz) => isCompletedAttempt(quiz.attemptStatus))
+    .filter((quiz) => {
+      if (isCompletedAttempt(quiz.attemptStatus)) {
+        // Only show completed quizzes if they have NO remaining attempts
+        return (quiz.remainingAttempts ?? 0) === 0;
+      }
+      return false;
+    })
     .sort(sortByCreatedAtDesc);
 
   const visibleCompletedQuizzes = showCompleted
@@ -527,6 +561,11 @@ export default function HomeClient() {
                   <div className="rounded-xl border border-border/70 bg-muted/60 px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground">
                     Completed
                   </div>
+                  {quiz.completedAttempts !== undefined && quiz.remainingAttempts !== undefined && (
+                    <p className="text-center text-xs font-medium text-muted-foreground">
+                      {getAttemptSummary(quiz)}
+                    </p>
+                  )}
                   {typeof quiz.userScore === "number" && (
                     <p className="text-center text-xs text-muted-foreground">
                       Your score: {quiz.userScore}%
@@ -534,13 +573,30 @@ export default function HomeClient() {
                   )}
                 </div>
               ) : (
-                <Link
-                  href={`/playme/${quiz.id}`}
-                  className="pulse-focus mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
-                >
-                  {quiz.attemptStatus === "pending" ? "Resume Quiz" : "Start Quiz"}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="mt-auto space-y-2">
+                  {quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0 && (
+                    <p className="text-center text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                      {getAttemptSummary(quiz)}
+                    </p>
+                  )}
+                  <Link
+                    href={`/playme/${quiz.id}`}
+                    className={`pulse-focus inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:brightness-110 ${
+                      quiz.attemptStatus === "pending"
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : "bg-primary text-primary-foreground"
+                    }`}
+                  >
+                    {quiz.attemptStatus === "pending"
+                      ? "Resume Quiz"
+                      : quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0
+                        ? "Try Again"
+                        : "Start Quiz"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
               )}
             </motion.article>
           );
@@ -661,9 +717,31 @@ export default function HomeClient() {
                   )}
 
                   <div className="mt-auto space-y-2">
-                    <div className="rounded-xl border border-border/70 bg-muted/60 px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground">
-                      Completed
-                    </div>
+                    {(quiz.remainingAttempts ?? 0) > 0 ? (
+                      <>
+                        <p className="text-center text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-2">
+                          {getAttemptSummary(quiz)}
+                        </p>
+                        <Link
+                          href={`/playme/${quiz.id}`}
+                          className="pulse-focus inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+                        >
+                          Try Again
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <div className="rounded-xl border border-border/70 bg-muted/60 px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+                          Completed
+                        </div>
+                        {quiz.completedAttempts !== undefined && quiz.remainingAttempts !== undefined && (
+                          <p className="text-center text-xs font-medium text-muted-foreground">
+                            {getAttemptSummary(quiz)}
+                          </p>
+                        )}
+                      </>
+                    )}
                     {typeof quiz.userScore === "number" && (
                       <p className="text-center text-xs text-muted-foreground">
                         Your score: {quiz.userScore}%

@@ -64,6 +64,9 @@ export default function QuizPage() {
     "available" | "pending" | "completed"
   >("available");
   const [completedScore, setCompletedScore] = useState<number | null>(null);
+  const [attemptsAllowed, setAttemptsAllowed] = useState<number | null>(null);
+  const [attemptsCompleted, setAttemptsCompleted] = useState<number | null>(null);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
 
   function parseQuizType(value: unknown): QuizType {
     return value === "mcq" ? "mcq" : "open_ended";
@@ -128,6 +131,9 @@ export default function QuizPage() {
     setCurrent(0);
     setAttemptStatus("available");
     setCompletedScore(null);
+    setAttemptsAllowed(null);
+    setAttemptsCompleted(null);
+    setAttemptsRemaining(null);
 
     fetch(`/api/start-quiz?id=${encodeURIComponent(quizId)}`)
       .then(async (res) => {
@@ -140,6 +146,16 @@ export default function QuizPage() {
           setCompletedScore(
             typeof data?.score === "number" ? data.score : null,
           );
+          if (data?.attempts && typeof data.attempts === "object") {
+            const attempts = data.attempts as {
+              allowed?: unknown;
+              completed?: unknown;
+              remaining?: unknown;
+            };
+            setAttemptsAllowed(typeof attempts.allowed === "number" ? attempts.allowed : null);
+            setAttemptsCompleted(typeof attempts.completed === "number" ? attempts.completed : null);
+            setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
+          }
           setError(data?.error || "You already completed this quiz.");
           toast({
             title: "Quiz already completed",
@@ -176,6 +192,16 @@ export default function QuizPage() {
           };
 
           setAttemptStatus(data?.attemptStatus === "pending" ? "pending" : "available");
+          if (data?.attempts && typeof data.attempts === "object") {
+            const attempts = data.attempts as {
+              allowed?: unknown;
+              completed?: unknown;
+              remaining?: unknown;
+            };
+            setAttemptsAllowed(typeof attempts.allowed === "number" ? attempts.allowed : null);
+            setAttemptsCompleted(typeof attempts.completed === "number" ? attempts.completed : null);
+            setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
+          }
           setQuiz(parsedQuiz);
           setUserAnswers(Array(questions.length).fill(""));
           toast({
@@ -303,12 +329,100 @@ export default function QuizPage() {
             {typeof completedScore === "number" && (
               <p className="mb-3 text-gray-700">Your score: {completedScore}%</p>
             )}
-            <button
-              className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              onClick={handleGoHome}
-            >
-              Go to Home
-            </button>
+            {typeof attemptsCompleted === "number" && typeof attemptsAllowed === "number" && (
+              <p className="mb-3 text-gray-600">
+                Attempt {attemptsCompleted} of {attemptsAllowed} completed
+              </p>
+            )}
+            {typeof attemptsRemaining === "number" && attemptsRemaining > 0 && (
+              <p className="mb-4 text-green-700 font-semibold">
+                You have {attemptsRemaining} attempt{attemptsRemaining === 1 ? "" : "s"} left!
+              </p>
+            )}
+            <div className="flex gap-2">
+              {typeof attemptsRemaining === "number" && attemptsRemaining > 0 && (
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-semibold"
+                  onClick={() => {
+                    setAttemptStatus("available");
+                    setCompletedScore(null);
+                    setAttemptsAllowed(null);
+                    setAttemptsCompleted(null);
+                    setAttemptsRemaining(null);
+                    setCurrent(0);
+                    setUserAnswers([]);
+                    setError(null);
+                    setQuiz(null);
+                    setLoading(true);
+                    fetch(`/api/start-quiz?id=${encodeURIComponent(quizId)}`)
+                      .then(async (res) => {
+                        const data = await res.json();
+                        return { ok: res.ok, data };
+                      })
+                      .then(({ ok, data }) => {
+                        if (ok && data?.quiz) {
+                          const rawQuiz = data.quiz as {
+                            id?: unknown;
+                            title?: unknown;
+                            category?: unknown;
+                            difficulty?: unknown;
+                            quizType?: unknown;
+                            questions?: unknown;
+                          };
+                          const questions = Array.isArray(rawQuiz.questions)
+                            ? rawQuiz.questions.map((rawQuestion, index) =>
+                                parseQuestion(rawQuestion, index),
+                              )
+                            : [];
+                          const parsedQuiz: Quiz = {
+                            id: typeof rawQuiz.id === "string" ? rawQuiz.id : quizId,
+                            title: typeof rawQuiz.title === "string" ? rawQuiz.title : "Untitled Quiz",
+                            category: typeof rawQuiz.category === "string" ? rawQuiz.category : "Uncategorized",
+                            difficulty: typeof rawQuiz.difficulty === "string" ? rawQuiz.difficulty : "Unknown",
+                            quizType: parseQuizType(rawQuiz.quizType),
+                            questions,
+                          };
+                          setAttemptStatus(data?.attemptStatus === "pending" ? "pending" : "available");
+                          if (data?.attempts && typeof data.attempts === "object") {
+                            const attempts = data.attempts as {
+                              allowed?: unknown;
+                              completed?: unknown;
+                              remaining?: unknown;
+                            };
+                            setAttemptsAllowed(typeof attempts.allowed === "number" ? attempts.allowed : null);
+                            setAttemptsCompleted(typeof attempts.completed === "number" ? attempts.completed : null);
+                            setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
+                          }
+                          setQuiz(parsedQuiz);
+                          setUserAnswers(Array(questions.length).fill(""));
+                          toast({
+                            title: "Quiz reloaded",
+                            description: "Ready for attempt 2. Good luck!",
+                            variant: "success",
+                          });
+                        }
+                      })
+                      .catch(() => {
+                        setError("Failed to reload quiz.");
+                        toast({
+                          title: "Error",
+                          description: "Failed to reload quiz.",
+                          variant: "destructive",
+                        });
+                      })
+                      .finally(() => setLoading(false));
+                  }}
+                >
+                  Try Again
+                </button>
+              )}
+              <button
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                onClick={handleGoHome}
+              >
+                Back to Quizzes
+              </button>
+            </div>
           </>
         )}
       </main>
@@ -428,7 +542,12 @@ export default function QuizPage() {
             </h2>
             <p className="mb-4">Here are your results:</p>
             <p className="mb-4 font-semibold">Score: {result?.score ?? 0}%</p>
-            <ul className="text-left mb-4">
+            {typeof attemptsCompleted === "number" && typeof attemptsAllowed === "number" && (
+              <p className="mb-4 text-sm text-gray-600">
+                Attempt {attemptsCompleted} of {attemptsAllowed}
+              </p>
+            )}
+            <ul className="text-left mb-4 max-h-96 overflow-y-auto">
               {(result?.questionResults ?? []).map((questionResult, i) => (
                 <li key={i} className="mb-2">
                   <span className="font-semibold">
@@ -467,12 +586,30 @@ export default function QuizPage() {
                 </li>
               ))}
             </ul>
-            <button
-              className="mt-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-bold"
-              onClick={handleGoHome}
-            >
-              Go to Home
-            </button>
+            <div className="flex gap-2 justify-center">
+              {typeof attemptsRemaining === "number" && attemptsRemaining > 0 && (
+                <button
+                  className="mt-2 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-bold"
+                  onClick={() => {
+                    setShowFinish(false);
+                    setResult(null);
+                    setAttemptStatus("available");
+                    setCompletedScore(null);
+                    setCurrent(0);
+                    setUserAnswers([]);
+                    setError(null);
+                  }}
+                >
+                  Try Again
+                </button>
+              )}
+              <button
+                className="mt-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-bold"
+                onClick={handleGoHome}
+              >
+                Back to Quizzes
+              </button>
+            </div>
           </div>
         </div>
       )}

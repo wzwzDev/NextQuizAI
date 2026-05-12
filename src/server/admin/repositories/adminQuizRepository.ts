@@ -68,6 +68,7 @@ export async function findApprovedQuizzesForLibrary() {
       difficulty: true,
       quizType: true,
       status: true,
+      allowedAttempts: true,
       createdAt: true,
       updatedAt: true,
       _count: {
