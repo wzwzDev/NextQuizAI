@@ -1,7 +1,14 @@
 import { config } from "dotenv";
 
 config({ path: ".env.test" });
-config({ path: ".env.test" });
+
+jest.mock("@/infrastructure/mail/EmailProviderFactory", () => ({
+	getEmailSenderAdapter: () => ({
+		sendVerification: async () => undefined,
+	}),
+	resetEmailSenderAdapter: () => undefined,
+}));
+
 // Suppress known benign warnings during backend tests
 const originalConsoleWarn = console.warn.bind(console);
 const originalConsoleError = console.error.bind(console);

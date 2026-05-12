@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/40</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/51</span>
+                <span class='fraction'>0/62</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/40</span>
             </div>
         
             
@@ -171,7 +171,25 @@
 <a name='L106'></a><a href='#L106'>106</a>
 <a name='L107'></a><a href='#L107'>107</a>
 <a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,6 +223,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -220,6 +241,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -228,11 +253,22 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -313,6 +349,9 @@ function <span class="fstat-no" title="function not covered" >validateSmtpConfig
 function <span class="fstat-no" title="function not covered" >getSmtpTransporter(</span>) {
   const smtpPort = <span class="cstat-no" title="statement not covered" >Number(process.env.SMTP_PORT?.trim() || 587);</span>
 &nbsp;
+  const allowSelfSigned =
+<span class="cstat-no" title="statement not covered" >    process.env.SMTP_ALLOW_SELF_SIGNED === "true" || process.env.NODE_ENV !== "production";</span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >  return nodemailer.createTransport({</span>
     host: process.env.SMTP_HOST?.trim(),
     port: smtpPort,
@@ -320,6 +359,10 @@ function <span class="fstat-no" title="function not covered" >getSmtpTransporter
     auth: {
       user: process.env.SMTP_USER?.trim(),
       pass: process.env.SMTP_PASS?.trim(),
+    },
+    tls: {
+      // When developing or when explicitly allowed, accept self-signed certs.
+      rejectUnauthorized: !allowSelfSigned,
     },
   });
 }
@@ -336,11 +379,22 @@ async function <span class="fstat-no" title="function not covered" >sendWithSmtp
   const transporter = <span class="cstat-no" title="statement not covered" >getSmtpTransporter();</span>
   const fromAddress = <span class="cstat-no" title="statement not covered" >getFromAddress();</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    await transporter.verify();</span>
-  } catch (error) {
-    const message = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : "Unknown error";</span>
-<span class="cstat-no" title="statement not covered" >    throw new Error(`SMTP connection verification failed: ${message}`);</span>
+  // Skip verification in test environment to avoid actual SMTP connection attempts
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (process.env.NODE_ENV !== "test") {</span>
+    const allowSelfSigned =
+<span class="cstat-no" title="statement not covered" >      process.env.SMTP_ALLOW_SELF_SIGNED === "true" || process.env.NODE_ENV !== "production";</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      await transporter.verify();</span>
+    } catch (error) {
+      const message = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : "Unknown error";</span>
+      const isSelfSigned = <span class="cstat-no" title="statement not covered" >/self[- ]?signed/i.test(message) || message.includes("self signed certificate");</span>
+<span class="cstat-no" title="statement not covered" >      if (allowSelfSigned &amp;&amp; isSelfSigned) {</span>
+<span class="cstat-no" title="statement not covered" >        console.warn(`[SMTP] Ignoring self-signed certificate verification error: ${message}`);</span>
+      } else {
+<span class="cstat-no" title="statement not covered" >        throw new Error(`SMTP connection verification failed: ${message}`);</span>
+      }
+    }
   }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  try {</span>
@@ -348,19 +402,19 @@ async function <span class="fstat-no" title="function not covered" >sendWithSmtp
       from: fromAddress,
       to,
       subject: "Verify your QuizUPM account",
-      text: `Welcome to QuizUPM. Verify your account by visiting: ${verificationUrl}`,
+      text: `Welcome to QuizUPM.\n\nVerify your account by visiting: ${verificationUrl}\n\nIf the link is not clickable, copy and paste it into your browser.`,
       html: `
         &lt;div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;"&gt;
           &lt;h2&gt;Welcome to &lt;strong&gt;QuizUPM&lt;/strong&gt;&lt;/h2&gt;
           &lt;p&gt;Thank you for signing up. Please verify your email address to activate your account.&lt;/p&gt;
           &lt;p&gt;
-            &lt;a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;"&gt;
+            &lt;a href="${verificationUrl}" target="_blank" rel="noreferrer noopener" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;"&gt;
               Verify Your Email
             &lt;/a&gt;
           &lt;/p&gt;
           &lt;p style="color: #666; font-size: 12px;"&gt;
-            Or copy and paste this link in your browser:&lt;br /&gt;
-            &lt;code&gt;${verificationUrl}&lt;/code&gt;
+            Or open this direct link in your browser:&lt;br /&gt;
+            &lt;a href="${verificationUrl}" target="_blank" rel="noreferrer noopener" style="color: #2563eb; word-break: break-all;"&gt;${verificationUrl}&lt;/a&gt;
           &lt;/p&gt;
           &lt;p style="color: #999; font-size: 12px; margin-top: 20px;"&gt;
             This link expires in 24 hours.
@@ -394,7 +448,7 @@ async function <span class="fstat-no" title="function not covered" >sendWithSmtp
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-11T09:02:48.914Z
+                at 2026-05-12T13:07:08.494Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
