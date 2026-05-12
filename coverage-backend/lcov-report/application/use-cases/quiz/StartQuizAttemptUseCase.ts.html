@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -119,24 +119,22 @@
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -147,23 +145,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,24 +173,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { QuizAttemptRepositoryPort } from "@/application/ports/out/QuizAttemptRepositoryPort";
 &nbsp;
-export class QuizAlreadyCompletedError extends Error {
-  constructor() {
-    super("You already completed this quiz.");
-    this.name = "QuizAlreadyCompletedError";
+<span class="cstat-no" title="statement not covered" >export class Q</span>uizAlreadyCompletedError extends Error {
+<span class="fstat-no" title="function not covered" >  constructor() {</span>
+<span class="cstat-no" title="statement not covered" >    super("You already completed this quiz.");</span>
+<span class="cstat-no" title="statement not covered" >    this.name = "QuizAlreadyCompletedError";</span>
   }
 }
 &nbsp;
-export class QuizAttemptStartError extends Error {
-  constructor() {
-    super("Could not start quiz attempt.");
-    this.name = "QuizAttemptStartError";
+<span class="cstat-no" title="statement not covered" >export class Q</span>uizAttemptStartError extends Error {
+<span class="fstat-no" title="function not covered" >  constructor() {</span>
+<span class="cstat-no" title="statement not covered" >    super("Could not start quiz attempt.");</span>
+<span class="cstat-no" title="statement not covered" >    this.name = "QuizAttemptStartError";</span>
   }
 }
 &nbsp;
-export class StartQuizAttemptUseCase {
-  constructor(private quizAttemptRepository: QuizAttemptRepositoryPort) {}
+<span class="cstat-no" title="statement not covered" >export class S</span>tartQuizAttemptUseCase {
+<span class="fstat-no" title="function not covered" >  constructor(private <span class="cstat-no" title="statement not covered" >q</span>uizAttemptRepository: QuizAttemptRepositoryPort)</span> {}
 &nbsp;
-  async execute(input: {
+<span class="fstat-no" title="function not covered" >  async </span>execute(input: {
     userId: string;
     quizId: string;
     quizTitle: string;
@@ -201,23 +201,23 @@ export class StartQuizAttemptUseCase {
     status: "pending";
   }&gt; {
     // Check if quiz attempt already completed
-    const existing = await this.quizAttemptRepository.findAttemptByUserAndQuiz(
+    const existing = <span class="cstat-no" title="statement not covered" >await this.quizAttemptRepository.findAttemptByUserAndQuiz(</span>
       input.userId,
       input.quizId,
     );
 &nbsp;
-    if (existing?.status === "completed") {
-      throw new QuizAlreadyCompletedError();
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (existing?.status === "completed") {</span>
+<span class="cstat-no" title="statement not covered" >      throw new QuizAlreadyCompletedError();</span>
     }
 &nbsp;
     // Ensure pending attempt exists or create one
-    const attempt = await this.quizAttemptRepository.ensurePending(input);
+    const attempt = <span class="cstat-no" title="statement not covered" >await this.quizAttemptRepository.ensurePending(input);</span>
 &nbsp;
-    if (!attempt) {
-      throw new QuizAttemptStartError();
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!attempt) {</span>
+<span class="cstat-no" title="statement not covered" >      throw new QuizAttemptStartError();</span>
     }
 &nbsp;
-    return {
+<span class="cstat-no" title="statement not covered" >    return {</span>
       id: attempt.id,
       userId: input.userId,
       quizId: input.quizId,
@@ -232,7 +232,7 @@ export class StartQuizAttemptUseCase {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-12T13:07:08.494Z
+                at 2026-05-12T14:11:54.949Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

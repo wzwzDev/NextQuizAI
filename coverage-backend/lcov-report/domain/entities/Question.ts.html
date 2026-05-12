@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.96% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>22/31</span>
+                <span class='fraction'>0/31</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -96,23 +96,23 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,32 +127,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { GameType } from "@/domain/value-objects/DomainEnums";
 &nbsp;
-export class Question {
-  constructor(
-    public readonly id: string,
-    public readonly question: string,
-    public readonly answer: string,
-    public readonly gameId: string,
-    public readonly options: unknown | null,
-    public readonly percentageCorrect: number | null,
-    public readonly isCorrect: boolean | null,
-    public readonly questionType: GameType,
-    public readonly userAnswer: string | null,
+<span class="cstat-no" title="statement not covered" >export class Q</span>uestion {
+<span class="fstat-no" title="function not covered" >  constructor(</span>
+    public readonly <span class="cstat-no" title="statement not covered" >id: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >question: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >answer: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >gameId: string,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >options: unknown | null,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >percentageCorrect: number | null,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >isCorrect: boolean | null,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >questionType: GameType,</span>
+    public readonly <span class="cstat-no" title="statement not covered" >userAnswer: string | null,</span>
   ) {}
 &nbsp;
-  static fromPrisma(p: unknown) {
-    if (!p) return null;
-    const d = p as unknown as Record&lt;string, unknown&gt;;
-    return new Question(
-      String(d["id"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      String(d["question"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      String(d["answer"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      String(d["gameId"] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>,
-      d["options"]<span class="branch-0 cbranch-no" title="branch not covered" > ?? n</span>ull,
-      d["percentageCorrect"] === undefined ? null : <span class="branch-1 cbranch-no" title="branch not covered" >Number(d["percentageCorrect"]),</span>
-      d["isCorrect"] === undefined ? null : <span class="branch-1 cbranch-no" title="branch not covered" >Boolean(d["isCorrect"]),</span>
-      (d["questionType"] as GameType) ?? (<span class="branch-1 cbranch-no" title="branch not covered" >"mcq" as GameType),</span>
-      d["userAnswer"] ? <span class="branch-0 cbranch-no" title="branch not covered" >String(d["userAnswer"]) </span>: null,
+<span class="fstat-no" title="function not covered" >  static </span>fromPrisma(p: unknown) {
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!p) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+    const d = <span class="cstat-no" title="statement not covered" >p as unknown as Record&lt;string, unknown&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    return new Question(</span>
+      String(d["id"] ?? ""),
+      String(d["question"] ?? ""),
+      String(d["answer"] ?? ""),
+      String(d["gameId"] ?? ""),
+      d["options"] ?? null,
+      d["percentageCorrect"] === undefined ? null : Number(d["percentageCorrect"]),
+      d["isCorrect"] === undefined ? null : Boolean(d["isCorrect"]),
+      (d["questionType"] as GameType) ?? ("mcq" as GameType),
+      d["userAnswer"] ? String(d["userAnswer"]) : null,
     );
   }
 }
@@ -163,7 +163,7 @@ export class Question {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-12T13:07:08.494Z
+                at 2026-05-12T14:11:54.949Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

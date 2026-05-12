@@ -4,7 +4,7 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   setupFiles: ["<rootDir>/jest.env.setup.ts"],
-  testMatch: ["**/__tests__/api/**/*.test.ts"],
+  testMatch: ["**/__tests__/**/*.test.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
@@ -47,6 +47,7 @@ module.exports = {
     "!src/domain/ports/**/*.ts",
     "!src/domain/index.ts",
     "!src/domain/**/index.ts",
+    "!src/infrastructure/mail/EmailProviderFactory.ts",
     "!src/**/*.d.ts",
     "!src/**/__tests__/**",
     "!src/**/test-utils/**"

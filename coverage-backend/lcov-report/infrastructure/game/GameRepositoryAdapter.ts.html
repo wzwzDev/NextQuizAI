@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -132,7 +132,7 @@
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -143,36 +143,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,7 +200,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { GameRepositoryPort } from "@/application/ports/out/GameRepositoryPort";
-import {
+<span class="cstat-no" title="statement not covered" >import {</span>
   createQuestionsForGame,
   createGame,
   findGameById,
@@ -211,36 +211,36 @@ import {
   countGamesByUserId,
   markGameEnded,
 } from "@/server/repositories/gameRepository";
-import { incrementTopicCount } from "@/server/repositories/topicRepository";
+<span class="cstat-no" title="statement not covered" >import { incrementTopicCount } from "@/server/repositories/topicRepository";</span>
 import { GameType, Prisma } from "@prisma/client";
 &nbsp;
-export class GameRepositoryAdapter implements GameRepositoryPort {
-  async createGame(params: {
+<span class="cstat-no" title="statement not covered" >export class G</span>ameRepositoryAdapter implements GameRepositoryPort {
+<span class="fstat-no" title="function not covered" >  async </span>createGame(params: {
     userId: string;
     topic: string;
     gameType: GameType;
   }) {
-    return createGame(params);
+<span class="cstat-no" title="statement not covered" >    return createGame(params);</span>
   }
 &nbsp;
-  async findGameById(gameId: string) {
-    return findGameById(gameId);
+<span class="fstat-no" title="function not covered" >  async </span>findGameById(gameId: string) {
+<span class="cstat-no" title="statement not covered" >    return findGameById(gameId);</span>
   }
 &nbsp;
-  async endGame(gameId: string) {
-    await markGameEnded(gameId);
+<span class="fstat-no" title="function not covered" >  async </span>endGame(gameId: string) {
+<span class="cstat-no" title="statement not covered" >    await markGameEnded(gameId);</span>
   }
 &nbsp;
-  async trackTopic(topic: string) {
-    await incrementTopicCount(topic);
+<span class="fstat-no" title="function not covered" >  async </span>trackTopic(topic: string) {
+<span class="cstat-no" title="statement not covered" >    await incrementTopicCount(topic);</span>
   }
 &nbsp;
-  async createQuestionsForGame(manyData: Prisma.QuestionCreateManyInput[]) {
-    await createQuestionsForGame(manyData);
+<span class="fstat-no" title="function not covered" >  async </span>createQuestionsForGame(manyData: Prisma.QuestionCreateManyInput[]) {
+<span class="cstat-no" title="statement not covered" >    await createQuestionsForGame(manyData);</span>
   }
 &nbsp;
-  async findGameWithQuestionsById(gameId: string) {
-    return findGameWithQuestionsById(gameId);
+<span class="fstat-no" title="function not covered" >  async </span>findGameWithQuestionsById(gameId: string) {
+<span class="cstat-no" title="statement not covered" >    return findGameWithQuestionsById(gameId);</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>findRecentGamesByUserId(userId: string, limit: number) {
@@ -274,7 +274,7 @@ export class GameRepositoryAdapter implements GameRepositoryPort {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-12T13:07:08.494Z
+                at 2026-05-12T14:11:54.949Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
