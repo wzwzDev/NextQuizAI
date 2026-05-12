@@ -530,7 +530,7 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Clear</Button>
             <Button variant="outline" size="sm" onClick={handleSelectAllFiltered}>Select all filtered</Button>
-            <Button variant="destructive" size="sm" onClick={handleDeleteSelectedRequest} disabled={selectedCount===0}>Delete selected</Button>
+            <Button aria-label="Delete selected (bulk)" variant="destructive" size="sm" onClick={handleDeleteSelectedRequest} disabled={selectedCount===0}>Delete selected</Button>
           </div>
         </div>
       )}
