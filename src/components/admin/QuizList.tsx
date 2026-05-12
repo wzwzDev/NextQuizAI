@@ -8,6 +8,14 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 function parseQuestionMetadata(rawOptions: unknown) {
   if (Array.isArray(rawOptions)) {
@@ -396,6 +404,10 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
     );
   };
 
+  const handleSelectAllFiltered = () => {
+    setSelectedIds(() => filteredQuizzes.map((q) => q.id).filter(Boolean) as string[]);
+  };
+
   const handleDeleteSelectedRequest = () => {
     setDeleteSelectedError(null);
     setDeleteSelectedOpen(true);
@@ -511,6 +523,17 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
       {loading && <div>Loading quizzes...</div>}
       {error && <div className="text-red-500">{error}</div>}
       {!loading && filteredQuizzes.length === 0 && <div>No quizzes found.</div>}
+
+      {selectedCount > 0 && (
+        <div className="mb-3 flex items-center justify-between rounded border bg-muted/5 p-2">
+          <div className="text-sm">{selectedCount} selected</div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Clear</Button>
+            <Button variant="outline" size="sm" onClick={handleSelectAllFiltered}>Select all filtered</Button>
+            <Button variant="destructive" size="sm" onClick={handleDeleteSelectedRequest} disabled={selectedCount===0}>Delete selected</Button>
+          </div>
+        </div>
+      )}
       {!loading && filteredQuizzes.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full border rounded-lg">

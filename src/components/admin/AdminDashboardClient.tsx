@@ -298,8 +298,8 @@ const AdminDashboardClient = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    aria-label="Collapse expanded section"
-                    title="Collapse (Alt+0)"
+                    aria-label="Minimize expanded section"
+                    title="Minimize (Alt+0)"
                     onClick={() => setExpandedSection(null)}
                     className="shrink-0"
                   >

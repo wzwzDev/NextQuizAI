@@ -50,10 +50,10 @@ const DetailsDialog = () => {
                 <span>
                   <strong>Tutor:</strong>{" "}
                   <a
-                    href="mailto:Alonso.vallverde@upm.es"
+                    href="mailto:Alonso.Valverde@upm.es"
                     className="underline text-blue-700 hover:text-blue-900"
                   >
-                    Alonso Santiago Valverde
+                    Alonso Valverde
                   </a>
                 </span>
               </div>
