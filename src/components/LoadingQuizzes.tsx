@@ -50,7 +50,7 @@ const LoadingQuizzes = () => {
 
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      <Image src="/LoadingQuiz.gif" width={200} height={200} alt="loading" />
+      <Image src="/LoadingQuiz.gif" width={200} height={200} alt="loading" loading="eager" />
       <Progress value={progress} className="w-full mt-4" />
       <h1 className="mt-2 text-xl">{loadingText}</h1>
     </div>

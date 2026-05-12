@@ -373,7 +373,7 @@ export default function HomeClient() {
                 completedCategorySummaries.map((category) => (
                   <span
                     key={`completed-category-${category.category}`}
-                    className="chip-pill bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                    className="chip-pill bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/60 dark:text-fuchsia-200"
                   >
                     {category.category} ({category.completed})
                   </span>

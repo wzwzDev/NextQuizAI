@@ -53,7 +53,7 @@ const DetailsDialog = () => {
                     href="mailto:Alonso.vallverde@upm.es"
                     className="underline text-blue-700 hover:text-blue-900"
                   >
-                    Alonso Valverde
+                    Alonso Santiago Valverde
                   </a>
                 </span>
               </div>
@@ -94,6 +94,7 @@ const DetailsDialog = () => {
                       src="/nextauth.png"
                       width={30}
                       height={30}
+                      style={{ width: "auto", height: "auto" }}
                     />
                     <span>NextAuth</span>
                   </div>
