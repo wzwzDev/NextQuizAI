@@ -6,9 +6,11 @@ export type TopicQuestionInput = {
   amount: number;
   topic: string;
   type: "open_ended" | "mcq";
+  difficulty?: "easy" | "medium" | "hard";
 };
 
 type OpenEndedQuestionKind = "code" | "general";
+type DifficultyLevel = "easy" | "medium" | "hard" | "mixed";
 
 type OpenEndedQuestion = {
   question: string;
@@ -58,8 +60,48 @@ function shuffleCopy<T>(items: T[]) {
   return cloned;
 }
 
+function normalizeDifficultyLevel(value?: string): DifficultyLevel {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (normalized === "easy" || normalized === "medium" || normalized === "hard") {
+    return normalized;
+  }
+  return "mixed";
+}
+
+function getDifficultyInstructions(level: DifficultyLevel) {
+  switch (level) {
+    case "easy":
+      return [
+        "Prefer direct recall questions from clearly stated facts.",
+        "Use very simple wording and avoid comparisons or multi-step reasoning.",
+        "Keep answers extremely short, ideally 1 to 3 words.",
+        "Ask for obvious terms, names, values, labels, or literal facts directly present in the topic.",
+      ].join(" ");
+    case "medium":
+      return [
+        "Mix direct recall with light inference or comparison.",
+        "Questions should require connecting two nearby ideas.",
+        "Keep answers concise, usually 2 to 5 words, and avoid obvious one-word clues.",
+      ].join(" ");
+    case "hard":
+      return [
+        "Prefer questions that require multi-step reasoning and synthesis.",
+        "Ask for relationships, implications, distinctions, or combined concepts.",
+        "Use less obvious wording than easy or medium questions.",
+        "Keep the answer concise, usually 3 to 6 words, and make it depend on deeper synthesis.",
+      ].join(" ");
+    default:
+      return [
+        "Balance direct recall and light inference based on the topic.",
+        "Aim for a mixed difficulty set when no specific level is selected.",
+      ].join(" ");
+  }
+}
+
 function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
   const questionPlan = getOpenEndedQuestionPlan(input.amount);
+  const difficulty = normalizeDifficultyLevel(input.difficulty);
+  const difficultyInstructions = getDifficultyInstructions(difficulty);
 
   return questionPlan.map((kind, index) => {
     const position = index + 1;
@@ -73,43 +115,43 @@ function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
         : `Generate one general knowledge question about ${input.topic}.`,
       `Question position: ${position}/${input.amount}.`,
       `Batch token: ${batchToken}-${position}.`,
+      `Difficulty target: ${difficulty}`,
+      `Difficulty requirements: ${difficultyInstructions}`,
       isCodeQuestion
         ? "The question must present a short script, command, code snippet, or console output scenario."
         : "The question must be about the topic itself, not a code snippet or execution output.",
-      isCodeQuestion
-        ? useFillBlankMode
-          ? "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question."
-          : "Use full-output mode and ask the user to type the full execution result."
-        : "Ask for a concise factual answer, definition, or concept-level explanation in 1 to 8 words.",
-      isCodeQuestion
-        ? useFillBlankMode
-          ? "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'."
-          : "Do not include blank markers in the question text."
-        : "Do not ask the user to run or inspect code.",
+      getCodeModeInstructions(isCodeQuestion, useFillBlankMode),
+      getCodeStructureInstructions(isCodeQuestion, useFillBlankMode),
       isCodeQuestion
         ? "The answer must be the exact execution result, including line breaks when relevant."
         : "The answer must be short, accurate, and directly about the topic.",
       "Avoid repeated phrasing.",
       "Each question in this batch must test a different subtopic.",
+      "Make the difference between easy, medium, and hard clearly noticeable in the wording and reasoning required.",
     ].join(" ");
   });
 }
 
 function buildMcqPrompts(input: TopicQuestionInput, batchToken: string) {
   const focusAreas = buildMcqFocusAreas(input.topic, input.amount);
+  const difficulty = normalizeDifficultyLevel(input.difficulty);
+  const difficultyInstructions = getDifficultyInstructions(difficulty);
 
   return Array.from({ length: input.amount }, (_, index) => {
     const focusArea = focusAreas[index];
 
     return [
-      `Generate one challenging MCQ question about ${input.topic}.`,
+      `Generate one MCQ question about ${input.topic}.`,
       `Question position: ${index + 1}/${input.amount}.`,
       `Batch token: ${batchToken}-${index + 1}.`,
       `Focus area: ${focusArea}.`,
+      `Difficulty target: ${difficulty}`,
+      `Difficulty requirements: ${difficultyInstructions}`,
       "Keep the correct answer and all options under 15 words.",
       "Avoid repeated question stems and avoid generic beginner phrasing.",
       "Each question in this batch must cover a distinct concept.",
       "Do not use generic framing like 'associated with' or 'generally true' unless it is clearly topic-specific.",
+      "Make easy questions direct, medium questions slightly inferential, and hard questions require broader synthesis.",
     ].join(" ");
   });
 }
@@ -347,88 +389,78 @@ function fillMcqQuestionsWithFallback(
   return collected.slice(0, input.amount);
 }
 
+function buildDifficultyAwareFallbackOpenEndedQuestion(
+  topic: string,
+  kind: OpenEndedQuestionKind,
+  codeIndex: number,
+  difficulty: DifficultyLevel,
+): OpenEndedQuestion {
+  if (kind === "code") {
+    if (difficulty === "hard") {
+      const outputs = [`[FILL_BLANK] Advanced: What does this async code output?\n\nasync function process(val) {\n  return (val * 2).toString();\n}\nOutput: _____`, `[FILL_BLANK] Complex: Trace this execution.\n\nconst arr = [1, 2, 3];\nconst result = arr.map(x => x * x).filter(x => x > 4);\nconsole.log(result.join(","));\nOutput: _____`];
+      const index = codeIndex % outputs.length;
+      return { question: outputs[index], answer: index === 0 ? "function() {}" : "9,16" };
+    } else if (difficulty === "medium") {
+      const outputs = [`[FILL_BLANK] What is the output?\n\nconsole.log([1, 2, 3].map(x => x + 1).join("-"));\nOutput: _____`, `[FILL_BLANK] Complete the output.\n\nconst x = { a: 1, b: 2 };\nconsole.log(Object.keys(x).length);\nOutput: _____`];
+      const index = codeIndex % outputs.length;
+      return { question: outputs[index], answer: index === 0 ? "2-3-4" : "2" };
+    }
+    const outputs = [`[FILL_BLANK] Basic: What is the output?\n\nconsole.log(5 + 3);\nOutput: _____`, `[FILL_BLANK] Simple: What is printed?\n\nconsole.log("${topic}");\nOutput: _____`];
+    const index = codeIndex % outputs.length;
+    return { question: outputs[index], answer: index === 0 ? "8" : topic };
+  }
+  if (difficulty === "hard") {
+    return {
+      question: `Based on your understanding of ${topic}, what relationship exists between two of its key aspects?`,
+      answer: `${topic} integrates multiple concepts coherently`,
+    };
+  } else if (difficulty === "medium") {
+    return {
+      question: `What is an important characteristic or rule in ${topic}?`,
+      answer: `${topic} follows consistent principles`,
+    };
+  }
+  return {
+    question: `What is ${topic} primarily used for?`,
+    answer: `${topic} solves practical problems`,
+  };
+}
+
 function buildFallbackOpenEndedQuestions(input: TopicQuestionInput): OpenEndedQuestion[] {
   const topic = normalizeTopic(input.topic);
   const questionPlan = getOpenEndedQuestionPlan(input.amount);
+  const difficulty = normalizeDifficultyLevel(input.difficulty);
 
-  const codeQuestions: OpenEndedQuestion[] = [
-    {
-      question:
-        "[FILL_BLANK] Complete the blank output.\n\nconsole.log(\"" +
-        topic +
-        "\".toUpperCase());\nOutput: _____",
-      answer: `${topic.toUpperCase()}`,
-    },
-    {
-      question:
-        "[FILL_BLANK] What is the exact runtime output?\n\nconsole.log(\"" + topic + " ready\");\nOutput: _____",
-      answer: `${topic} ready`,
-    },
-    {
-      question:
-        "[FILL_BLANK] Fill the missing output value.\n\nconst values = [1, 2, 3].map((value) => value * 2);\nconsole.log(values.join(\",\"));\nOutput: _____",
-      answer: "2,4,6",
-    },
-    {
-      question:
-        "[FILL_BLANK] What is the output of this function call?\n\nfunction greet(name) {\n  return \"Hello, \" + name + \"!\";\n}\nconsole.log(greet(\"" +
-        topic +
-        "\"));\nOutput: _____",
-      answer: `Hello, ${topic}!`,
-    },
-    {
-      question:
-        "[FILL_BLANK] What does this loop print?\n\nfor (let index = 1; index <= 3; index += 1) {\n  console.log(index);\n}\nOutput: _____",
-      answer: "1\n2\n3",
-    },
-    {
-      question:
-        "[FILL_BLANK] Complete the missing output.\n\nconsole.log(JSON.stringify({ topic: \"" +
-        topic +
-        "\" }));\nOutput: _____",
-      answer: `{"topic":"${topic}"}`,
-    },
-  ];
+  const result: OpenEndedQuestion[] = [];
+  let codeCounter = 0;
 
-  const generalQuestions: OpenEndedQuestion[] = [
-    {
-      question: `What is ${topic} mainly used for?`,
-      answer: `${topic} is used to solve practical problems`,
-    },
-    {
-      question: `Name one core principle of ${topic}.`,
-      answer: `${topic} follows clear rules and patterns`,
-    },
-    {
-      question: `What is a common real-world use of ${topic}?`,
-      answer: `It helps in real projects and workflows`,
-    },
-    {
-      question: `What describes ${topic} at a high level?`,
-      answer: `${topic} is a practical topic with clear concepts`,
-    },
-    {
-      question: `Why do people study ${topic}?`,
-      answer: `To apply it in useful situations`,
-    },
-  ];
+  for (const kind of questionPlan) {
+    if (kind === "code") {
+      result.push(buildDifficultyAwareFallbackOpenEndedQuestion(topic, kind, codeCounter, difficulty));
+      codeCounter += 1;
+    } else {
+      result.push(buildDifficultyAwareFallbackOpenEndedQuestion(topic, kind, 0, difficulty));
+    }
+  }
 
-  const codeCount = questionPlan.filter((kind) => kind === "code").length;
-  const generalCount = questionPlan.length - codeCount;
-
-  return [
-    ...codeQuestions.slice(0, codeCount),
-    ...generalQuestions.slice(0, generalCount),
-  ];
+  return result;
 }
 
 function buildFallbackMcqQuestions(input: TopicQuestionInput): McqQuestion[] {
   const topic = normalizeTopic(input.topic);
   const focusAreas = buildMcqFocusAreas(topic, input.amount);
+  const difficulty = normalizeDifficultyLevel(input.difficulty);
 
   return Array.from({ length: input.amount }, (_, index) => {
     const focusArea = focusAreas[index];
-    const answer = buildMcqCorrectAnswer(topic, focusArea);
+    let answer = buildMcqCorrectAnswer(topic, focusArea);
+    
+    if (difficulty === "easy") {
+      answer = `${topic} directly addresses ${focusArea}`;
+    } else if (difficulty === "hard") {
+      answer = `The synthesis of ${topic} concepts shows ${focusArea} is central`;
+    }
+    
     const [option1, option2, option3] = buildMcqDistractors(topic, focusArea);
 
     return {
@@ -442,10 +474,10 @@ function buildFallbackMcqQuestions(input: TopicQuestionInput): McqQuestion[] {
 }
 
 function isCodeLikeContent(text: string): boolean {
-  const codePatterns = /\b(?:function|const|let|var|return|if|else|for|while|switch|class|async|await|import|export|console\.log|=>|\{|\}|\[|\]|;)\b/i;
+  const codePatterns = /\b(function|const|let|var|return|if|else|for|while|switch|class|async|await|import|export|console\.log|=>|[{}\[\]();])\b/i;
   const hasCodeKeywords = codePatterns.test(text);
   const hasMultipleLines = text.includes('\n');
-  const hasCodeSymbols = /[{}\[\]()=>:;]/.test(text);
+  const hasCodeSymbols = /[{}[\]()=>:;]/.test(text);
   const startsWithBackticks = text.trim().startsWith('```');
   
   return hasCodeKeywords || (hasMultipleLines && hasCodeSymbols) || startsWithBackticks;
@@ -460,7 +492,7 @@ function ensureCodeQuestionWrapper(question: string, answer: string): OpenEndedQ
   
   // Auto-wrap code questions that don't have wrapper format
   if (isCodeLikeContent(question)) {
-    const normalized = question.replace(/\r\n/g, '\n').trim();
+    const normalized = question.replaceAll('\r\n', '\n').trim();
     const alreadyHasOutput = /output:\s*_+/i.test(normalized);
     
     if (!alreadyHasOutput) {
@@ -577,6 +609,34 @@ function normalizeMcqQuestions(generated: unknown) {
   return parsed;
 }
 
+// Helper function to get code mode instructions
+function getCodeModeInstructions(
+  isCode: boolean,
+  useFillBlankMode: boolean,
+): string {
+  if (!isCode) {
+    return "Ask for a concise factual answer, definition, or concept-level explanation in 1 to 8 words.";
+  }
+  if (useFillBlankMode) {
+    return "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question.";
+  }
+  return "Use full-output mode and ask the user to type the full execution result.";
+}
+
+// Helper function to get code structure instructions
+function getCodeStructureInstructions(
+  isCode: boolean,
+  useFillBlankMode: boolean,
+): string {
+  if (!isCode) {
+    return "Do not ask the user to run or inspect code.";
+  }
+  if (useFillBlankMode) {
+    return "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'.";
+  }
+  return "Do not include blank markers in the question text.";
+}
+
 export async function generateQuestionsByTopic(input: TopicQuestionInput) {
   const models = getQuestionGenerationModels();
   const temperature = getQuestionGenerationTemperature();
@@ -586,7 +646,6 @@ export async function generateQuestionsByTopic(input: TopicQuestionInput) {
     let lastError: unknown = null;
     const collectedQuestions: OpenEndedQuestion[] = [];
     const seenQuestions = new Set<string>();
-    const questionPlan = getOpenEndedQuestionPlan(input.amount);
 
     for (const model of models) {
       try {

@@ -3,17 +3,21 @@ import React from "react";
 import UserAccountNav from "./UserAccountNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import SignInButton from "./SignInButton";
 import { Home, Sparkles, ShieldCheck, ChartSpline } from "lucide-react";
 
 const Navbar = async () => {
   const session = await getAuthSession();
-  const isAuthenticated = Boolean(
-    session?.user?.id &&
-      session?.user?.email &&
-      !session?.user?.banned &&
-      !session?.user?.revoked,
-  );
+  
+  // Check both session token AND database for revoked/banned status
+  let isAuthenticated = false;
+  if (session?.user?.id && session?.user?.email && !session?.user?.banned) {
+    // Double-check revoked status from database in case it was just updated
+    const isRevoked = await getUserRevokedStatus(session.user.id);
+    isAuthenticated = !isRevoked;
+  }
+  
   const authenticatedUser = isAuthenticated && session?.user ? session.user : null;
 
   return (

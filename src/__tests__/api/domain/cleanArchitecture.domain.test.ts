@@ -3,7 +3,6 @@ import { OpenEndedAnswer } from "@/domain/entities/OpenEndedAnswer";
 import { gradeOpenEndedAnswer } from "@/domain/services/OpenEndedGrader";
 import { Game } from "@/domain/entities/Game";
 import { Question } from "@/domain/entities/Question";
-import { Quiz } from "@/domain/entities/Quiz";
 import { User } from "@/domain/entities/User";
 import { UserQuizAttempt } from "@/domain/entities/UserQuizAttempt";
 import { TopicCount } from "@/domain/entities/TopicCount";
@@ -12,7 +11,6 @@ import { Account } from "@/domain/entities/Account";
 import { AdminQuiz } from "@/domain/entities/AdminQuiz";
 import { AdminQuizQuestion } from "@/domain/entities/AdminQuizQuestion";
 import { EmailVerificationToken } from "@/domain/entities/EmailVerificationToken";
-import { QuizQuestion } from "@/domain/entities/QuizQuestion";
 
 describe("domain logic coverage", () => {
   it("NormalizedText supports normalization, sequence and adjacent swap", () => {
@@ -59,7 +57,6 @@ describe("domain logic coverage", () => {
   it("entity fromPrisma methods map values and return null for empty input", () => {
     expect(Game.fromPrisma(null)).toBeNull();
     expect(Question.fromPrisma(null)).toBeNull();
-    expect(Quiz.fromPrisma(null)).toBeNull();
     expect(User.fromPrisma(null)).toBeNull();
     expect(UserQuizAttempt.fromPrisma(null)).toBeNull();
     expect(TopicCount.fromPrisma(null)).toBeNull();
@@ -68,7 +65,6 @@ describe("domain logic coverage", () => {
     expect(AdminQuiz.fromPrisma(null)).toBeNull();
     expect(AdminQuizQuestion.fromPrisma(null)).toBeNull();
     expect(EmailVerificationToken.fromPrisma(null)).toBeNull();
-    expect(QuizQuestion.fromPrisma(null)).toBeNull();
 
     const q = Question.fromPrisma({
       id: "q1",
@@ -88,17 +84,6 @@ describe("domain logic coverage", () => {
       questions: [{ id: "q1", question: "Q", answer: "A", gameId: "g1", questionType: "mcq" }],
     });
     expect(g?.questions.length).toBe(1);
-
-    const quiz = Quiz.fromPrisma({
-      id: 1,
-      title: "t",
-      category: "c",
-      difficulty: "d",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      questions: [{ id: 1, question: "Q", answer: "A", options: "[]", quizId: 1 }],
-    });
-    expect(quiz?.id).toBe(1);
 
     const user = User.fromPrisma({ id: "u", email: "u@x.com", banned: false, revoked: false, isOnline: false, isAdmin: false });
     expect(user?.email).toBe("u@x.com");

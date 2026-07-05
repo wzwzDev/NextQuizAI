@@ -1,4 +1,5 @@
-import { getAuthSession } from "@/lib/nextauth";
+import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import {
   createGameWithTopicCount,
   getGameWithQuestions,
@@ -20,6 +21,15 @@ export async function POST(req: Request) {
         },
       );
     }
+
+    // Check if user is revoked (only if user.id exists)
+    if (session.user.id) {
+      const isRevoked = await getUserRevokedStatus(session.user.id);
+      if (isRevoked) {
+        return NextResponse.json({ error: "User access revoked" }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const { topic, type, amount } = quizCreationSchema.parse(body);
     const game = await createGameWithTopicCount({

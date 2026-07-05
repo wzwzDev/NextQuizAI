@@ -46,6 +46,74 @@ type Quiz = {
   questions: Question[];
 };
 
+function parseQuizType(value: unknown): QuizType {
+  return value === "mcq" ? "mcq" : "open_ended";
+}
+
+function getButtonText(
+  submitting: boolean,
+  current: number,
+  totalQuestions: number,
+): string {
+  if (submitting) return "Submitting...";
+  if (current === totalQuestions - 1) return "Finish";
+  return "Next";
+}
+
+function parseQuestion(rawQuestion: unknown, index: number): Question {
+  if (!rawQuestion || typeof rawQuestion !== "object") {
+    return {
+      id: `q-${index}`,
+      question: "",
+      options: [],
+    };
+  }
+
+  const candidate = rawQuestion as {
+    id?: unknown;
+    question?: unknown;
+    options?: unknown;
+    citation?: unknown;
+  };
+
+  const options = Array.isArray(candidate.options)
+    ? candidate.options.filter((option): option is string => typeof option === "string")
+    : [];
+
+  const citation =
+    candidate.citation && typeof candidate.citation === "object"
+      ? (candidate.citation as {
+          source?: unknown;
+          snippet?: unknown;
+          confidence?: unknown;
+        })
+      : null;
+
+  const normalizedCitation =
+    citation &&
+    typeof citation.source === "string" &&
+    typeof citation.snippet === "string"
+      ? {
+          source: citation.source,
+          snippet: citation.snippet,
+          ...(typeof citation.confidence === "number"
+            ? { confidence: citation.confidence }
+            : {}),
+        }
+      : undefined;
+
+  return {
+    id: typeof candidate.id === "string" ? candidate.id : `q-${index}`,
+    question: typeof candidate.question === "string" ? candidate.question : "",
+    options,
+    ...(normalizedCitation ? { citation: normalizedCitation } : {}),
+  };
+}
+
+function getProgressStorageKey(quizId: string): string {
+  return `quiz_progress_${quizId}`;
+}
+
 export default function QuizPage() {
   const params = useParams();
   const router = useRouter();
@@ -67,60 +135,6 @@ export default function QuizPage() {
   const [attemptsAllowed, setAttemptsAllowed] = useState<number | null>(null);
   const [attemptsCompleted, setAttemptsCompleted] = useState<number | null>(null);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
-
-  function parseQuizType(value: unknown): QuizType {
-    return value === "mcq" ? "mcq" : "open_ended";
-  }
-
-  function parseQuestion(rawQuestion: unknown, index: number): Question {
-    if (!rawQuestion || typeof rawQuestion !== "object") {
-      return {
-        id: `q-${index}`,
-        question: "",
-        options: [],
-      };
-    }
-
-    const candidate = rawQuestion as {
-      id?: unknown;
-      question?: unknown;
-      options?: unknown;
-      citation?: unknown;
-    };
-
-    const options = Array.isArray(candidate.options)
-      ? candidate.options.filter((option): option is string => typeof option === "string")
-      : [];
-
-    const citation =
-      candidate.citation && typeof candidate.citation === "object"
-        ? (candidate.citation as {
-            source?: unknown;
-            snippet?: unknown;
-            confidence?: unknown;
-          })
-        : null;
-
-    const normalizedCitation =
-      citation &&
-      typeof citation.source === "string" &&
-      typeof citation.snippet === "string"
-        ? {
-            source: citation.source,
-            snippet: citation.snippet,
-            ...(typeof citation.confidence === "number"
-              ? { confidence: citation.confidence }
-              : {}),
-          }
-        : undefined;
-
-    return {
-      id: typeof candidate.id === "string" ? candidate.id : `q-${index}`,
-      question: typeof candidate.question === "string" ? candidate.question : "",
-      options,
-      ...(normalizedCitation ? { citation: normalizedCitation } : {}),
-    };
-  }
 
   useEffect(() => {
     setLoading(true);
@@ -197,19 +211,36 @@ export default function QuizPage() {
               allowed?: unknown;
               completed?: unknown;
               remaining?: unknown;
+              current?: unknown;
             };
             setAttemptsAllowed(typeof attempts.allowed === "number" ? attempts.allowed : null);
             setAttemptsCompleted(typeof attempts.completed === "number" ? attempts.completed : null);
             setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
           }
           setQuiz(parsedQuiz);
-          setUserAnswers(Array(questions.length).fill(""));
+          setUserAnswers(new Array(questions.length).fill(""));
+          
+          // If resuming, try to restore previous progress
+          if (data?.attemptStatus === "pending") {
+            const savedProgress = localStorage.getItem(getProgressStorageKey(quizId));
+            if (savedProgress) {
+              try {
+                const parsed = JSON.parse(savedProgress);
+                if (typeof parsed.currentQuestion === "number" && parsed.currentQuestion < questions.length) {
+                  setCurrent(parsed.currentQuestion);
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+          
           toast({
             title: data?.attemptStatus === "pending" ? "Quiz resumed" : "Quiz started",
             description:
               data?.attemptStatus === "pending"
                 ? "Continue where you left off."
-                : "Good luck. Your quiz is ready.",
+                : `Attempt ${data?.currentAttempt || (attemptsCompleted || 0) + 1} of ${attemptsAllowed || 2}`,
             variant: "success",
           });
         } else {
@@ -255,10 +286,41 @@ export default function QuizPage() {
       throw new Error(message);
     }
 
-    const parsedResult = payload as QuizResult;
+    const parsedResult = payload as QuizResult & {
+      attempts?: {
+        allowed?: number;
+        completed?: number;
+        remaining?: number;
+      };
+    };
+    
+    // Update attempts data after submission
+    if (parsedResult?.attempts && typeof parsedResult.attempts === "object") {
+      const attempts = parsedResult.attempts;
+      setAttemptsAllowed(typeof attempts.allowed === "number" ? attempts.allowed : null);
+      setAttemptsCompleted(typeof attempts.completed === "number" ? attempts.completed : null);
+      setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
+    }
+    
     setResult(parsedResult);
     setAttemptStatus("completed");
+    // Clear saved progress when quiz is completed
+    localStorage.removeItem(getProgressStorageKey(quizId));
   }
+
+  // Save current question index to localStorage whenever it changes (for resume functionality)
+  useEffect(() => {
+    if (attemptStatus === "pending" && quiz && current >= 0 && current < quiz.questions.length) {
+      try {
+        localStorage.setItem(
+          getProgressStorageKey(quizId),
+          JSON.stringify({ currentQuestion: current })
+        );
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+  }, [current, attemptStatus, quiz, quizId]);
 
   const handleInput = (val: string) => {
     setUserAnswers((prev) => {
@@ -330,8 +392,8 @@ export default function QuizPage() {
               <p className="mb-3 text-gray-700">Your score: {completedScore}%</p>
             )}
             {typeof attemptsCompleted === "number" && typeof attemptsAllowed === "number" && (
-              <p className="mb-3 text-gray-600">
-                Attempt {attemptsCompleted} of {attemptsAllowed} completed
+              <p className="mb-4 text-sm text-gray-600">
+                Attempt {attemptsCompleted + 1} of {attemptsAllowed} completed
               </p>
             )}
             {typeof attemptsRemaining === "number" && attemptsRemaining > 0 && (
@@ -394,7 +456,7 @@ export default function QuizPage() {
                             setAttemptsRemaining(typeof attempts.remaining === "number" ? attempts.remaining : null);
                           }
                           setQuiz(parsedQuiz);
-                          setUserAnswers(Array(questions.length).fill(""));
+                          setUserAnswers(new Array(questions.length).fill(""));
                           toast({
                             title: "Quiz reloaded",
                             description: "Ready for attempt 2. Good luck!",
@@ -469,14 +531,6 @@ export default function QuizPage() {
             Question {current + 1} of {quiz.questions.length}
           </div>
           <div className="mb-4">{question.question}</div>
-          {question.citation && (
-            <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Source: {question.citation.source} - {question.citation.snippet}
-              {typeof question.citation.confidence === "number" && (
-                <span className="ml-2">(Citation confidence: {Math.round(question.citation.confidence * 100)}%)</span>
-              )}
-            </div>
-          )}
           {quiz.quizType === "mcq" ? (
             <div className="mb-4 space-y-2">
               {question.options.length > 0 ? (
@@ -526,11 +580,7 @@ export default function QuizPage() {
               onClick={handleNext}
               disabled={!hasAnswer || submitting}
             >
-              {submitting
-                ? "Submitting..."
-                : current === quiz.questions.length - 1
-                  ? "Finish"
-                  : "Next"}
+              {getButtonText(submitting, current, quiz.questions.length)}
             </button>
           </div>
         </div>
@@ -544,12 +594,12 @@ export default function QuizPage() {
             <p className="mb-4 font-semibold">Score: {result?.score ?? 0}%</p>
             {typeof attemptsCompleted === "number" && typeof attemptsAllowed === "number" && (
               <p className="mb-4 text-sm text-gray-600">
-                Attempt {attemptsCompleted} of {attemptsAllowed}
+                Attempt {attemptsCompleted + 1} of {attemptsAllowed}
               </p>
             )}
             <ul className="text-left mb-4 max-h-96 overflow-y-auto">
               {(result?.questionResults ?? []).map((questionResult, i) => (
-                <li key={i} className="mb-2">
+                <li key={`${questionResult.question}-${i}`} className="mb-2">
                   <span className="font-semibold">
                     {i + 1}. {questionResult.question}
                   </span>

@@ -2,6 +2,7 @@ import HistoryCard from "@/components/dashboard/HistoryCard";
 import QuizMeCard from "@/components/dashboard/QuizMeCard";
 import HotTopicsCard from "@/components/dashboard/HotTopicsCard";
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import React from "react";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
@@ -15,6 +16,14 @@ const Dasboard = async () => {
   const session = await getAuthSession();
   if (!session?.user) {
     redirect("/");
+  }
+
+  // Check if user is revoked
+  if (session.user.id) {
+    const isRevoked = await getUserRevokedStatus(session.user.id);
+    if (isRevoked) {
+      redirect("/revoked");
+    }
   }
 
   return (

@@ -1,4 +1,5 @@
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -6,13 +7,14 @@ const RevokedPage = async () => {
   const session = await getAuthSession();
 
   // If the user is not logged in, redirect to home (or login)
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/");
   }
 
-  // If the user is not revoked, redirect to home
-  if (!session.user.revoked) {
-    redirect("/");
+  // Check revoked status from database (not just token)
+  const isRevoked = await getUserRevokedStatus(session.user.id);
+  if (!isRevoked) {
+    redirect("/home");
   }
 
   return (

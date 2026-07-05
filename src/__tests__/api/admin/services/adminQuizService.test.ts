@@ -40,7 +40,8 @@ describe("adminQuizService", () => {
     const quiz = await createApprovedAdminQuiz({
       category: "science",
       difficulty: "easy",
-      questions: [{ question: "Q1", answer: "A1" }],
+      quizType: "mcq",
+      questions: [{ question: "Q1", answer: "A1", options: ["A1", "B1", "C1"] }],
     });
 
     expect(quiz.title).toBe("Untitled Quiz");
@@ -132,6 +133,26 @@ describe("adminQuizService", () => {
     const statsQuizTitleOne = `service-admin-quiz-a-${suffix}`;
     const statsQuizTitleTwo = `service-admin-quiz-b-${suffix}`;
 
+    // Create AdminQuiz records first
+    await prisma.adminQuiz.createMany({
+      data: [
+        {
+          id: statsQuizIdOne,
+          title: statsQuizTitleOne,
+          status: "approved",
+          category: "math",
+          difficulty: "easy",
+        },
+        {
+          id: statsQuizIdTwo,
+          title: statsQuizTitleTwo,
+          status: "approved",
+          category: "science",
+          difficulty: "medium",
+        },
+      ],
+    });
+
     await prisma.userQuizAttempt.createMany({
       data: [
         {
@@ -190,6 +211,17 @@ describe("adminQuizService", () => {
     const suffix = Date.now();
     const statsQuizId = `service-admin-stats-pending-${suffix}`;
     const statsQuizTitle = `service-admin-quiz-pending-${suffix}`;
+
+    // Create AdminQuiz record first
+    await prisma.adminQuiz.create({
+      data: {
+        id: statsQuizId,
+        title: statsQuizTitle,
+        status: "approved",
+        category: "history",
+        difficulty: "hard",
+      },
+    });
 
     await prisma.userQuizAttempt.createMany({
       data: [

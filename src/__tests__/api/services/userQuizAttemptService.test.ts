@@ -32,7 +32,7 @@ describe("userQuizAttemptService", () => {
 
     const quiz = await prisma.adminQuiz.create({
       data: {
-        title: "Service Quiz 1",
+        title: `Service Quiz 1 ${Date.now()}`,
         quizType: "mcq",
         category: "math",
         difficulty: "medium",
@@ -42,7 +42,7 @@ describe("userQuizAttemptService", () => {
 
     const quiz2 = await prisma.adminQuiz.create({
       data: {
-        title: "Service Quiz 2",
+        title: `Service Quiz 2 ${Date.now()}`,
         quizType: "open_ended",
         category: "science",
         difficulty: "hard",

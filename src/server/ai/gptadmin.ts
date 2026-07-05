@@ -5,7 +5,7 @@ let openaiClient: OpenAI | null = null;
 let cachedApiKey: string | null = null;
 let cachedBaseUrl: string | null = null;
 
-function getOpenAIClient(): OpenAI {
+export function getOpenAIClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -60,7 +60,8 @@ function isRateLimitError(error: unknown): boolean {
 
 function parseRetryDelayMs(error: unknown, attempt: number): number {
   const message = getErrorMessage(error);
-  const suggestedMsMatch = message.match(/try again in\s*(\d+)ms/i);
+  const retryRegex = /try again in\s*(\d+)ms/i;
+  const suggestedMsMatch = retryRegex.exec(message);
   if (suggestedMsMatch) {
     const parsed = Number.parseInt(suggestedMsMatch[1], 10);
     if (Number.isFinite(parsed) && parsed > 0) {

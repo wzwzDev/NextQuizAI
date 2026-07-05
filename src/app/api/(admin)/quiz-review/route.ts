@@ -6,6 +6,29 @@ import {
   removeAdminQuiz,
 } from "@/server/admin/services/adminQuizService";
 
+// Clean AI metadata from question text before storing in database
+function cleanQuestionMetadata(question: string): string {
+  // Remove everything from "Source:" to the next sentence-ending punctuation or "(Citation"
+  // This handles cases where metadata is mixed into the question text
+  let cleaned = question.replace(/\s*Source:\s*[^(]*?\(Citation[^)]*\)/gi, "");
+
+  // If "Source:" wasn't in full pattern, try removing just "Source: filename -" prefix
+  if (cleaned === question) {
+    cleaned = question.replace(/Source:\s*[^-]*\s*-\s*/gi, "");
+  }
+
+  // Remove "(Citation confidence: XX%)" or similar patterns
+  cleaned = cleaned.replace(/\s*\(Citation\s+confidence:\s*\d+%?\)/gi, "");
+
+  // Remove any remaining "(Citation ...)" patterns
+  cleaned = cleaned.replace(/\s*\(Citation[^)]*\)/gi, "");
+
+  // Clean up extra whitespace and line breaks
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
+}
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
@@ -39,7 +62,7 @@ export async function POST(req: NextRequest) {
           options?: string[];
           citation?: { source: string; snippet: string; confidence?: number };
         }) => ({
-          question: q.question,
+          question: cleanQuestionMetadata(q.question),
           answer: q.answer,
           options: Array.isArray(q.options) ? q.options : undefined,
           citation:
@@ -82,8 +105,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const difficulty = searchParams.get("difficulty");
-  const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
-  const limit = parseInt(searchParams.get("limit") ?? "10", 10) || 10;
+  const page = Number.parseInt(searchParams.get("page") ?? "1", 10) || 1;
+  const limit = Number.parseInt(searchParams.get("limit") ?? "10", 10) || 10;
 
   const allQuizzes = await getAdminQuizzes({
     category: category ?? undefined,

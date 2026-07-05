@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What keyword is used to extend a class in Java?",
+    "answer": "extends"
+  },
+  {
+    "question": "What is the output of console.log('hello')?",
+    "answer": "hello"
+  },
+  {
+    "question": "What does HTML stand for?",
+    "answer": "HyperText Markup Language"
+  },
+  {
+    "question": "What is the capital of France?",
+    "answer": "Paris"
+  },
+  {
+    "question": "What does CSS stand for?",
+    "answer": "Cascading Style Sheets"
+  }
+]

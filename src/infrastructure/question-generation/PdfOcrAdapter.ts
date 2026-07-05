@@ -1,5 +1,5 @@
 import type { PdfOcrPort } from "@/application/ports/out/PdfOcrPort";
-import { getOpenAIClient } from "@/lib/openaiClient";
+import { getOpenAIClient } from "@/server/ai/openaiClient";
 
 const MIN_OCR_WORD_COUNT = 6;
 const MIN_OCR_ALPHA_WORD_RATIO = 0.45;

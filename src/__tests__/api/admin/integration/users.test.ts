@@ -9,22 +9,30 @@ describe("/api/users Route Handler", () => {
   let normalUser: User;
 
   beforeAll(async () => {
-    // Clean up users with these emails before creating them
+    // Use unique timestamps to avoid race conditions with other tests
+    const timestamp = Date.now();
+    const adminEmail = `admin-users-test-${timestamp}@example.com`;
+    const normalEmail = `normal-users-test-${timestamp}@example.com`;
+    
+    // Clean up any existing test users with these emails
     await prisma.user.deleteMany({
-      where: { email: { in: ["adminusers@example.com", "userusers@example.com"] } },
+      where: { email: { in: [adminEmail, normalEmail] } },
     });
+    
     adminUser = await prisma.user.create({
-      data: { email: "adminusers@example.com", isAdmin: true },
+      data: { email: adminEmail, isAdmin: true },
     });
     normalUser = await prisma.user.create({
-      data: { email: "userusers@example.com", isAdmin: false },
+      data: { email: normalEmail, isAdmin: false },
     });
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { in: ["adminusers@example.com", "userusers@example.com"] } },
-    });
+    if (adminUser?.email && normalUser?.email) {
+      await prisma.user.deleteMany({
+        where: { email: { in: [adminUser.email, normalUser.email] } },
+      });
+    }
     await prisma.$disconnect();
   });
 
@@ -44,7 +52,14 @@ describe("/api/users Route Handler", () => {
   });
 
   it("returns all users for admin", async () => {
-    const req = new Request("http://localhost/api/users?limit=1000", {
+    // Get admin user to search for
+    const adminUserData = await prisma.user.findUnique({
+      where: { email: adminUser.email },
+    });
+    expect(adminUserData).not.toBeNull();
+
+    // Fetch all users (increased limit to ensure we get test users)
+    const req = new Request("http://localhost/api/users?limit=5000", {
       method: "GET",
       headers: { "x-test-user-email": adminUser.email },
     });
@@ -53,15 +68,16 @@ describe("/api/users Route Handler", () => {
     const payload = await res.json();
     const users = Array.isArray(payload) ? payload : payload?.users ?? [];
     expect(Array.isArray(users)).toBe(true);
-    expect(users.some((u: User) => u.email === "adminusers@example.com")).toBe(true);
-    // Check selected fields
-    const user = users.find((u: User) => u.email === "adminusers@example.com");
-    expect(user).toHaveProperty("id");
-    expect(user).toHaveProperty("email");
-    expect(user).toHaveProperty("isAdmin");
-    expect(user).toHaveProperty("banned");
-    expect(user).toHaveProperty("revoked");
-    expect(user).toHaveProperty("lastSeen");
-    expect(user).toHaveProperty("name");
+    
+    // Find our admin test user
+    const foundAdminUser = users.find((u: User) => u.email === adminUser.email);
+    expect(foundAdminUser).toBeDefined();
+    expect(foundAdminUser).toHaveProperty("id");
+    expect(foundAdminUser).toHaveProperty("email");
+    expect(foundAdminUser).toHaveProperty("isAdmin");
+    expect(foundAdminUser).toHaveProperty("banned");
+    expect(foundAdminUser).toHaveProperty("revoked");
+    expect(foundAdminUser).toHaveProperty("lastSeen");
+    expect(foundAdminUser).toHaveProperty("name");
   });
 });

@@ -1,4 +1,4 @@
-import { generateQuestionsByTopic } from "@/lib/services/questionGenerationService";
+import { generateQuestionsByTopic } from "@/server/services/questionGenerationService";
 import { getAuthSession } from "@/server/core/auth";
 import { getQuestionsSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";

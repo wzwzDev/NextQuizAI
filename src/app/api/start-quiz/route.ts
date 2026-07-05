@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApprovedQuiz } from "@/server/admin/services/adminQuizService";
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { submitAdminQuizAttemptSchema } from "@/schemas/questions";
 import {
   AdminQuizNotFoundError,
@@ -12,8 +13,8 @@ import {
   ensurePendingQuizAttempt,
   getUserQuizAttempt,
   UserQuizAttemptLimitExceededError,
+  getCompletedAttemptsForUser,
 } from "@/server/services/userQuizAttemptService";
-import { getCompletedAttemptsForUser } from "@/server/services/userQuizAttemptService";
 import { ZodError } from "zod";
 import { parseQuestionMetadata } from "@/server/core/quizQuestionMetadata";
 
@@ -21,6 +22,12 @@ export async function GET(req: NextRequest) {
   const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user is revoked
+  const isRevoked = await getUserRevokedStatus(session.user.id);
+  if (isRevoked) {
+    return NextResponse.json({ error: "User is revoked" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -48,11 +55,14 @@ export async function GET(req: NextRequest) {
 
     const counts = await getCompletedAttemptsForUser(session.user.id, [quiz.id]);
     const completedAttempts = Array.isArray(counts) && counts.length > 0 ? counts[0].completedAttempts : 0;
+    const currentAttempt = completedAttempts + 1;
 
     return NextResponse.json({
       attemptStatus: pendingAttempt.status,
       startedAt: pendingAttempt.startedAt,
+      currentAttempt,
       attempts: {
+        current: currentAttempt,
         completed: completedAttempts,
         allowed: quiz.allowedAttempts,
         remaining: quiz.allowedAttempts - completedAttempts,
@@ -128,7 +138,22 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
     });
 
-    return NextResponse.json(result, { status: 200 });
+    // Get updated attempt counts
+    const quiz = await getApprovedQuiz(quizId);
+    const counts = await getCompletedAttemptsForUser(session.user.id, [quizId]);
+    const completedAttempts = Array.isArray(counts) && counts.length > 0 ? counts[0].completedAttempts : 0;
+    const allowedAttempts = quiz?.allowedAttempts ?? 2;
+    const currentAttempt = completedAttempts;
+    
+    return NextResponse.json({
+      ...result,
+      attempts: {
+        current: currentAttempt,
+        completed: completedAttempts,
+        allowed: allowedAttempts,
+        remaining: allowedAttempts - completedAttempts,
+      },
+    }, { status: 200 });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

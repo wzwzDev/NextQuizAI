@@ -67,20 +67,25 @@ describe("/api/game Route Handler", () => {
     expect(res.status).toBe(400);
   });
 
-  it("creates a game even when API_URL is not usable (POST)", async () => {
-    const previousApiUrl = process.env.API_URL;
-    process.env.API_URL = "http://127.0.0.1:1";
+  it("creates a game even when OpenAI config is missing (POST)", async () => {
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
 
-    const res = await callPost(
-      { topic: "math", type: "mcq", amount: 1 },
-      user.email,
-    );
-    const json = await res.json();
+    try {
+      const res = await callPost(
+        { topic: "math", type: "mcq", amount: 1 },
+        user.email,
+      );
+      const json = await res.json();
 
-    process.env.API_URL = previousApiUrl;
-    expect(res.status).toBe(200);
-    expect(typeof json.gameId).toBe("string");
-  });
+      expect(res.status).toBe(200);
+      expect(typeof json.gameId).toBe("string");
+    } finally {
+      if (previousApiKey) {
+        process.env.OPENAI_API_KEY = previousApiKey;
+      }
+    }
+  }, 45000);
 
   it("creates an open-ended game and saves generated questions (POST)", async () => {
     const previousApiKey = process.env.OPENAI_API_KEY;

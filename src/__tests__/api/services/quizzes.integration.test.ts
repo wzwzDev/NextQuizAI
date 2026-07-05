@@ -1,10 +1,10 @@
-import { GET } from "@/app/api/quizzes/route";
+import { GET } from "@/app/api/published-quizzes/route";
 import { prisma } from "@/server/core/db";
 import type { NextRequest } from "next/server";
 
 jest.setTimeout(30000);
 
-describe("GET /api/quizzes", () => {
+describe("GET /api/published-quizzes", () => {
   let user;
   const suitePrefix = `quizzes-suite-${Date.now()}`;
 
@@ -32,7 +32,7 @@ describe("GET /api/quizzes", () => {
   });
 
   const callGet = async (email?: string) => {
-    const req = new Request("http://localhost/api/quizzes", {
+    const req = new Request("http://localhost/api/published-quizzes", {
       method: "GET",
       headers: {
         ...(email ? { "x-test-user-email": email } : {}),

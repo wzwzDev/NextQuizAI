@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { saveUserQuizAttemptSchema } from "@/schemas/questions";
 import {
   UserQuizAttemptAlreadyCompletedError,
@@ -13,6 +14,12 @@ export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user is revoked
+  const isRevoked = await getUserRevokedStatus(session.user.id);
+  if (isRevoked) {
+    return NextResponse.json({ error: "User access revoked" }, { status: 403 });
   }
 
   let body;

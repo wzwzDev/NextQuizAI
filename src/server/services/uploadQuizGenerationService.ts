@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from "crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import * as vision from "@google-cloud/vision";
 import { Storage } from "@google-cloud/storage";
 import { strict_output } from "@/server/ai/gptadmin";
@@ -175,7 +175,7 @@ type RawGeneratedQuestion = {
 };
 
 function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replace(/[.*+?^${}()|[\]\\]/g, (c) => `\\${c}`);
 }
 
 function isRateLimitMessage(message: string) {
@@ -235,6 +235,29 @@ function tokenizeForOverlap(value: string) {
   );
 }
 
+function cleanAiMetadataFromQuestion(question: string): string {
+  // Remove everything from "Source:" to the next sentence-ending punctuation or "(Citation"
+  // This handles cases where metadata is mixed into the question text
+  let cleaned = question.replace(/\s*Source:\s*[^(]*?\(Citation[^)]*\)/gi, "");
+
+  // If "Source:" wasn't in full pattern, try removing just "Source: filename -" prefix
+  if (cleaned === question) {
+    cleaned = question.replace(/Source:\s*[^-]*\s*-\s*/gi, "");
+  }
+
+  // Remove "(Citation confidence: XX%)" or similar patterns
+  cleaned = cleaned.replace(/\s*\(Citation\s+confidence:\s*\d+%?\)/gi, "");
+
+  // Remove any remaining "(Citation ...)" patterns
+  cleaned = cleaned.replace(/\s*\(Citation[^)]*\)/gi, "");
+
+  // Clean up extra whitespace and line breaks
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
+}
+
+
 function normalizeRawCitation(rawCitation: unknown) {
   if (!rawCitation || typeof rawCitation !== "object") {
     return undefined;
@@ -262,7 +285,7 @@ function normalizeRawCitation(rawCitation: unknown) {
   return {
     source,
     snippet,
-    ...(confidence !== undefined ? { confidence } : {}),
+    ...((confidence ?? null) !== null && { confidence }),
   };
 }
 
@@ -356,22 +379,22 @@ function getDifficultyInstructions(level: DifficultyLevel) {
     case "easy":
       return [
         "Prefer direct recall questions from a single sentence or clearly stated fact.",
-        "Use simple wording and avoid multi-step reasoning.",
-        "Keep answers very short, ideally 1 to 3 words when possible.",
-        "Ask for obvious terms, names, definitions, or values explicitly present in the content.",
+        "Use very simple wording and avoid comparisons, chains, or multi-step reasoning.",
+        "Keep answers extremely short, ideally 1 to 3 words.",
+        "Ask for obvious terms, names, values, labels, or literal phrases explicitly present in the content.",
       ].join(" ");
     case "medium":
       return [
-        "Mix direct recall with light inference or comparison.",
-        "Questions may require connecting two nearby ideas from the content.",
-        "Keep answers concise, usually 2 to 5 words.",
+        "Mix direct recall with light inference, comparison, or ordering.",
+        "Questions should require connecting two nearby ideas from the content.",
+        "Keep answers concise, usually 2 to 5 words, and avoid obvious one-word clues.",
       ].join(" ");
     case "hard":
       return [
         "Prefer questions that require multi-step reasoning across the content.",
-        "Ask for relationships, implications, distinctions, or combined concepts.",
-        "Keep the answer exact but slightly more demanding, usually 3 to 6 words.",
-        "Do not make the answer a paragraph; it must still be concise and directly supported by the content.",
+        "Ask for relationships, implications, distinctions, trade-offs, or combined concepts.",
+        "Use less obvious wording than easy or medium questions, but still keep the answer exact.",
+        "Keep the answer concise, usually 3 to 6 words, and make it depend on synthesis rather than direct spotting.",
       ].join(" ");
     default:
       return [
@@ -430,7 +453,7 @@ function buildFallbackQuestion(sentence: string, answer: string) {
       : normalizedSentence;
 
   const clozeSentence = shortenedSentence.replace(
-    new RegExp(`\\b${escapeRegExp(answer)}\\b`, "i"),
+    new RegExp(String.raw`\b${escapeRegExp(answer)}\b`, "i"),
     "_____",
   );
 
@@ -441,9 +464,41 @@ function buildFallbackQuestion(sentence: string, answer: string) {
   return `From this statement, what key term is being referenced: "${shortenedSentence}"`;
 }
 
+function buildDifficultyAwareFallbackQuestion(
+  sentence: string,
+  answer: string,
+  difficulty: DifficultyLevel,
+) {
+  const normalizedSentence = sentence.replace(/\s+/g, " ").trim();
+  const shortenedSentence =
+    normalizedSentence.length > 140
+      ? `${normalizedSentence.slice(0, 137)}...`
+      : normalizedSentence;
+
+  if (difficulty === "easy") {
+    const clozeSentence = shortenedSentence.replace(
+      new RegExp(String.raw`\b${escapeRegExp(answer)}\b`, "i"),
+      "_____",
+    );
+
+    if (clozeSentence !== shortenedSentence) {
+      return `Fill in the blank from the course content: "${clozeSentence}"`;
+    }
+
+    return `Identify the term directly mentioned in: "${shortenedSentence}"`;
+  }
+
+  if (difficulty === "hard") {
+    return `Based on this statement, what concept is being emphasized and why: "${shortenedSentence}"`;
+  }
+
+  return `From this statement, what key term is being referenced: "${shortenedSentence}"`;
+}
+
 function generateFallbackQuestionsFromContent(
   courseContent: string,
   questionCount: number = FALLBACK_QUESTION_COUNT,
+  difficulty: DifficultyLevel = "mixed",
 ): GeneratedQuestion[] {
   const sentences = extractSentencesForFallback(courseContent);
   const usedAnswers = new Set<string>();
@@ -461,7 +516,7 @@ function generateFallbackQuestionsFromContent(
       continue;
     }
 
-    const question = buildFallbackQuestion(sentence, answer);
+    const question = buildDifficultyAwareFallbackQuestion(sentence, answer, difficulty);
     const questionKey = question.toLowerCase();
     if (usedQuestions.has(questionKey)) {
       continue;
@@ -498,7 +553,12 @@ function generateFallbackQuestionsFromContent(
       continue;
     }
 
-    const question = `Identify key term #${generated.length + 1} from the provided content.`;
+    const question =
+      difficulty === "hard"
+        ? `What concept best captures key idea #${generated.length + 1} from the provided content?`
+        : difficulty === "easy"
+          ? `Identify key term #${generated.length + 1} from the provided content.`
+          : `Identify the key term #${generated.length + 1} from the provided content.`;
     const questionKey = question.toLowerCase();
     if (usedQuestions.has(questionKey)) {
       continue;
@@ -515,13 +575,20 @@ function generateFallbackQuestionsFromContent(
 function padQuestionsWithPlaceholders(
   questions: GeneratedQuestion[],
   questionCount: number,
+  difficulty: DifficultyLevel = "mixed",
 ) {
   const paddedQuestions = [...questions];
 
   while (paddedQuestions.length < questionCount) {
+    const nextIndex = paddedQuestions.length + 1;
     paddedQuestions.push({
-      question: `Identify a key term #${paddedQuestions.length + 1} from the provided content.`,
-      answer: "term",
+      question:
+        difficulty === "hard"
+          ? `What is the main concept behind key idea #${nextIndex} in the provided content?`
+          : difficulty === "easy"
+            ? `Identify key term #${nextIndex} from the provided content.`
+            : `Identify a key term #${nextIndex} from the provided content.`,
+      answer: difficulty === "hard" ? "main concept" : "term",
     });
   }
 
@@ -781,7 +848,7 @@ async function extractTextFromPdfWithGoogleVision(file: File): Promise<string> {
   });
 
   const fileResponse = result.responses?.[0];
-  if (!fileResponse || !fileResponse.responses) {
+  if (!fileResponse?.responses) {
     return "";
   }
 
@@ -998,11 +1065,14 @@ function normalizeGeneratedQuestions(rawOutput: unknown): GeneratedQuestion[] {
   return rawQuestions
     .map((item): GeneratedQuestion | null => {
       const rawQuestion = item as RawGeneratedQuestion;
-      const question =
+      let question =
         typeof rawQuestion?.question === "string" ? rawQuestion.question.trim() : "";
       const answer =
         typeof rawQuestion?.answer === "string" ? rawQuestion.answer.trim() : "";
       const citation = normalizeRawCitation(rawQuestion?.citation);
+
+      // Clean AI metadata from question (Source:, Citation confidence:, etc.)
+      question = cleanAiMetadataFromQuestion(question);
 
       if (!question || !answer) {
         return null;
@@ -1026,15 +1096,25 @@ export async function generateQuestionsFromCourseContent(
   const categoryHint = options.category?.trim() || "content-derived";
   const quizTypeHint = options.quizType === "mcq" ? "mcq-ready" : "open-ended";
   const difficultyInstructions = getDifficultyInstructions(difficultyLevel);
+  const difficultyBehavior =
+    difficultyLevel === "easy"
+      ? "Prefer obvious answers and short, direct stems."
+      : difficultyLevel === "medium"
+        ? "Prefer moderate synthesis and compare nearby ideas."
+        : difficultyLevel === "hard"
+          ? "Prefer deeper synthesis, implication, and multi-step reasoning."
+          : "Mix direct recall with light inference.";
 
   const systemPrompt = `
 You are a quiz generator. Given the following course content, generate exactly ${questionCount} short-answer questions and answers.
 Difficulty target: ${difficultyLevel}
 Difficulty requirements: ${difficultyInstructions}
+Difficulty behavior: ${difficultyBehavior}
 Category focus: ${categoryHint}
 Target style: ${quizTypeHint}
 Each answer must be an exact, concise target (for example: code output, exact syntax, keyword, identifier, number, or short phrase), 1 to 6 words max.
 Do not generate definition/explanation questions that require writing a paragraph.
+Make the difference between easy, medium, and hard clearly noticeable in the wording and reasoning required.
 Course content:
 ${courseContent}
 Respond ONLY with a JSON array of ${questionCount} objects, each with BOTH "question" and "answer" fields, like this:
@@ -1051,10 +1131,12 @@ Every object must include a non-empty "question" and a non-empty concise "answer
 You are a quiz generator. Create exactly ${questionCount} high-confidence short-answer question/answer pairs from the course content below.
 Difficulty target: ${difficultyLevel}
 Difficulty requirements: ${difficultyInstructions}
+Difficulty behavior: ${difficultyBehavior}
 Category focus: ${categoryHint}
 Target style: ${quizTypeHint}
 Use only facts that are explicitly present in the content.
 Each answer must be 1 to 6 words and non-empty.
+Make easy questions direct, medium questions slightly inferential, and hard questions require combining more than one clue.
 Course content:
 ${courseContent}
 Return ONLY a valid JSON array of objects with keys "question" and "answer".
@@ -1121,9 +1203,10 @@ Do not include markdown or extra commentary.
       const fallbackQuestions = generateFallbackQuestionsFromContent(
         courseContent,
         questionCount,
+        difficultyLevel,
       );
 
-      return padQuestionsWithPlaceholders(fallbackQuestions, questionCount);
+      return padQuestionsWithPlaceholders(fallbackQuestions, questionCount, difficultyLevel);
     }
 
     throw error;
@@ -1131,7 +1214,11 @@ Do not include markdown or extra commentary.
 
   if (normalizedQuestions.length === 0) {
     console.warn("Question generation produced 0 items; synthesizing placeholders.");
-    normalizedQuestions = padQuestionsWithPlaceholders(normalizedQuestions, questionCount);
+    normalizedQuestions = padQuestionsWithPlaceholders(
+      normalizedQuestions,
+      questionCount,
+      difficultyLevel,
+    );
   }
 
   if (normalizedQuestions.length > questionCount) {
@@ -1142,6 +1229,7 @@ Do not include markdown or extra commentary.
     const fallbackQuestions = generateFallbackQuestionsFromContent(
       courseContent,
       questionCount,
+      difficultyLevel,
     );
     const usedQuestionKeys = new Set(
       normalizedQuestions.map((item) => item.question.trim().toLowerCase()),
@@ -1164,7 +1252,11 @@ Do not include markdown or extra commentary.
       console.warn(
         `Only ${normalizedQuestions.length}/${questionCount} questions generated; padding with placeholders.`,
       );
-      normalizedQuestions = padQuestionsWithPlaceholders(normalizedQuestions, questionCount);
+      normalizedQuestions = padQuestionsWithPlaceholders(
+        normalizedQuestions,
+        questionCount,
+        difficultyLevel,
+      );
     }
   }
 

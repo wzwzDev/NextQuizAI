@@ -3,6 +3,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import LoadingQuizzes from "@/components/LoadingQuizzes";
 import { motion } from "framer-motion";
 import {
@@ -118,6 +119,58 @@ function getAttemptSummary(quiz: Quiz) {
   return "Not started";
 }
 
+function getStatusDisplayText(quiz: Quiz): string {
+  const status = getAttemptDisplayStatus(quiz);
+  if (status === "completed") return "Completed";
+  if (status === "pending") return "Pending";
+  return "Available";
+}
+
+function getButtonClass(quiz: Quiz): string {
+  // Available (new quiz): primary color for "Start Quiz"
+  if (quiz.attemptStatus === "available") {
+    return "bg-primary text-primary-foreground";
+  }
+  
+  // Pending (in progress): red for "Resume Quiz"
+  if (quiz.attemptStatus === "pending") {
+    return "bg-red-600 hover:bg-red-700 text-white";
+  }
+  
+  // Completed with remaining attempts: green for "Retry Quiz"
+  const remainingAttempts = quiz.remainingAttempts ?? 0;
+  if (quiz.attemptStatus === "completed" && remainingAttempts > 0) {
+    return "bg-green-600 hover:bg-green-700 text-white";
+  }
+  
+  // Completed with no attempts left: disabled
+  return "bg-muted text-muted-foreground cursor-not-allowed";
+}
+
+function getButtonText(quiz: Quiz): string {
+  // New quiz (available): Start Quiz
+  if (quiz.attemptStatus === "available") {
+    return "Start Quiz";
+  }
+  
+  // In progress (pending): Resume Quiz
+  if (quiz.attemptStatus === "pending") {
+    return "Resume Quiz";
+  }
+  
+  // Completed: Check remaining attempts
+  const remainingAttempts = quiz.remainingAttempts ?? 0;
+  if (quiz.attemptStatus === "completed") {
+    if (remainingAttempts > 0) {
+      return "Retry Quiz";
+    }
+    return "No Attempts Left";
+  }
+  
+  // Fallback
+  return "Start Quiz";
+}
+
 function toTimestamp(value?: string | null) {
   if (!value) {
     return 0;
@@ -176,14 +229,43 @@ export default function HomeClient() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("/api/quizzes")
-      .then((res) => res.json())
-      .then((data: { quizzes?: Quiz[] }) => {
+    fetch("/api/published-quizzes")
+      .then(async (res) => {
+        // Check if user is revoked (403 status) - if res.status exists (real fetch)
+        if (res.status === 403) {
+          // User is revoked - logout immediately
+          await signOut({ redirect: true, callbackUrl: "/" });
+          return null;
+        }
+
+        // Check if response is not ok (real fetch)
+        if (res.ok === false) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+        // If signOut was triggered, data will be null
+        if (data === null) {
+          setLoading(false);
+          return;
+        }
+
         setQuizzes(Array.isArray(data.quizzes) ? data.quizzes : []);
         setLoading(false);
       })
-      .catch(() => {
-        setError("Error loading quizzes.");
+      .catch((err: unknown) => {
+        console.error("Error loading quizzes:", err);
+        let errorMessage: string;
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === "string") {
+          errorMessage = err;
+        } else {
+          errorMessage = "Error loading quizzes.";
+        }
+        setError(errorMessage);
         setLoading(false);
       });
   }, []);
@@ -284,7 +366,8 @@ export default function HomeClient() {
       completed: 0,
     };
 
-    if (isCompletedAttempt(quiz.attemptStatus)) {
+    // Only count as completed if status is completed AND no remaining attempts
+    if (isCompletedAttempt(quiz.attemptStatus) && (quiz.remainingAttempts ?? 0) === 0) {
       existing.completed += 1;
     } else {
       existing.available += 1;
@@ -478,7 +561,9 @@ export default function HomeClient() {
                   checked={showCompleted}
                   onChange={(event) => setShowCompleted(event.target.checked)}
                   className="h-4 w-4 accent-primary"
+                  aria-label="Show completed quizzes"
                 />
+                {" "}
                 Show completed quizzes
               </label>
             </div>
@@ -517,7 +602,7 @@ export default function HomeClient() {
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="animated-float flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-card/80 p-2">
-                  {cat && cat.img ? (
+                  {cat?.img ? (
                     <Image
                       src={cat.img}
                       alt={cat.name}
@@ -543,7 +628,7 @@ export default function HomeClient() {
                   Difficulty: {quiz.difficulty}
                 </span>
                 <span className={`chip-pill ${getAttemptStatusChipClass(getAttemptDisplayStatus(quiz))}`}>
-                  Status: {getAttemptDisplayStatus(quiz) === "completed" ? "Completed" : getAttemptDisplayStatus(quiz) === "pending" ? "Pending" : "Available"}
+                  Status: {getStatusDisplayText(quiz)}
                 </span>
                 <span className="chip-pill bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
                   Type: {formatQuizTypeLabel(quiz.quizType)}
@@ -589,19 +674,9 @@ export default function HomeClient() {
                   )}
                   <Link
                     href={`/playme/${quiz.id}`}
-                    className={`pulse-focus inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:brightness-110 ${
-                      quiz.attemptStatus === "pending"
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "bg-primary text-primary-foreground"
-                    }`}
+                    className={`pulse-focus inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:brightness-110 ${getButtonClass(quiz)}`}
                   >
-                    {quiz.attemptStatus === "pending"
-                      ? "Resume Quiz"
-                      : quiz.attemptStatus === "completed" && (quiz.remainingAttempts ?? 0) > 0
-                        ? "Try Again"
-                        : "Start Quiz"}
+                    {getButtonText(quiz)}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -678,7 +753,7 @@ export default function HomeClient() {
                 >
                   <div className="mb-4 flex items-center gap-3">
                     <div className="animated-float flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-card/80 p-2">
-                      {cat && cat.img ? (
+                      {cat?.img ? (
                         <Image
                           src={cat.img}
                           alt={cat.name}

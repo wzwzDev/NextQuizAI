@@ -1,5 +1,5 @@
 "use client";
-import { quizCreationSchema } from "@/schemas/forms/quiz";
+import { quizCreationSchema, isGibberish, SUGGESTED_TOPICS } from "@/schemas/forms/quiz";
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -28,6 +28,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import LoadingQuestions from "../LoadingQuestions";
 
 type Props = {
@@ -36,33 +42,15 @@ type Props = {
 
 type Input = z.infer<typeof quizCreationSchema>;
 type CreateGameResponse = { gameId: string };
-type QuizStat = {
-  id: string;
-  title: string;
-  attempts: number;
-  averageScore: number | null;
-  lastAttempt: string;
-};
-
-function formatRecentAttempt(dateStr: string) {
-  if (!dateStr) {
-    return "N/A";
-  }
-
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) {
-    return "N/A";
-  }
-
-  return date.toLocaleString();
-}
 
 const QuizCreation = ({ topic: topicParam }: Props) => {
   const router = useRouter();
   const [showLoader, setShowLoader] = React.useState(false);
   const [finishedLoading, setFinishedLoading] = React.useState(false);
-  const [stats, setStats] = React.useState<QuizStat[]>([]);
+  const [showGibberishDialog, setShowGibberishDialog] = React.useState(false);
+  const [pendingData, setPendingData] = React.useState<Input | null>(null);
   const { toast } = useToast();
+  
   const { mutate: getQuestions, isPending } = useMutation<
     CreateGameResponse,
     Error,
@@ -87,25 +75,19 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
     },
   });
 
-  React.useEffect(() => {
-    if (typeof fetch !== "function") {
+  const onSubmit = async (data: Input) => {
+    // ✅ Check if topic is gibberish
+    if (isGibberish(data.topic)) {
+      setPendingData(data);
+      setShowGibberishDialog(true);
       return;
     }
 
-    fetch("/api/user-quiz-stats")
-      .then((res) => res.json())
-      .then((data) => {
-        const parsed = Array.isArray(data?.quizStats)
-          ? (data.quizStats as QuizStat[])
-          : [];
-        setStats(parsed);
-      })
-      .catch(() => {
-        setStats([]);
-      });
-  }, []);
+    // ✅ Normal flow: submit
+    startQuiz(data);
+  };
 
-  const onSubmit = async (data: Input) => {
+  const startQuiz = (data: Input) => {
     setShowLoader(true);
     toast({
       title: "Preparing your quiz",
@@ -143,64 +125,46 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
       },
     });
   };
-  form.watch();
 
-  const totalAttempts = React.useMemo(
-    () => stats.reduce((acc, curr) => acc + curr.attempts, 0),
-    [stats],
-  );
-  const totalCompleted = stats.length;
-  const recentAttemptDate = React.useMemo(
-    () =>
-      stats.reduce(
-        (acc, curr) =>
-          curr.lastAttempt && curr.lastAttempt > acc ? curr.lastAttempt : acc,
-        "",
-      ),
-    [stats],
-  );
+  const handleChooseSuggestedTopic = () => {
+    // Pick random suggested topic
+    const randomTopic = SUGGESTED_TOPICS[
+      Math.floor(Math.random() * SUGGESTED_TOPICS.length)
+    ];
+    form.setValue("topic", randomTopic);
+    setShowGibberishDialog(false);
+    setPendingData(null);
+    toast({
+      title: "Topic updated",
+      description: `Changed to "${randomTopic}". Ready to generate!`,
+    });
+  };
+
+  const handleGenerateAnyway = () => {
+    if (pendingData) {
+      setShowGibberishDialog(false);
+      setPendingData(null);
+      startQuiz(pendingData);
+    }
+  };
+
+  form.watch();
 
   if (showLoader) {
     return <LoadingQuestions finished={finishedLoading} />;
   }
 
   return (
-    <div className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-      <Card>
+    <div className="flex items-center justify-center min-h-screen p-4">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Quiz Creation</CardTitle>
-          <CardDescription>Choose a topic</CardDescription>
+          <CardDescription>Create a new quiz</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Recent Attempt
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
-                {formatRecentAttempt(recentAttemptDate)}
-              </p>
-            </div>
-            <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Total Attempts
-              </p>
-              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                {totalAttempts}
-              </p>
-            </div>
-            <div className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 shadow dark:border-gray-700 dark:bg-black">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Quizzes Completed
-              </p>
-              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                {totalCompleted}
-              </p>
-            </div>
-          </div>
-
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Topic Input */}
               <FormField
                 control={form.control}
                 name="topic"
@@ -208,16 +172,17 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
                   <FormItem>
                     <FormLabel>Topic</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter a topic" {...field} />
+                      <Input placeholder="e.g., Java, React, Python" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Please provide any topic you would like to be quizzed on
-                      here.
+                      Enter a topic you want to be quizzed on
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Number of Questions */}
               <FormField
                 control={form.control}
                 name="amount"
@@ -246,14 +211,14 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
                       />
                     </FormControl>
                     <FormDescription>
-                      You can choose how many questions you would like to be
-                      quizzed on here.
+                      Choose between 1 and 10 questions
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Quiz Type Selection */}
               <div className="flex justify-between">
                 <Button
                   variant={
@@ -281,11 +246,49 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
                   <BookOpen className="w-4 h-4 mr-2" /> Open Ended
                 </Button>
               </div>
+
+              {/* Submit Button */}
               <Button disabled={isPending} type="submit">
                 Submit
               </Button>
             </form>
           </Form>
+
+          {/* Gibberish Alert Dialog */}
+          <AlertDialog open={showGibberishDialog} onOpenChange={setShowGibberishDialog}>
+            <AlertDialogContent>
+              <AlertDialogTitle>⚠️ Topic Seems Unclear</AlertDialogTitle>
+              <AlertDialogDescription>
+                The topic "<strong>{pendingData?.topic}</strong>" looks unclear or contains invalid characters. This might result in poor quiz questions.
+              </AlertDialogDescription>
+
+              <div className="flex flex-col gap-3 mt-6">
+                <button
+                  onClick={handleChooseSuggestedTopic}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium transition"
+                >
+                  💡 Choose a Suggested Topic
+                </button>
+
+                <button
+                  onClick={handleGenerateAnyway}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 text-sm font-medium transition"
+                >
+                  ⚡ Generate Anyway
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowGibberishDialog(false);
+                    setPendingData(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 text-sm font-medium transition"
+                >
+                  ❌ Cancel
+                </button>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>

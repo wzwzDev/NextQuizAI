@@ -4,6 +4,7 @@ import keyword_extractor from "keyword-extractor";
 type Props = {
   answer: string;
   setBlankAnswer: React.Dispatch<React.SetStateAction<string>>;
+  onAnswerChange?: (filledAnswer: string) => void;
 };
 
 const blank = "_____";
@@ -18,7 +19,8 @@ const secureRandomInt = (max: number): number => {
   return randomValues[0] % max;
 };
 
-const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
+const BlankAnswerInput = ({ answer, setBlankAnswer, onAnswerChange }: Props) => {
+  const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
   const keywords = React.useMemo(() => {
     const words = keyword_extractor.extract(answer, {
       language: "english",
@@ -54,6 +56,16 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
     setBlankAnswer(finalAnswerWithBlanks);
   }, [finalAnswerWithBlanks, setBlankAnswer]);
 
+  React.useEffect(() => {
+    if (onAnswerChange) {
+      let filled = finalAnswerWithBlanks;
+      Object.entries(inputValues).forEach(([indexStr, value]) => {
+        filled = filled.replace(blank, value);
+      });
+      onAnswerChange(filled);
+    }
+  }, [inputValues, finalAnswerWithBlanks, onAnswerChange]);
+
   const isCodeLike =
     answer.includes("\n") ||
     answer.trim().startsWith("```") ||
@@ -64,8 +76,9 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
       <div className="flex justify-start w-full mt-4">
         <pre className="text-sm font-mono whitespace-pre-wrap bg-slate-100 dark:bg-slate-900 p-3 rounded-md w-full overflow-auto">
           {finalAnswerWithBlanks.split(blank).map((part, index) => {
+            const key = `blank-${index}-${part.length}`;
             return (
-              <React.Fragment key={index}>
+              <React.Fragment key={key}>
                 {part}
                 {index === finalAnswerWithBlanks.split(blank).length - 1 ? (
                   ""
@@ -74,6 +87,13 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
                     data-blank-answer-input="true"
                     className="inline-block align-middle text-sm font-mono border-b-2 border-black dark:border-white w-36 focus:outline-none bg-transparent"
                     type="text"
+                    value={inputValues[index] ?? ""}
+                    onChange={(e) =>
+                      setInputValues((prev) => ({
+                        ...prev,
+                        [index]: e.target.value,
+                      }))
+                    }
                   />
                 )}
               </React.Fragment>
@@ -88,8 +108,9 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
     <div className="flex justify-start w-full mt-4">
       <h1 className="text-xl font-semibold">
         {finalAnswerWithBlanks.split(blank).map((part, index) => {
+          const key = `blank-${index}-${part.length}`;
           return (
-            <React.Fragment key={index}>
+            <React.Fragment key={key}>
               {part}
               {index === finalAnswerWithBlanks.split(blank).length - 1 ? (
                 ""
@@ -98,6 +119,13 @@ const BlankAnswerInput = ({ answer, setBlankAnswer }: Props) => {
                   data-blank-answer-input="true"
                   className="text-center border-b-2 border-black dark:border-white w-28 focus:border-2 focus:border-b-4 focus:outline-none"
                   type="text"
+                  value={inputValues[index] ?? ""}
+                  onChange={(e) =>
+                    setInputValues((prev) => ({
+                      ...prev,
+                      [index]: e.target.value,
+                    }))
+                  }
                 />
               )}
             </React.Fragment>

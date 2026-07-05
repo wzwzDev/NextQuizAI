@@ -111,7 +111,7 @@ function extractErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-const MCQ = ({ game }: Props) => {
+const MCQComponent = ({ game }: Props) => {
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const [hasEnded, setHasEnded] = React.useState(false);
   const [stats, setStats] = React.useState({
@@ -370,4 +370,4 @@ const MCQ = ({ game }: Props) => {
   );
 };
 
-export default MCQ;
+export default MCQComponent;

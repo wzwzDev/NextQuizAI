@@ -6,21 +6,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getUserBannedStatusByEmail } from "@/server/services/userReadService";
+import { getUserBannedStatusByEmail, getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { getAuthSession } from "@/server/core/auth";
 import { Sparkles, Trophy } from "lucide-react";
 export default async function Home() {
-  const session = await getServerSession();
+  const session = await getAuthSession();
   if (session?.user) {
     const email = session.user.email;
     if (!email) {
       redirect("/dashboard");
     }
+    
     const isBanned = await getUserBannedStatusByEmail(email);
     if (isBanned) {
       redirect("/banned");
     }
+    
+    // Check if user is revoked
+    if (session.user.id) {
+      const isRevoked = await getUserRevokedStatus(session.user.id);
+      if (isRevoked) {
+        redirect("/revoked");
+      }
+    }
+    
     redirect("/dashboard");
   }
   return (

@@ -13,13 +13,13 @@ export type OpenEndedGradeResult = {
 const TYPO_TOLERANCE_THRESHOLD = 0.8;
 
 function normalizeExecutionOutput(value: string) {
-  const lines = value.replace(/\r\n/g, "\n").split("\n");
+  const lines = value.replaceAll("\r\n", "\n").split("\n");
 
-  while (lines.length > 0 && lines[0].trim() === "") {
+  while (lines.length > 0 && lines.at(0)?.trim() === "") {
     lines.shift();
   }
 
-  while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
+  while (lines.length > 0 && lines.at(-1)?.trim() === "") {
     lines.pop();
   }
 
@@ -32,8 +32,8 @@ function unwrapQuotedValue(value: string) {
     return trimmed;
   }
 
-  const first = trimmed[0];
-  const last = trimmed[trimmed.length - 1];
+  const first = trimmed.at(0);
+  const last = trimmed.at(-1);
   const isMatchingQuotePair =
     (first === '"' && last === '"') ||
     (first === "'" && last === "'") ||
@@ -52,7 +52,9 @@ function normalizeAnswerArtifact(value: string) {
     return "";
   }
 
-  normalized = normalized.replace(/^```[a-z]*\s*/i, "").replace(/```$/i, "").trim();
+  // Remove markdown code blocks: ````language\ncode\n``` or ````code```\n` or ````code```\n`
+  // Pattern matches: backticks + optional (language + newline or just backtick)
+  normalized = normalized.replace(/^```(?:[a-z]+\n)?/i, "").replace(/\n?```$/i, "").trim();
   normalized = normalized
     .replace(/^(output|answer|result)\s*[:=-]\s*/i, "")
     .replace(/^the\s+output\s+is\s+/i, "")
@@ -76,7 +78,7 @@ function containsLineSequence(expectedLines: string[], userLines: string[]) {
   for (let start = 0; start <= maxStart; start++) {
     let matches = true;
     for (let offset = 0; offset < expectedLines.length; offset++) {
-      if (userLines[start + offset] !== expectedLines[offset]) {
+      if (userLines.at(start + offset) !== expectedLines.at(offset)) {
         matches = false;
         break;
       }

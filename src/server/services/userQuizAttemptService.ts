@@ -377,3 +377,17 @@ export async function getCompletedAttemptsForUser(
 
   return counts;
 }
+
+export async function getCompletedUserQuizAttempts(
+  userId: string,
+  quizId: string,
+) {
+  return countCompletedUserQuizAttempts(userId, quizId);
+}
+
+export async function getAttemptsByUserAndQuizIds(
+  userId: string,
+  quizIds: string[],
+) {
+  return listUserQuizAttemptsByUserIdAndQuizIds(userId, quizIds);
+}

@@ -1,6 +1,7 @@
 import OpenEnded from "@/components/OpenEnded";
 import { getAuthSession } from "@/server/core/auth";
 import { getOpenEndedGameForPlay } from "@/server/services/playReadService";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -16,6 +17,14 @@ const OpenEndedPage = async (props: Props) => {
   const isAdmin = session?.user?.isAdmin === true;
   if (!session?.user && !isAdmin) {
     redirect("/");
+  }
+
+  // Check if user is revoked
+  if (session.user.id) {
+    const isRevoked = await getUserRevokedStatus(session.user.id);
+    if (isRevoked) {
+      redirect("/revoked");
+    }
   }
 
   const game = await getOpenEndedGameForPlay({

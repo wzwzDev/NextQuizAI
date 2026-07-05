@@ -1,13 +1,13 @@
 generator client {
   provider = "prisma-client-js"
 }
- 
+
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
- 
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -21,10 +21,11 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
- 
+
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -32,38 +33,113 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
- 
+
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String   @unique
+  email         String    @unique
   passwordHash  String?
   emailVerified DateTime?
-  image    String?
-  accounts Account[]
-  sessions Session[]
-  games         Game[] 
-  banned        Boolean   @default(false) 
-  revoked  Boolean  @default(false) 
-  isOnline      Boolean   @default(false) 
-  isAdmin   Boolean  @default(false)
-  lastSeen  DateTime @default(now()) @updatedAt
-
+  image         String?
+  banned        Boolean   @default(false)
+  revoked       Boolean   @default(false)
+  isOnline      Boolean   @default(false)
+  isAdmin       Boolean   @default(false)
+  lastSeen      DateTime  @default(now()) @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  games         Game[]
 }
 
 model EmailVerificationToken {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   email      String
-  tokenHash  String   @unique
+  tokenHash  String    @unique
   expiresAt  DateTime
   consumedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([email])
   @@index([expiresAt])
 }
 
-enum GameType{
+model Game {
+  id          String     @id @default(cuid())
+  userId      String
+  timeStarted DateTime
+  topic       String
+  timeEnded   DateTime?
+  gameType    GameType
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions   Question[]
+
+  @@index([userId], map: "userId")
+}
+
+model Question {
+  id                String   @id @default(cuid())
+  question          String
+  answer            String
+  gameId            String
+  options           Json?
+  percentageCorrect Float?
+  isCorrect         Boolean?
+  questionType      GameType
+  userAnswer        String?
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId], map: "gameId")
+}
+
+model TopicCount {
+  id    String @id @default(cuid())
+  topic String @unique
+  count Int
+}
+
+model AdminQuiz {
+  id              String              @id @default(uuid())
+  title           String
+  category        String
+  difficulty      String
+  quizType        GameType            @default(open_ended)
+  status          String              @default("pending")
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  allowedAttempts Int                 @default(2)
+  questions       AdminQuizQuestion[]
+
+  @@unique([title, quizType], map: "AdminQuiz_title_quizType_key")
+}
+
+model AdminQuizQuestion {
+  id       String    @id @default(uuid())
+  quizId   String
+  question String
+  answer   String
+  options  Json?
+  quiz     AdminQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model UserQuizAttempt {
+  id            String                @id @default(uuid())
+  userId        String
+  quizId        String
+  quizTitle     String
+  answers       Json
+  score         Float                 @default(0)
+  status        UserQuizAttemptStatus @default(pending)
+  startedAt     DateTime              @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  attemptNumber Int                   @default(1)
+
+  @@index([userId, status], map: "user_quiz_attempt_user_status_idx")
+  @@index([userId, quizId, status], map: "user_quiz_attempt_composite_idx")
+}
+
+enum GameType {
   mcq
   open_ended
 }
@@ -71,96 +147,4 @@ enum GameType{
 enum UserQuizAttemptStatus {
   pending
   completed
-}
-
-model Game{
-  id String @id @default(cuid())
-  userId String
-  timeStarted DateTime
-  topic String
-  timeEnded DateTime?
-  gameType GameType
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questions Question[]
-
-  @@index([userId], name: "userId")
-}
-
-model Question {
-  id String @id @default (cuid())
-  question String
-  answer String
-  gameId String
-  options Json? // for mcq questions
-  percentageCorrect Float? // for open ended questions
-  isCorrect Boolean? // for mcq questions
-  questionType GameType
-  userAnswer String?
-
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-
-  @@index([gameId], name: "gameId")
-}
-model Quiz {
-  id         Int           @id @default(autoincrement())
-  title      String
-  category   String
-  difficulty String
-  questions  QuizQuestion[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-}
-
-model QuizQuestion {
-  id        Int    @id @default(autoincrement())
-  quizId    Int
-  text      String
-  answer    String
-  Quiz      Quiz   @relation(fields: [quizId], references: [id])
-}
-
-model topicCount {
-  id    String @id @default(cuid())
-  topic String @unique
-  count Int
-}
-
-model AdminQuiz {
-  id          String           @id @default(uuid())
-  title       String
-  category    String
-  difficulty  String
-  quizType    GameType         @default(open_ended)
-  status      String           @default("pending") // e.g. "pending", "approved", "rejected"
-  allowedAttempts Int          @default(2)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  questions   AdminQuizQuestion[]
-}
-
-model AdminQuizQuestion {
-  id        String   @id @default(uuid())
-  quizId    String
-  quiz      AdminQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  question  String
-  answer    String
-  options   Json?
-}
-
-model UserQuizAttempt {
-  id         String   @id @default(uuid())
-  userId     String
-  quizId     String
-  quizTitle  String
-  answers    Json
-  score      Float    @default(0)
-  attemptNumber Int    @default(1)
-  status     UserQuizAttemptStatus @default(pending)
-  startedAt  DateTime @default(now())
-  completedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([userId, status], name: "user_quiz_attempt_user_status_idx")
-  @@index([userId, quizId, status], name: "user_quiz_attempt_composite_idx")
 }

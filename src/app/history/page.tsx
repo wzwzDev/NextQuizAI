@@ -1,5 +1,6 @@
 import HistoryComponent from "@/components/HistoryComponent";
 import { getAuthSession } from "@/server/core/auth";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import React from "react";
@@ -12,6 +13,14 @@ const History = async () => {
   const isAdmin = session?.user?.isAdmin === true;
   if (!session?.user && !isAdmin) {
     redirect("/");
+  }
+  
+  // Check if user is revoked
+  if (session?.user?.id) {
+    const isRevoked = await getUserRevokedStatus(session.user.id);
+    if (isRevoked) {
+      redirect("/revoked");
+    }
   }
   return (
     <div className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 w-[400px]">

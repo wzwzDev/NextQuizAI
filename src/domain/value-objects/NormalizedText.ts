@@ -2,7 +2,13 @@ export class NormalizedText {
   private constructor(private readonly normalizedValue: string) {}
 
   static from(value: string) {
-    return new NormalizedText(value.toLowerCase().replace(/\s+/g, " ").trim());
+    return new NormalizedText(
+      value
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/[.,!?;:]/g, "") // Remove common punctuation
+        .trim()
+    );
   }
 
   get value() {

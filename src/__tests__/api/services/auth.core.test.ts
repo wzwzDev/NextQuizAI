@@ -8,8 +8,18 @@ describe("getAuthSession", () => {
   let user: User;
 
   beforeAll(async () => {
+    // Cleanup all test emails
     await prisma.user.deleteMany({
-      where: { email: "auth-test@example.com" },
+      where: {
+        email: {
+          in: [
+            "auth-test@example.com",
+            "auth-admin@example.com",
+            "auth-banned@example.com",
+            "auth-revoked@example.com",
+          ],
+        },
+      },
     });
     user = await prisma.user.create({
       data: { email: "auth-test@example.com", isAdmin: false },
@@ -17,9 +27,19 @@ describe("getAuthSession", () => {
   });
 
   afterAll(async () => {
-    if (user?.id) {
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    // Cleanup all test emails
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: [
+            "auth-test@example.com",
+            "auth-admin@example.com",
+            "auth-banned@example.com",
+            "auth-revoked@example.com",
+          ],
+        },
+      },
+    });
     await prisma.$disconnect();
   });
 

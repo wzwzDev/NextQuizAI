@@ -62,3 +62,12 @@ process.on("warning", (warning) => {
   // still emit other warnings
   originalConsoleWarn(warning);
 });
+
+// Global mocks for Next.js runtime hooks used in components during frontend tests
+jest.mock('next-themes', () => ({
+  useTheme: () => ({ theme: 'light' }),
+}));
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));

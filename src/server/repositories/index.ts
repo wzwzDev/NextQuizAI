@@ -1,4 +1,4 @@
-export * from "@/server/repositories/adminQuizRepository";
+export * from "@/server/admin/repositories/adminQuizRepository";
 export * from "@/server/repositories/gameRepository";
 export * from "@/server/repositories/questionRepository";
 export * from "@/server/repositories/topicRepository";

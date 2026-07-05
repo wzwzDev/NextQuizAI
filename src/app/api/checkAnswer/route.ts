@@ -1,5 +1,6 @@
 import { checkAnswerSchema } from "@/schemas/questions";
 import { gradeAndSaveAnswer } from "@/server/services/answerEvaluationService";
+import { getUserRevokedStatus } from "@/server/services/userReadService";
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/server/core/auth";
 
@@ -7,6 +8,12 @@ export async function POST(req: Request) {
   const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user is revoked
+  const isRevoked = await getUserRevokedStatus(session.user.id);
+  if (isRevoked) {
+    return NextResponse.json({ message: "User access revoked" }, { status: 403 });
   }
 
   let body;

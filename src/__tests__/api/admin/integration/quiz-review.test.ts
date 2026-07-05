@@ -15,6 +15,13 @@ describe("/api/quiz-review Route Handler", () => {
     await prisma.user.deleteMany({
       where: { email: { in: ["admin-quizreview@example.com", "user-quizreview@example.com"] } },
     });
+    // Clean up any existing test quizzes with these titles
+    await prisma.adminQuizQuestion.deleteMany({
+      where: { quiz: { title: { in: ["myquiz", "Untitled Quiz", "chapter-1"] } } },
+    });
+    await prisma.adminQuiz.deleteMany({
+      where: { title: { in: ["myquiz", "Untitled Quiz", "chapter-1"] } },
+    });
     adminUser = await prisma.user.create({
       data: { email: "admin-quizreview@example.com", isAdmin: true },
     });
@@ -35,8 +42,15 @@ describe("/api/quiz-review Route Handler", () => {
     await prisma.$disconnect();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    // Clean up any residual test quizzes before each test
+    await prisma.adminQuizQuestion.deleteMany({
+      where: { quiz: { title: { in: ["myquiz", "Untitled Quiz", "Untitled Quiz - MCQ"] } } },
+    });
+    await prisma.adminQuiz.deleteMany({
+      where: { title: { in: ["myquiz", "Untitled Quiz", "Untitled Quiz - MCQ"] } },
+    });
   });
 
   // POST tests
@@ -82,7 +96,8 @@ describe("/api/quiz-review Route Handler", () => {
       body: JSON.stringify({
         category: "cat",
         difficulty: "easy",
-        questions: [{ question: "Q2", answer: "A2" }],
+        quizType: "mcq",
+        questions: [{ question: "Q2", answer: "A2", options: ["A2", "B2", "C2"] }],
       }),
       headers: {
         "Content-Type": "application/json",
@@ -90,9 +105,14 @@ describe("/api/quiz-review Route Handler", () => {
       },
     });
     const res = await POST(req as unknown as NextRequest);
+    if (res.status !== 201) {
+      const errorBody = await res.json();
+      console.log("Error creating quiz:", errorBody);
+    }
     expect(res.status).toBe(201);
     const json = await res.json();
     expect(json.quiz.title).toBe("Untitled Quiz");
+    expect(json.quiz.quizType).toBe("mcq");
     createdQuizIds.add(json.quiz.id);
   });
 

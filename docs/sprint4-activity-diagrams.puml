@@ -1,0 +1,97 @@
+@startuml HU14_Ver_Cuestionarios_Publicados
+title HU14: Ver cuestionarios publicados
+
+start
+:Usuario accede a página Home;
+:GET /api/published-quizzes;
+
+partition "Validaciones de Seguridad" {
+  :getAuthSession();
+  if (¿Sesión válida?) then (No)
+    :401 Unauthorized;
+    stop
+  endif
+  
+  if (¿Usuario revocado?) then (Sí)
+    :403 User access revoked;
+    stop
+  endif
+}
+
+partition "Procesamiento de Parámetros" {
+  :Obtener query params;
+  note right
+    - category: string (opcional)
+    - difficulty: "easy"|"medium"|"hard" (opcional)
+    - page: número positivo (default 1)
+    - limit: número positivo (default 10)
+  end note
+  
+  if (¿Validación Zod exitosa?) then (No)
+    :Fallback a defaults;
+  endif
+}
+
+partition "Consulta de Base de Datos" {
+  :getPublishedQuizzesWithAttempts(userId, filtros);
+  
+  :Obtener todos quizzes aprobados;
+  :Filtrar por category (si aplica);
+  :Filtrar por difficulty (si aplica);
+  
+  :Consultar UserQuizAttempt del usuario;
+  :Mapear status por quizId:
+  note right
+    Para cada quiz:
+    - pending: cantidad de intentos pending
+    - completed: cantidad de intentos completados
+    - scores: array de scores
+    
+    Determinar attemptStatus:
+    - "completed" si > 0 completados
+    - "pending" si > 0 pending y 0 completados
+    - "available" si sin intentos
+  end note
+}
+
+partition "Paginación" {
+  :Calcular start = (page-1) * limit;
+  :Slice array desde start hasta start+limit;
+  :Calcular total pages = ceil(total/limit);
+}
+
+partition "Construcción de Respuesta" {
+  :Retornar 200 OK;
+  note right
+    {
+      "quizzes": [
+        {
+          "id": uuid,
+          "title": string,
+          "category": string,
+          "difficulty": "easy"|"medium"|"hard",
+          "allowedAttempts": number,
+          "attemptStatus": "available"|"pending"|"completed",
+          "completedAttempts": number,
+          "pendingAttempts": number,
+          "remainingAttempts": number,
+          "isLocked": boolean,
+          "bestScore": number|null,
+          "lastAttempt": Date|null
+        }
+      ],
+      "pagination": {
+        "total": number,
+        "page": number,
+        "limit": number,
+        "pages": number
+      }
+    }
+  end note
+}
+
+:Mostrar quizzes en Home con estado visual;
+:Usuario puede filtrar y paginar;
+
+stop
+@enduml

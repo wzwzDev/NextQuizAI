@@ -95,25 +95,17 @@ const OpenEnded = ({ game }: Props) => {
     void
   >({
     mutationFn: async () => {
-      let filledAnswer = blankAnswer;
+      let answerToSubmit = blankAnswer;
 
       if (fillBlankScriptQuestion) {
-        filledAnswer = blankAnswer.trim();
+        answerToSubmit = blankAnswer.trim();
       } else if (!codeQuestion) {
-        document
-          .querySelectorAll('[data-blank-answer-input="true"]')
-          .forEach((input) => {
-            filledAnswer = filledAnswer.replace(
-              "_____",
-              (input as HTMLInputElement).value,
-            );
-            (input as HTMLInputElement).value = "";
-          });
+        answerToSubmit = filledAnswer;
       }
 
       const payload: z.infer<typeof checkAnswerSchema> = {
         questionId: currentQuestion.id,
-        userInput: filledAnswer,
+        userInput: answerToSubmit,
       };
       const response = await axios.post<CheckAnswerResponse>(
         `/api/checkAnswer`,
@@ -132,8 +124,10 @@ const OpenEnded = ({ game }: Props) => {
     }
   }, [hasEnded]);
 
+  const [filledAnswer, setFilledAnswer] = React.useState("");
+
   const handleNext = React.useCallback(() => {
-    if (isChecking || hasEnded || !currentQuestion) {
+    if (isChecking || hasEnded || !currentQuestion || (!codeQuestion && !filledAnswer.trim())) {
       return;
     }
 
@@ -147,6 +141,7 @@ const OpenEnded = ({ game }: Props) => {
             : "Your answer does not match the expected result.",
           variant: isCorrect ? "success" : "destructive",
         });
+        setFilledAnswer("");
         setAveragePercentage((prev) => {
           const answeredBeforeCurrent = questionIndex;
           return (
@@ -167,6 +162,7 @@ const OpenEnded = ({ game }: Props) => {
           description: `${extractErrorMessage(error, "Unexpected error")} Moving to the next question.`,
           variant: "destructive",
         });
+        setFilledAnswer("");
 
         setAveragePercentage((prev) => {
           const answeredBeforeCurrent = questionIndex;
@@ -191,6 +187,8 @@ const OpenEnded = ({ game }: Props) => {
     questionIndex,
     endGame,
     game.questions.length,
+    filledAnswer,
+    codeQuestion,
   ]);
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -289,6 +287,7 @@ const OpenEnded = ({ game }: Props) => {
           <BlankAnswerInput
             setBlankAnswer={setBlankAnswer}
             answer={currentQuestion.answer}
+            onAnswerChange={setFilledAnswer}
           />
         )}
         <Button

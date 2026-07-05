@@ -3,10 +3,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import HomeClient from "../../components/home/HomeClient";
 
 // Mock next/image to avoid SSR issues
-jest.mock("next/image", () => (props: any) => <img {...props} />);
+jest.mock("next/image", () => (props: any) => <img {...props} alt="" />);
 
 // Mock LoadingQuizzes
 jest.mock("@/components/LoadingQuizzes", () => () => <div data-testid="loading-quizzes" />);
+
+// Mock next-auth/react
+jest.mock("next-auth/react", () => ({
+  signOut: jest.fn(),
+}));
 
 type QuizMock = {
   id: string;
@@ -44,8 +49,11 @@ const mockQuizzes = [
 
 describe("HomeClient", () => {
   beforeEach(() => {
-    global.fetch = jest.fn(() =>
+    globalThis.fetch = jest.fn(() =>
       Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
         json: () => Promise.resolve({ quizzes: mockQuizzes }),
       })
     ) as jest.Mock;
@@ -98,9 +106,11 @@ describe("HomeClient", () => {
   });
 
   it("shows error message on fetch failure", async () => {
-    (global.fetch as jest.Mock).mockImplementationOnce(() => Promise.reject());
+    (globalThis.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.reject(new Error("Network error"))
+    );
     render(<HomeClient />);
-    expect(await screen.findByText("Error loading quizzes.")).toBeInTheDocument();
+    expect(await screen.findByText("Network error")).toBeInTheDocument();
   });
 
   it("shows 'No quizzes found.' if filter returns nothing", async () => {
@@ -123,7 +133,7 @@ describe("HomeClient", () => {
       }),
     );
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       json: async () => ({ quizzes: manyQuizzes }),
     });
 
@@ -153,7 +163,7 @@ describe("HomeClient", () => {
       }),
     ];
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       json: async () => ({ quizzes: quizzesWithCompleted }),
     });
 

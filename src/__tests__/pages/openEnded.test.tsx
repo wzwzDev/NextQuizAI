@@ -14,10 +14,13 @@ jest.mock("../../components/ui/button", () => ({
   buttonVariants: () => "btn",
 }));
 jest.mock("../../components/OpenEndedPercentage", () => () => <div data-testid="open-ended-percentage" />);
-jest.mock("../../components/BlankAnswerInput", () => ({ setBlankAnswer }: any) => (
+jest.mock("../../components/BlankAnswerInput", () => ({ setBlankAnswer, onAnswerChange }: any) => (
   <input
     data-testid="blank-input"
-    onChange={e => setBlankAnswer(e.target.value)}
+    onChange={e => {
+      setBlankAnswer(e.target.value);
+      onAnswerChange?.(e.target.value);
+    }}
     defaultValue=""
   />
 ));
@@ -131,5 +134,91 @@ describe("OpenEnded", () => {
     expect(screen.getByText(/Code Output Challenge/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Type exact output/i)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/output here/i)).not.toBeInTheDocument();
+  });
+
+  describe("Answer variations tolerance", () => {
+    it("accepts answer with different case - uppercase", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with uppercase instead of lowercase
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "WATER" } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      // Should proceed to next question without error (mock returns 80% match)
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with mixed case", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with mixed case
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "WaTeR" } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with trailing period", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with period at the end
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "Water." } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with leading/trailing spaces", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with spaces
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "  Water  " } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with comma by mistake", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with comma
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "Water," } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with exclamation mark", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with exclamation
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "Water!" } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("accepts answer with one extra space in the middle", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer with extra space
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "Water  " } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText("What planet is known as the Red Planet?")).toBeInTheDocument();
+      });
+    });
+
+    it("processes all questions with mixed case answers", async () => {
+      render(<OpenEnded game={mockGame as any} />);
+      // Answer first question with lowercase
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "water" } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      // Answer second question with uppercase
+      fireEvent.change(screen.getByTestId("blank-input"), { target: { value: "MARS" } });
+      fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/You Completed in/)).toBeInTheDocument();
+      });
+    });
   });
 });

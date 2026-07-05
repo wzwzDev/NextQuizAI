@@ -182,7 +182,7 @@ describe("infrastructure adapters", () => {
     const { PdfOcrAdapter } = await import("@/infrastructure/question-generation/PdfOcrAdapter");
 
     // Mock OpenAI client module
-    jest.doMock("@/lib/openaiClient", () => ({
+    jest.doMock("@/server/ai/openaiClient", () => ({
       getClient: jest.fn().mockReturnValue({
         vision: {
           ocr: jest.fn(),

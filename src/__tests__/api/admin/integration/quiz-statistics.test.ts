@@ -25,7 +25,7 @@ describe("/api/quiz-statistics Route Handler", () => {
   const quizTitle2 = `Quiz 2 ${unique}`;
 
   beforeAll(async () => {
-    // Clean up quiz attempts first, then users, in a transaction
+    // Clean up quiz attempts first, then quizzes, then users, in a transaction
     await prisma.$transaction([
       prisma.userQuizAttempt.deleteMany({
         where: {
@@ -33,6 +33,13 @@ describe("/api/quiz-statistics Route Handler", () => {
             { quizId: quizId1 },
             { quizId: quizId2 },
           ],
+        },
+      }),
+      prisma.adminQuiz.deleteMany({
+        where: {
+          id: {
+            in: [quizId1, quizId2],
+          },
         },
       }),
       prisma.user.deleteMany({
@@ -55,6 +62,13 @@ describe("/api/quiz-statistics Route Handler", () => {
             { quizId: quizId1 },
             { quizId: quizId2 },
           ],
+        },
+      }),
+      prisma.adminQuiz.deleteMany({
+        where: {
+          id: {
+            in: [quizId1, quizId2],
+          },
         },
       }),
       prisma.user.deleteMany({
@@ -80,6 +94,30 @@ describe("/api/quiz-statistics Route Handler", () => {
   });
 
   it("returns aggregated statistics for admin", async () => {
+    // Create AdminQuiz entries first
+    await prisma.adminQuiz.createMany({
+      data: [
+        {
+          id: quizId1,
+          title: quizTitle1,
+          category: "Programming",
+          difficulty: "medium",
+          quizType: "open_ended",
+          status: "approved",
+          allowedAttempts: 3,
+        },
+        {
+          id: quizId2,
+          title: quizTitle2,
+          category: "Programming",
+          difficulty: "hard",
+          quizType: "open_ended",
+          status: "approved",
+          allowedAttempts: 3,
+        },
+      ],
+    });
+
     // Seed some quiz attempts (answers must be valid JSON, e.g. [])
     await prisma.userQuizAttempt.createMany({
       data: [
