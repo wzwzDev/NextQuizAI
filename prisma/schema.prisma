@@ -95,6 +95,8 @@ model TopicCount {
   id    String @id @default(cuid())
   topic String @unique
   count Int
+
+  @@map("topicCount")
 }
 
 model AdminQuiz {
