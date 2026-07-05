@@ -21,7 +21,7 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "QuizUPytxwM",
+  title: "QuizUPM",
   description: "Quiz yourself!",
 };
 
