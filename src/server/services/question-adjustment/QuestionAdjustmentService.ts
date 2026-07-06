@@ -178,11 +178,13 @@ export class QuestionAdjustmentService {
       }
 
       // Shuffle options (but keep track of correct answer)
+      // Use cryptographically secure random for security
+      const { randomInt } = await import("crypto");
       const shuffled = newOptions
         .slice(1)
-        .sort(() => Math.random() - 0.5);
+        .sort(() => randomInt(-1, 2) - 1);
       shuffled.splice(
-        Math.floor(Math.random() * shuffled.length),
+        randomInt(0, shuffled.length),
         0,
         correctAnswer
       );

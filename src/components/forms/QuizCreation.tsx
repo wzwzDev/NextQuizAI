@@ -127,10 +127,9 @@ const QuizCreation = ({ topic: topicParam }: Props) => {
   };
 
   const handleChooseSuggestedTopic = () => {
-    // Pick random suggested topic
-    const randomTopic = SUGGESTED_TOPICS[
-      Math.floor(Math.random() * SUGGESTED_TOPICS.length)
-    ];
+    // Pick random suggested topic (cryptographically secure)
+    const randomIndex = crypto.getRandomValues(new Uint32Array(1))[0] % SUGGESTED_TOPICS.length;
+    const randomTopic = SUGGESTED_TOPICS[randomIndex];
     form.setValue("topic", randomTopic);
     setShowGibberishDialog(false);
     setPendingData(null);
