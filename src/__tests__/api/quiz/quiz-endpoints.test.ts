@@ -7,18 +7,6 @@
  */
 
 describe("Quiz Endpoints - E2E Tests Placeholder", () => {
-  it("POST /api/quiz/create endpoint exists", () => {
-    // New endpoint created at src/app/api/quiz/create/route.ts
-    // Tests via E2E testing
-    expect(true).toBe(true);
-  });
-
-  it("POST /api/quiz/generate endpoint exists", () => {
-    // New endpoint created at src/app/api/quiz/generate/route.ts
-    // Tests via E2E testing
-    expect(true).toBe(true);
-  });
-
   it("GET /api/quiz/[quizId] endpoint exists", () => {
     // New endpoint created at src/app/api/quiz/[quizId]/route.ts
     // Tests via E2E testing
