@@ -356,6 +356,91 @@ function buildCitationForQuestion(params: {
   };
 }
 
+function buildEnhancedCitationForQuestion(params: {
+  courseContent: string;
+  sourceName?: string;
+  question: string;
+  answer: string;
+}) {
+  const source = params.sourceName?.trim() || "Uploaded document";
+  const candidates = extractSentenceCandidates(params.courseContent);
+
+  if (candidates.length === 0) {
+    const fallbackSnippet = params.courseContent
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, MAX_CITATION_SNIPPET_LENGTH);
+
+    return {
+      source,
+      snippet: fallbackSnippet || "No citation snippet available.",
+      confidence: 0.35,
+      locationHint: "General content",
+    };
+  }
+
+  const answerNormalized = params.answer.trim().toLowerCase();
+  const questionTokens = tokenizeForOverlap(params.question);
+  let bestSentence = candidates[0];
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let bestContainsAnswer = false;
+  let sectionContext = "";
+
+  for (const sentence of candidates) {
+    const sentenceNormalized = sentence.toLowerCase();
+    const sentenceTokens = tokenizeForOverlap(sentence);
+    const containsAnswer =
+      answerNormalized.length > 0 && sentenceNormalized.includes(answerNormalized);
+
+    let overlapScore = 0;
+    if (questionTokens.length > 0 && sentenceTokens.length > 0) {
+      const sentenceTokenSet = new Set(sentenceTokens);
+      const overlapCount = questionTokens.filter((token) =>
+        sentenceTokenSet.has(token),
+      ).length;
+      overlapScore = overlapCount / questionTokens.length;
+    }
+
+    const score = (containsAnswer ? 3 : 0) + overlapScore;
+    if (score > bestScore) {
+      bestScore = score;
+      bestSentence = sentence;
+      bestContainsAnswer = containsAnswer;
+      
+      // Try to extract section/chapter context
+      const sentenceIndex = params.courseContent.indexOf(sentence);
+      if (sentenceIndex > 0) {
+        const beforeText = params.courseContent.substring(Math.max(0, sentenceIndex - 500), sentenceIndex);
+        const chapterMatch = beforeText.match(/(Chapter|Capítulo|Section|Sección|Part|Parte)\s*(\d+)/i);
+        const headingMatch = beforeText.match(/^(#+|\*\*|__)?([^#*_\n]+)(#+|\*\*|__)?$/m);
+        if (chapterMatch) {
+          sectionContext = `${chapterMatch[1]} ${chapterMatch[2]}`;
+        } else if (headingMatch) {
+          sectionContext = headingMatch[2]?.trim() || "";
+        }
+      }
+    }
+  }
+
+  const snippet =
+    bestSentence.length > MAX_CITATION_SNIPPET_LENGTH
+      ? `${bestSentence.slice(0, MAX_CITATION_SNIPPET_LENGTH - 3)}...`
+      : bestSentence;
+
+  const confidence = bestContainsAnswer
+    ? 0.95
+    : Math.max(0.45, Math.min(0.85, 0.45 + Math.max(bestScore, 0) * 0.1));
+
+  const locationHint = sectionContext || "Content material";
+
+  return {
+    source,
+    snippet,
+    confidence: Math.round(confidence * 100) / 100,
+    locationHint,
+  };
+}
+
 function normalizeQuestionCount(value?: number) {
   if (!Number.isFinite(value)) {
     return FALLBACK_QUESTION_COUNT;
@@ -1105,42 +1190,53 @@ export async function generateQuestionsFromCourseContent(
           ? "Prefer deeper synthesis, implication, and multi-step reasoning."
           : "Mix direct recall with light inference.";
 
+  // Enhanced prompt that generates questions WITH SOURCE INFORMATION
   const systemPrompt = `
-You are a quiz generator. Given the following course content, generate exactly ${questionCount} short-answer questions and answers.
+You are a quiz generator creating questions from educational content. Generate exactly ${questionCount} short-answer questions and answers.
+
+IMPORTANT GUIDELINES:
+- Each question must ask about SPECIFIC CONTENT DETAILS, not document structure
+- Never ask "What does Chapter X discuss?" or "What topic is covered in section Y?"
+- Instead, extract specific facts, concepts, or information FROM each chapter/section
+- Questions should test understanding of the actual content material
+- Each answer must be an exact, concise target (code output, keyword, number, phrase), 1-6 words max
+
 Difficulty target: ${difficultyLevel}
-Difficulty requirements: ${difficultyInstructions}
 Difficulty behavior: ${difficultyBehavior}
 Category focus: ${categoryHint}
 Target style: ${quizTypeHint}
-Each answer must be an exact, concise target (for example: code output, exact syntax, keyword, identifier, number, or short phrase), 1 to 6 words max.
-Do not generate definition/explanation questions that require writing a paragraph.
-Make the difference between easy, medium, and hard clearly noticeable in the wording and reasoning required.
-Course content:
+
+Course content (may contain multiple chapters/sections):
 ${courseContent}
-Respond ONLY with a JSON array of ${questionCount} objects, each with BOTH "question" and "answer" fields, like this:
+
+Respond ONLY with a JSON array of ${questionCount} objects with "question" and "answer" fields:
 [
   {"question": "What is the output of console.log(2 + 2)?", "answer": "4"},
+  {"question": "In the authentication section, what does getAuthSession() return?", "answer": "JWT token"},
   ...
 ]
-Do not include any explanation, markdown, or extra text. Only output the JSON array.
-Never return empty strings for "question" or "answer".
-Every object must include a non-empty "question" and a non-empty concise "answer".
+
+Requirements:
+- Do not include any explanation, markdown, or extra text
+- Never return empty strings for "question" or "answer"
+- Focus on CONTENT specifics, not document organization
+- Generate questions that could only be answered by reading this specific material
 `;
 
   const fallbackSystemPrompt = `
-You are a quiz generator. Create exactly ${questionCount} high-confidence short-answer question/answer pairs from the course content below.
+You are a quiz generator. Create exactly ${questionCount} high-confidence short-answer questions from the course content below.
+- Generate questions about SPECIFIC CONTENT DETAILS in the material
+- Avoid questions about document structure or organization
+- Each answer must be 1 to 6 words and non-empty
+- Ask about facts, concepts, and information explicitly in the content
 Difficulty target: ${difficultyLevel}
-Difficulty requirements: ${difficultyInstructions}
 Difficulty behavior: ${difficultyBehavior}
 Category focus: ${categoryHint}
-Target style: ${quizTypeHint}
-Use only facts that are explicitly present in the content.
-Each answer must be 1 to 6 words and non-empty.
-Make easy questions direct, medium questions slightly inferential, and hard questions require combining more than one clue.
+
 Course content:
 ${courseContent}
-Return ONLY a valid JSON array of objects with keys "question" and "answer".
-Do not include markdown or extra commentary.
+
+Return ONLY a valid JSON array with "question" and "answer" fields.
 `;
 
   const outputFormat = {
@@ -1264,7 +1360,7 @@ Do not include markdown or extra commentary.
     ...question,
     citation:
       question.citation ??
-      buildCitationForQuestion({
+      buildEnhancedCitationForQuestion({
         courseContent,
         sourceName: options.sourceName,
         question: question.question,
