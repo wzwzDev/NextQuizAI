@@ -92,6 +92,43 @@ function containsLineSequence(expectedLines: string[], userLines: string[]) {
   return false;
 }
 
+function calculateWordMatchPercentage(expectedNormalized: string, userInputNormalized: string) {
+  // Common English words to ignore for matching (stopwords)
+  const stopwords = new Set([
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "is", "are", "was", "were", "am", "be", "been",
+    "have", "has", "do", "does", "did", "will", "would", "should", "could",
+    "may", "might", "must", "can", "it", "this", "that", "these", "those",
+    "i", "you", "he", "she", "we", "they", "from", "as", "if", "so",
+  ]);
+
+  // Split into words and filter empty strings and stopwords
+  const expectedWords = expectedNormalized
+    .split(/\s+/)
+    .filter((w) => w && !stopwords.has(w));
+  const userWords = userInputNormalized
+    .split(/\s+/)
+    .filter((w) => w && !stopwords.has(w));
+
+  if (expectedWords.length === 0) {
+    return userWords.length === 0 ? 1 : 0;
+  }
+
+  // Count how many user words match expected words
+  let matchedCount = 0;
+  const expectedSet = new Set(expectedWords);
+
+  for (const userWord of userWords) {
+    if (expectedSet.has(userWord)) {
+      matchedCount++;
+    }
+  }
+
+  // Return percentage based on expected words (not user words)
+  // This way if user provides fewer correct words, the percentage reflects that
+  return matchedCount / expectedWords.length;
+}
+
 function usesExecutionOutputComparison(expectedRaw: string, userInputRaw: string) {
   return expectedRaw.includes("\n") || userInputRaw.includes("\n");
 }
@@ -198,6 +235,26 @@ export class OpenEndedAnswer {
         gradingMethod: "typo_tolerant",
         rawScore: 1,
         isAccepted: true,
+      };
+    }
+
+    // Check word-by-word match for partial credit
+    const wordMatchPercentage = calculateWordMatchPercentage(
+      normalizedExpectedArtifact,
+      normalizedUserArtifact,
+    );
+
+    // Only apply word-match scoring if it's meaningful (> 40%)
+    // This prevents false positives from common stopwords
+    if (wordMatchPercentage > 0.4) {
+      const scaledPercentage = Math.round(wordMatchPercentage * 100);
+      const isAccepted = scaledPercentage >= TYPO_TOLERANCE_THRESHOLD * 100;
+      
+      return {
+        percentageSimilar: scaledPercentage,
+        gradingMethod: "typo_tolerant",
+        rawScore: wordMatchPercentage,
+        isAccepted,
       };
     }
 
