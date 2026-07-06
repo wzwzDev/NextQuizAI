@@ -431,7 +431,7 @@ export default function QuizReview({
             disabled={isRegeneratingDifficulty}
           >
             {difficulties.map((diff) => (
-              <option key={diff}>{diff}</option>
+              <option key={diff} value={diff}>{diff}</option>
             ))}
           </select>
           <p className={`text-xs mt-1 ${getRegenerationStatusClass(
