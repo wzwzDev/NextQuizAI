@@ -205,6 +205,7 @@ const OpenEnded = ({ game }: Props) => {
 
   React.useEffect(() => {
     setBlankAnswer("");
+    setFilledAnswer("");
   }, [currentQuestion?.id, codeQuestion, fillBlankScriptQuestion]);
 
   if (hasEnded) {
