@@ -5,6 +5,33 @@ dotenv.config({ path: ".env.local" });
 
 const prisma = new PrismaClient();
 
+/**
+ * PRESENTATION DATABASE CLEANUP SCRIPT
+ *
+ * WHAT THIS DOES:
+ * ===============
+ * 1. DELETES ALL DATA:
+ *    ❌ All created quizzes
+ *    ❌ All quiz questions  
+ *    ❌ All quiz attempts and history
+ *    ❌ All games played
+ *    ❌ All topics (Hot Topics list)
+ *    ❌ All email verification tokens
+ *    ❌ All users EXCEPT the 2 system accounts
+ *
+ * 2. ENSURES SYSTEM ACCOUNTS ALWAYS EXIST:
+ *    ✅ Owner: waelwzwz@gmail.com (Admin + verified)
+ *    ✅ Admin: tutormiw@gmail.com (Admin + verified)
+ *
+ * 3. WHEN USERS TRY TO LOGIN:
+ *    - Enter email waelwzwz@gmail.com or tutormiw@gmail.com
+ *    - Click magic link in email
+ *    - Access granted automatically
+ *    - OR use username "admin" + password "admin" if configured
+ *
+ * RESULT: Clean database ready for presentation demo
+ */
+
 async function main() {
   const ownerEmail = (process.env.OWNER_EMAIL || "").trim().toLowerCase();
   const adminEmail = (process.env.ADMIN_LOGIN_EMAIL || "").trim().toLowerCase();
@@ -17,8 +44,10 @@ async function main() {
 
   const keepEmails = Array.from(new Set([ownerEmail, adminEmail]));
 
-  console.log("🧹 Starting database cleanup for presentation...");
-  console.log(`📌 Keeping users: ${keepEmails.join(", ")}`);
+  console.log("🧹 PRESENTATION DATABASE CLEANUP");
+  console.log("═════════════════════════════════════════════════════════════");
+  console.log("🗑️  Deleting all user data...");
+  console.log(`📌 Preserving system accounts: ${keepEmails.join(", ")}`);
   console.log("");
 
   // 1. Delete UserQuizAttempt
@@ -68,7 +97,7 @@ async function main() {
   console.log(`✅ Deleted ${deletedUsers.count} non-system users`);
 
   // 9. Ensure owner and admin users exist with correct permissions
-  console.log("⏳ Ensuring owner and admin users exist...");
+  console.log("⏳ Recreating system accounts...");
 
   await prisma.user.upsert({
     where: { email: ownerEmail },
@@ -111,10 +140,29 @@ async function main() {
   console.log(`✅ Admin user ready: ${adminEmail}`);
 
   console.log("");
-  console.log("✨ Database cleanup complete!");
-  console.log(
-    "🎉 Database is now clean with only Owner and Admin users ready for presentation testing."
-  );
+  console.log("═════════════════════════════════════════════════════════════");
+  console.log("✨ DATABASE CLEANUP COMPLETE!");
+  console.log("");
+  console.log("📊 RESULT:");
+  console.log("  ✅ All quizzes deleted");
+  console.log("  ✅ All quiz history deleted");
+  console.log("  ✅ All hot topics deleted");
+  console.log("  ✅ All users deleted except:");
+  console.log(`     👑 ${ownerEmail} (Owner/Admin)`);
+  console.log(`     👤 ${adminEmail} (Admin)`);
+  console.log("");
+  console.log("🔐 HOW TO LOGIN FOR DEMO:");
+  console.log(`  1. Go to app and click 'Sign In'`);
+  console.log(`  2. Enter email: ${ownerEmail} or ${adminEmail}`);
+  console.log(`  3. Click magic link in email inbox`);
+  console.log(`  4. Access granted - Both are Admins`);
+  console.log("");
+  console.log("🎬 NEXT STEPS:");
+  console.log("  1. Start app: npm run dev");
+  console.log("  2. Login with one of the emails above");
+  console.log("  3. Go to /admin to manage quizzes");
+  console.log("  4. Create new quizzes for your demo");
+  console.log("═════════════════════════════════════════════════════════════");
 }
 
 main()
