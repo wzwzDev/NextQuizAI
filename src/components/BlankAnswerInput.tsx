@@ -56,8 +56,8 @@ const BlankAnswerInput = ({ answer, setBlankAnswer, onAnswerChange }: Props) => 
     setBlankAnswer(finalAnswerWithBlanks);
   }, [finalAnswerWithBlanks, setBlankAnswer]);
 
+  // Reset inputValues when the answer changes (moving to next question)
   React.useEffect(() => {
-    // Reset inputValues when answer changes (i.e., when moving to a new question)
     setInputValues({});
   }, [answer]);
 
