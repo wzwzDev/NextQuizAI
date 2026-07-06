@@ -41,6 +41,10 @@ async function main() {
   const attemptCount = await prisma.userQuizAttempt.count();
   console.log(`📝 Quiz Attempts: ${attemptCount}`);
 
+  // Count topics
+  const topicCount = await prisma.topicCount.count();
+  console.log(`🏷️  Hot Topics: ${topicCount}`);
+
   console.log("\n✨ Database is ready for presentation testing!");
 }
 
