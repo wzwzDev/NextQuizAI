@@ -57,6 +57,11 @@ const BlankAnswerInput = ({ answer, setBlankAnswer, onAnswerChange }: Props) => 
   }, [finalAnswerWithBlanks, setBlankAnswer]);
 
   React.useEffect(() => {
+    // Reset inputValues when answer changes (i.e., when moving to a new question)
+    setInputValues({});
+  }, [answer]);
+
+  React.useEffect(() => {
     if (onAnswerChange) {
       let filled = finalAnswerWithBlanks;
       Object.entries(inputValues).forEach(([indexStr, value]) => {
