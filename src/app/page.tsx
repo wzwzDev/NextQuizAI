@@ -10,6 +10,11 @@ import { getUserBannedStatusByEmail, getUserRevokedStatus } from "@/server/servi
 import { redirect } from "next/navigation";
 import { getAuthSession } from "@/server/core/auth";
 import { Sparkles, Trophy } from "lucide-react";
+
+// Disable caching - always fetch fresh data
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const session = await getAuthSession();
   if (session?.user) {

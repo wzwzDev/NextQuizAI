@@ -7,6 +7,10 @@ import { redirect } from "next/navigation";
 import React from "react";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
 
+// Disable caching - always fetch fresh data
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Dashboard | Quizzzy",
   description: "Quiz yourself on anything!",

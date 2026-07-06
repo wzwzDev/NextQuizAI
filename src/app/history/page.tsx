@@ -8,6 +8,10 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { LucideLayoutDashboard } from "lucide-react";
 
+// Disable caching - always fetch fresh data
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 const History = async () => {
   const session = await getAuthSession();
   const isAdmin = session?.user?.isAdmin === true;
