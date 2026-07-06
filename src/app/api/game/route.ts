@@ -50,7 +50,14 @@ export async function POST(req: Request) {
       questions,
     });
 
-    return NextResponse.json({ gameId: game.id }, { status: 200 });
+    return NextResponse.json({ gameId: game.id }, { 
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -114,6 +121,11 @@ export async function GET(req: Request) {
       { game },
       {
         status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
       },
     );
   } catch {
