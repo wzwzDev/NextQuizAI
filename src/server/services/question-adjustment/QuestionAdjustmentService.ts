@@ -11,6 +11,7 @@
  * - Map LLM responses back to domain models
  */
 
+import { randomInt } from "crypto";
 import { DifficultyLevel, DifficultyLevelType } from "@/domain/value-objects/DifficultyLevel";
 import { LlmPort } from "@/infrastructure/ports/LlmPort";
 
@@ -179,7 +180,6 @@ export class QuestionAdjustmentService {
 
       // Shuffle options (but keep track of correct answer)
       // Use cryptographically secure random for security
-      const { randomInt } = await import("crypto");
       const shuffled = newOptions
         .slice(1)
         .sort(() => randomInt(-1, 2) - 1);
