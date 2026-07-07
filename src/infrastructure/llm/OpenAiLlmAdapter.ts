@@ -25,13 +25,15 @@ export class OpenAiLlmAdapter implements LlmPort {
    */
   private async executeWithStrictOutput<T>(
     prompt: string,
-    responseFormat: "json_schema" | "json_object" = "json_schema"
+    responseFormat: "json_schema" | "json_object" = "json_object"
   ): Promise<T> {
     const gpt = getOpenAIClient();
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= OpenAiLlmAdapter.MAX_RETRIES; attempt++) {
       try {
+        // Use json_object mode which is simpler and doesn't require schema definition
+        // The model will ensure valid JSON output
         const response = await gpt.chat.completions.create({
           model: "gpt-4o-mini",
           temperature: 0,
@@ -42,7 +44,7 @@ export class OpenAiLlmAdapter implements LlmPort {
               content: prompt,
             },
           ],
-          response_format: { type: responseFormat },
+          response_format: { type: "json_object" },
         });
 
         if (!response.choices[0]?.message?.content) {

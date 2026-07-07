@@ -231,7 +231,8 @@ export default function QuizReview({
         let errorMessage = "Failed to adjust questions difficulty";
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          // Use details field if available for more specific error, otherwise use error field
+          errorMessage = errorData.details || errorData.error || errorMessage;
         } catch {
           // Response is not JSON (might be HTML error page)
           const text = await response.text();

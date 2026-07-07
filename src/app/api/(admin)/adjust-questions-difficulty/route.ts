@@ -40,14 +40,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       body = await req.json();
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON in request body" },
+        { error: "Invalid JSON in request body", details: "Could not parse request body as JSON" },
         { status: 400 }
       );
     }
 
     if (!body || typeof body !== "object") {
       return NextResponse.json(
-        { error: "Request body must be an object" },
+        { error: "Request body must be an object", details: "Request body is empty or not an object" },
         { status: 400 }
       );
     }
@@ -56,6 +56,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       string,
       unknown
     >;
+
+    // Step 2b: Validate required fields
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return NextResponse.json(
+        { error: "Invalid questions", details: "Questions must be a non-empty array" },
+        { status: 400 }
+      );
+    }
+
+    if (!difficulty) {
+      return NextResponse.json(
+        { error: "Invalid difficulty", details: "Difficulty level is required (easy, medium, or hard)" },
+        { status: 400 }
+      );
+    }
+
+    if (!quizType) {
+      return NextResponse.json(
+        { error: "Invalid quiz type", details: "Quiz type is required (mcq or open_ended)" },
+        { status: 400 }
+      );
+    }
 
     // Step 3: Instantiate dependency chain
     const llmAdapter = new OpenAiLlmAdapter();
@@ -86,18 +108,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Step 5: Return response
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("[adjust-questions-difficulty] ERROR:", {
-      error,
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error("[adjust-questions-difficulty] ERROR:", {
+      message: errorMessage,
+      stack: errorStack,
+      timestamp: new Date().toISOString(),
+    });
 
+    // Return detailed error for better debugging
     return NextResponse.json(
       {
-        error: "Failed to adjust questions",
+        error: "Failed to regenerate questions at new difficulty",
         details: errorMessage,
       },
       { status: 500 }
