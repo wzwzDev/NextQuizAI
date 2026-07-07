@@ -190,13 +190,15 @@ describe("nextauth", () => {
   });
 
   describe("signIn callback", () => {
-    it("returns false for banned user", async () => {
+    it("returns true for banned user (redirected to /banned by pages)", async () => {
+      // Banned users can now pass auth - they'll be redirected to /banned by pages
       const mockUser = { id: "1", email: "banned@example.com", emailVerified: null };
       const result = await authOptions.callbacks!.signIn!({
         user: { ...mockUser, email: "nextauth-banned@example.com" },
         account: null,
       });
-      expect(result).toBe(false);
+      // Now returns true because we only check if user exists, not if banned
+      expect(result).toBe(true);
     });
 
     it("returns true for allowed user", async () => {
