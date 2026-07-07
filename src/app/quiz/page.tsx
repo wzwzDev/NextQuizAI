@@ -1,7 +1,9 @@
 import React from "react";
 
 import { getAuthSession } from "@/server/core/auth";
-import { getUserRevokedStatus } from "@/server/services/userReadService";
+import {
+  getUserBannedStatusById,
+} from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import QuizCreation from "@/components/forms/QuizCreation";
 export const metadata = {
@@ -21,11 +23,11 @@ const Quiz = async ({ searchParams }: Props) => {
     redirect("/");
   }
   
-  // Check if user is revoked
+  // Check if user is banned
   if (session.user.id) {
-    const isRevoked = await getUserRevokedStatus(session.user.id);
-    if (isRevoked) {
-      redirect("/revoked");
+    const isBanned = await getUserBannedStatusById(session.user.id);
+    if (isBanned) {
+      redirect("/banned");
     }
   }
   

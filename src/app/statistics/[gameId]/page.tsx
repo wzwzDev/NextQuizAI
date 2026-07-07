@@ -1,7 +1,7 @@
 import { buttonVariants } from "@/components/ui/button";
 import { getAuthSession } from "@/server/core/auth";
 import { getGameForStatistics } from "@/server/services/statisticsReadService";
-import { getUserRevokedStatus } from "@/server/services/userReadService";
+import { getUserBannedStatusById } from "@/server/services/userReadService";
 import { LucideLayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,11 +26,11 @@ const Statistics = async (props: Props) => {
     redirect("/");
   }
 
-  // Check if user is revoked
+  // Check if user is banned
   if (session.user.id) {
-    const isRevoked = await getUserRevokedStatus(session.user.id);
-    if (isRevoked) {
-      redirect("/revoked");
+    const isBanned = await getUserBannedStatusById(session.user.id);
+    if (isBanned) {
+      redirect("/banned");
     }
   }
 

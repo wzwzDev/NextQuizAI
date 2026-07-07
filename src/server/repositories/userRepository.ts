@@ -84,6 +84,13 @@ export async function findUserRevokeStatus(userId: string) {
   });
 }
 
+export async function findUserBanStatusById(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: { banned: true },
+  });
+}
+
 export async function updateUserOnlineByEmail(email: string, isOnline: boolean) {
   return prisma.user.update({
     where: { email },

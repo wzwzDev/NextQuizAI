@@ -11,3 +11,8 @@ export async function getUserBannedStatusByEmail(email: string) {
   const user = await userRepository.findBanStatusByEmail(email);
   return user?.banned === true;
 }
+
+export async function getUserBannedStatusById(userId: string) {
+  const user = await userRepository.findBanStatusById(userId);
+  return user?.banned === true;
+}

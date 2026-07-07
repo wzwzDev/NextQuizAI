@@ -63,13 +63,37 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   }, [fetchUsers]);
 
   const handleBanUser = async (userId: string) => {
-    await fetch(`/api/users/${userId}/ban`, { method: "POST" });
-    fetchUsers();
+    const response = await fetch(`/api/users/${userId}/ban`, { method: "POST" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Failed to ban user.",
+      );
+      return;
+    }
+    setError(null);
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, banned: true } : u)),
+    );
   };
 
   const handleUnbanUser = async (userId: string) => {
-    await fetch(`/api/users/${userId}/unban`, { method: "POST" });
-    fetchUsers();
+    const response = await fetch(`/api/users/${userId}/unban`, { method: "POST" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Failed to unban user.",
+      );
+      return;
+    }
+    setError(null);
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, banned: false } : u)),
+    );
   };
   const handleRevokeUser = async (userId: string) => {
     await fetch(`/api/users/${userId}/revoke`, { method: "POST" });

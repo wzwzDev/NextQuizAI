@@ -1,6 +1,7 @@
 import type { UserRepositoryPort } from "@/application/ports/out/UserRepositoryPort";
 import {
   findUserBanStatusByEmail,
+  findUserBanStatusById,
   findUserIdentityByEmail,
   findUserIdentityById,
   findUserRevokeStatus,
@@ -28,6 +29,10 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
 
   async findBanStatusByEmail(email: string) {
     return findUserBanStatusByEmail(email);
+  }
+
+  async findBanStatusById(userId: string) {
+    return findUserBanStatusById(userId);
   }
 
   async findRevokeStatus(userId: string) {

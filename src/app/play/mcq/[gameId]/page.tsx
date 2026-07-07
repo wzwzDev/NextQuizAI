@@ -1,7 +1,9 @@
 import MCQComponent from "@/components/MCQ";
 import { getAuthSession } from "@/server/core/auth";
 import { getGameForStatistics } from "@/server/services/statisticsReadService";
-import { getUserRevokedStatus } from "@/server/services/userReadService";
+import {
+  getUserBannedStatusById,
+} from "@/server/services/userReadService";
 import { redirect } from "next/navigation";
 import React from "react";
 import type { Game, Question } from "@prisma/client";
@@ -22,11 +24,11 @@ const MCQPage = async (props: Props) => {
     redirect("/");
   }
 
-  // Check if user is revoked
+  // Check if user is banned
   if (session.user.id) {
-    const isRevoked = await getUserRevokedStatus(session.user.id);
-    if (isRevoked) {
-      redirect("/revoked");
+    const isBanned = await getUserBannedStatusById(session.user.id);
+    if (isBanned) {
+      redirect("/banned");
     }
   }
 

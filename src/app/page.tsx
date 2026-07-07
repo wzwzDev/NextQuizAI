@@ -32,7 +32,8 @@ export default async function Home() {
     if (session.user.id) {
       const isRevoked = await getUserRevokedStatus(session.user.id);
       if (isRevoked) {
-        redirect("/revoked");
+        // Revoked users can still access the main app, just not published quizzes
+        redirect("/dashboard");
       }
     }
     

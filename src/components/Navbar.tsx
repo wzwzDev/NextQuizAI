@@ -3,7 +3,7 @@ import React from "react";
 import UserAccountNav from "./UserAccountNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { getAuthSession } from "@/server/core/auth";
-import { getUserRevokedStatus } from "@/server/services/userReadService";
+import { getUserRevokedStatus, getUserBannedStatusById } from "@/server/services/userReadService";
 import SignInButton from "./SignInButton";
 import { Home, Sparkles, ShieldCheck, ChartSpline } from "lucide-react";
 
@@ -12,10 +12,14 @@ const Navbar = async () => {
   
   // Check both session token AND database for revoked/banned status
   let isAuthenticated = false;
-  if (session?.user?.id && session?.user?.email && !session?.user?.banned) {
-    // Double-check revoked status from database in case it was just updated
-    const isRevoked = await getUserRevokedStatus(session.user.id);
-    isAuthenticated = !isRevoked;
+  let isRevoked = false;
+  let isBanned = false;
+  
+  if (session?.user?.id && session?.user?.email) {
+    // Double-check revoked and banned status from database in case they were just updated
+    isRevoked = await getUserRevokedStatus(session.user.id);
+    isBanned = await getUserBannedStatusById(session.user.id);
+    isAuthenticated = !isRevoked && !isBanned;
   }
   
   const authenticatedUser = isAuthenticated && session?.user ? session.user : null;
@@ -32,7 +36,7 @@ const Navbar = async () => {
           </p>
         </Link>
 
-        {isAuthenticated && (
+        {isAuthenticated && !isRevoked && (
           <nav className="mx-2 hidden flex-1 justify-center md:flex">
             <div className="flex flex-wrap items-center gap-2">
               <Link

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import AdminDashboardClient from "@/components/admin/AdminDashboardClient";
 import { getAuthSession } from "@/server/core/auth";
-import { getUserRevokedStatus } from "@/server/services/userReadService";
+import {
+  getUserBannedStatusById,
+} from "@/server/services/userReadService";
 
 const AdminPage = async () => {
   const session = await getAuthSession();
@@ -9,11 +11,11 @@ const AdminPage = async () => {
     redirect("/");
   }
   
-  // Check if user is revoked
+  // Check if user is banned
   if (session.user.id) {
-    const isRevoked = await getUserRevokedStatus(session.user.id);
-    if (isRevoked) {
-      redirect("/revoked");
+    const isBanned = await getUserBannedStatusById(session.user.id);
+    if (isBanned) {
+      redirect("/banned");
     }
   }
   
