@@ -1,6 +1,14 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type User = {
   id: string;
@@ -27,6 +35,9 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = useCallback(async (pageNum?: number) => {
     setLoading(true);
@@ -130,26 +141,38 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
   };
 
   const handleDeleteUser = async (user: User) => {
-    const confirmed = window.confirm(
-      `Delete user ${user.email}? This action cannot be undone.`,
-    );
-    if (!confirmed) {
-      return;
-    }
+    setUserToDelete(user);
+    setShowDeleteDialog(true);
+  };
 
-    const response = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      setError(
-        typeof payload?.error === "string"
-          ? payload.error
-          : "Failed to delete user.",
-      );
-      return;
-    }
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/users/${userToDelete.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        setError(
+          typeof payload?.error === "string"
+            ? payload.error
+            : "Failed to delete user.",
+        );
+        setIsDeleting(false);
+        return;
+      }
 
-    setUsers((prev) => prev.filter((candidate) => candidate.id !== user.id));
-    setTotal((prev) => Math.max(0, prev - 1));
+      setUsers((prev) => prev.filter((candidate) => candidate.id !== userToDelete.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      setError(null);
+    } catch (err) {
+      setError("Failed to delete user. Please try again.");
+      setIsDeleting(false);
+    }
   };
 
   const isUserOnline = (lastSeen?: string) => {
@@ -317,6 +340,35 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
           Page {page} — {Math.min(page * limit, total)} of {total}
         </div>
       </div>
+
+      {/* Delete User Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete <strong>{userToDelete?.email}</strong>?
+            <br />
+            <br />
+            This action cannot be undone. The user will:
+            <ul className="list-disc list-inside mt-2 ml-2 text-sm">
+              <li>Be permanently removed from the system</li>
+              <li>Have all active sessions terminated</li>
+              <li>Need to sign up again if they want to use the app</li>
+              <li>Lose access to all their quiz data</li>
+            </ul>
+          </AlertDialogDescription>
+          <div className="flex gap-3 justify-end mt-4">
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteUser}
+              disabled={isDeleting}
+              className="bg-rose-700 hover:bg-rose-800"
+            >
+              {isDeleting ? "Deleting..." : "Delete User"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
