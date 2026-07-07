@@ -19,7 +19,8 @@ const Navbar = async () => {
     // Double-check revoked and banned status from database in case they were just updated
     isRevoked = await getUserRevokedStatus(session.user.id);
     isBanned = await getUserBannedStatusById(session.user.id);
-    isAuthenticated = !isRevoked && !isBanned;
+    // Only banned users are NOT authenticated. Revoked users CAN still use the app (just not published quizzes)
+    isAuthenticated = !isBanned;
   }
   
   const authenticatedUser = isAuthenticated && session?.user ? session.user : null;
