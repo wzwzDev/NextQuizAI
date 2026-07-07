@@ -118,12 +118,12 @@ function buildOpenEndedPrompts(input: TopicQuestionInput, batchToken: string) {
       `Difficulty target: ${difficulty}`,
       `Difficulty requirements: ${difficultyInstructions}`,
       isCodeQuestion
-        ? "The question must present a short script, command, code snippet, or console output scenario."
+        ? "The question must present a COMPLETE, READY-TO-RUN code snippet with concrete input values included. Show the code as-is without asking the user to write or modify it."
         : "The question must be about the topic itself, not a code snippet or execution output.",
       getCodeModeInstructions(isCodeQuestion, useFillBlankMode),
       getCodeStructureInstructions(isCodeQuestion, useFillBlankMode),
       isCodeQuestion
-        ? "The answer must be the exact execution result, including line breaks when relevant."
+        ? "The answer must be the exact execution result or output, including line breaks when relevant. NEVER ask the user to implement anything."
         : "The answer must be short, accurate, and directly about the topic.",
       "Avoid repeated phrasing.",
       "Each question in this batch must test a different subtopic.",
@@ -527,12 +527,11 @@ function isAmbiguousFillBlankQuestion(question: string) {
     return false;
   }
 
-  // Common bad pattern: asks user to write a function but expects a fixed output.
-  const asksToWriteFunction = /\b(write|create|define|implement)\b[^.\n]*\bfunction\b/i.test(
-    question,
-  );
-
-  if (asksToWriteFunction && !hasConcreteExecutionStep(question)) {
+  // Reject ANY pattern that asks user to write/implement code - even with execution step
+  const asksToWrite = /\b(write|create|define|implement)\b/i.test(question);
+  const asksAboutFunction = /\bfunction\b/i.test(question);
+  
+  if (asksToWrite && asksAboutFunction) {
     return true;
   }
 
@@ -671,7 +670,7 @@ function getCodeModeInstructions(
     return "Ask for a concise factual answer, definition, or concept-level explanation in 1 to 8 words.";
   }
   if (useFillBlankMode) {
-    return "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question. The code must be executable as-is and include concrete input values so the expected output is uniquely determined.";
+    return "IMPORTANT: Present COMPLETE, READY-TO-RUN code with concrete literal input values already included. The user must ONLY identify/type the exact output—NEVER ask them to write, implement, define, or create any code. The code snippet is a gift; they just predict what it outputs.";
   }
   return "Use full-output mode and ask the user to type the full execution result. Include concrete input values and an executable snippet that produces a single deterministic output.";
 }
@@ -685,7 +684,7 @@ function getCodeStructureInstructions(
     return "Do not ask the user to run or inspect code.";
   }
   if (useFillBlankMode) {
-    return "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'. Never ask the user to only write/implement a function without also executing it with explicit literal input (e.g., print(square(5))).";
+    return "Structure MUST be: [FILL_BLANK] <concise-instruction-about-output> followed by blank line, then the COMPLETE executable code (already written, not partial), then blank line, then 'Output: _____'. CRITICAL: Never include phrases like 'write', 'implement', 'create', 'define a function'. The code is complete—user only predicts/types the output.";
   }
   return "Do not include blank markers in the question text.";
 }
