@@ -65,10 +65,8 @@ export const authOptions: NextAuthOptions = {
         where: { email: user.email },
         select: { banned: true, revoked: true },
       });
-      if (db_user?.banned) {
-        // Block sign in for banned users only. Revoked users can still sign in.
-        return false;
-      }
+      // Allow both banned and revoked users to pass auth
+      // They will be redirected to /banned or /revoked by pages
       return true;
     },
     jwt: async ({ token }) => {
@@ -196,11 +194,7 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (adminUser.banned) {
-          // Block sign in for banned users only. Revoked users can still sign in.
-          return null;
-        }
-
+        // Allow banned users to pass auth, but they'll be redirected to /banned by pages
         return {
           id: adminUser.id,
           name: adminUser.name,
@@ -237,16 +231,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        if (user.banned) {
-          // Block sign in for banned users only. Revoked users can still sign in.
-          return null;
-        }
-
         const validPassword = await verifyPassword(password, user.passwordHash);
         if (!validPassword) {
           return null;
         }
 
+        // Allow banned users to pass auth, but they'll be redirected to /banned by pages
         return {
           id: user.id,
           name: user.name,
