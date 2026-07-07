@@ -294,24 +294,60 @@ describe("QuestionAdjustmentService - Application Service", () => {
   });
 
   describe("error handling", () => {
-    it("should propagate LLM adapter errors", async () => {
+    it("should throw error when LLM adapter fails", async () => {
       mockLlmAdapter.adjustQuestions!.mockRejectedValue(
-        new Error("LLM error")
+        new Error("LLM error: rate limited")
       );
 
-      // Service has fallback tolerance - returns original questions on LLM error
+      // Service now throws error instead of silently falling back
+      await expect(
+        service.adjustQuestions(
+          [mockQuestion],
+          mockDifficulty,
+          "Programming",
+          "open_ended"
+        )
+      ).rejects.toThrow("Failed to regenerate questions");
+    });
+
+    it("should propagate LLM connection errors", async () => {
+      mockLlmAdapter.adjustQuestions!.mockRejectedValue(
+        new Error("Connection timeout")
+      );
+
+      await expect(
+        service.adjustQuestions(
+          [mockQuestion],
+          mockDifficulty,
+          "Programming",
+          "open_ended"
+        )
+      ).rejects.toThrow();
+    });
+
+    it("should succeed even if MCQ options generation fails (graceful degradation)", async () => {
+      mockLlmAdapter.adjustQuestions!.mockResolvedValue([
+        {
+          question: "Adjusted question",
+          answer: "Correct",
+        },
+      ]);
+      // MCQ options generation fails, but should still work with fallback options
+      mockLlmAdapter.generateMcqOptions!.mockRejectedValue(
+        new Error("LLM timeout")
+      );
+
       const result = await service.adjustQuestions(
         [mockQuestion],
         mockDifficulty,
         "Programming",
-        "open_ended"
+        "mcq"
       );
 
-      // Should return original questions as fallback
-      expect(result).toHaveLength(1);
-      expect(result[0].question).toBe(mockQuestion.question);
-      expect(result[0].answer).toBe(mockQuestion.answer);
-      expect(result[0].citation).toEqual(mockQuestion.citation);
+      // Should still return 4 options (correct answer + fallback generics)
+      expect(result[0].options).toBeDefined();
+      expect(result[0].options?.length).toBe(4);
+      expect(result[0].options).toContain("Correct");
     });
   });
 });

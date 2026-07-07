@@ -97,16 +97,14 @@ export class QuestionAdjustmentService {
         citation: questions[idx]?.citation, // Preserve citation
       }));
     } catch (error) {
-      // Fallback: Keep original questions, just add a note about difficulty
-      // Don't apply transformations - they cause duplication
-      console.warn(`LLM failed, keeping original questions: ${error instanceof Error ? error.message : String(error)}`);
+      // Throw error instead of silently falling back
+      // This ensures users know when difficulty adjustment fails
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Failed to regenerate questions at ${difficulty.level} difficulty:`, errorMessage);
       
-      return questions.map(q => ({
-        question: q.question,
-        answer: q.answer,
-        options: q.options,
-        citation: q.citation,
-      }));
+      throw new Error(
+        `Failed to regenerate questions: ${errorMessage}`
+      );
     }
   }
 
