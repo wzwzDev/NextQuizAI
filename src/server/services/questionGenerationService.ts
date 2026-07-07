@@ -506,6 +506,52 @@ function ensureCodeQuestionWrapper(question: string, answer: string): OpenEndedQ
   return { question, answer };
 }
 
+function isFillBlankOutputQuestion(question: string) {
+  return /\[fill_blank\]|output:\s*_{3,}/i.test(question);
+}
+
+function hasConcreteExecutionStep(question: string) {
+  // Direct output instructions across common languages
+  if (/(console\.log|print\(|system\.out\.println|fmt\.println|echo\s)/i.test(question)) {
+    return true;
+  }
+
+  // Concrete invocation with literal-like arguments (not a function definition)
+  return /(?:^|\n)\s*(?!def\s|function\s)[a-zA-Z_]\w*\s*\(\s*[^)]*(?:\d|["'`]|true|false|\[|\{)[^)]*\)\s*;?/im.test(
+    question,
+  );
+}
+
+function isAmbiguousFillBlankQuestion(question: string) {
+  if (!isFillBlankOutputQuestion(question)) {
+    return false;
+  }
+
+  // Common bad pattern: asks user to write a function but expects a fixed output.
+  const asksToWriteFunction = /\b(write|create|define|implement)\b[^.\n]*\bfunction\b/i.test(
+    question,
+  );
+
+  if (asksToWriteFunction && !hasConcreteExecutionStep(question)) {
+    return true;
+  }
+
+  // Also reject any fill-blank output prompt that lacks an executable step.
+  return !hasConcreteExecutionStep(question);
+}
+
+function isAmbiguousCodeExecutionQuestion(question: string) {
+  if (!isCodeLikeContent(question)) {
+    return false;
+  }
+
+  const asksToWriteFunction = /\b(write|create|define|implement)\b[^.\n]*\bfunction\b/i.test(
+    question,
+  );
+
+  return asksToWriteFunction && !hasConcreteExecutionStep(question);
+}
+
 function normalizeOpenEndedQuestions(generated: unknown) {
   const seen = new Set<string>();
   const parsed = Array.isArray(generated)
@@ -531,6 +577,13 @@ function normalizeOpenEndedQuestions(generated: unknown) {
           const normalized = isCodeLikeContent(question) 
             ? ensureCodeQuestionWrapper(question, answer)
             : { question, answer };
+
+          if (
+            isAmbiguousFillBlankQuestion(normalized.question) ||
+            isAmbiguousCodeExecutionQuestion(normalized.question)
+          ) {
+            return null;
+          }
 
           return normalized;
         })
@@ -618,9 +671,9 @@ function getCodeModeInstructions(
     return "Ask for a concise factual answer, definition, or concept-level explanation in 1 to 8 words.";
   }
   if (useFillBlankMode) {
-    return "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question.";
+    return "Use fill-in-the-blank mode and include marker [FILL_BLANK] in the question. The code must be executable as-is and include concrete input values so the expected output is uniquely determined.";
   }
-  return "Use full-output mode and ask the user to type the full execution result.";
+  return "Use full-output mode and ask the user to type the full execution result. Include concrete input values and an executable snippet that produces a single deterministic output.";
 }
 
 // Helper function to get code structure instructions
@@ -632,7 +685,7 @@ function getCodeStructureInstructions(
     return "Do not ask the user to run or inspect code.";
   }
   if (useFillBlankMode) {
-    return "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'.";
+    return "Use this exact structure: [FILL_BLANK] <instruction line> followed by one blank line, then the code snippet, then a final line 'Output: _____'. Never ask the user to only write/implement a function without also executing it with explicit literal input (e.g., print(square(5))).";
   }
   return "Do not include blank markers in the question text.";
 }

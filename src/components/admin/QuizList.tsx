@@ -723,6 +723,9 @@ export default function QuizList({ refreshKey = 0 }: QuizListProps) {
                         ) : (
                           <div className="mt-1 text-xs text-gray-500">No citation metadata available.</div>
                         )}
+                        <div className="mt-1 text-xs text-gray-700">
+                          Correct Answer: {question.answer || "N/A"}
+                        </div>
                       </div>
                     ))}
                   </div>

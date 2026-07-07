@@ -175,4 +175,23 @@ describe("questionGenerationService", () => {
     expect(result[1].question).toBeTruthy();
     expect(result[2].question).toBeTruthy();
   });
+
+  it("filters ambiguous fill-blank questions without executable output", async () => {
+    jest.spyOn(gpt, "strict_output").mockResolvedValueOnce([
+      {
+        question:
+          "[FILL_BLANK] Write a function that returns the square of a number.\n\ndef square(num):\n  return num ** 2\nOutput: _____",
+        answer: "25",
+      },
+    ]);
+
+    const result = await generateQuestionsByTopic({
+      amount: 1,
+      topic: "Python",
+      type: "open_ended",
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].question.toLowerCase()).not.toContain("write a function");
+  });
 });
