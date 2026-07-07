@@ -65,8 +65,8 @@ export const authOptions: NextAuthOptions = {
         where: { email: user.email },
         select: { banned: true, revoked: true },
       });
-      if (db_user?.banned || db_user?.revoked) {
-        // Block sign in for banned/revoked users.
+      if (db_user?.banned) {
+        // Block sign in for banned users only. Revoked users can still sign in.
         return false;
       }
       return true;
@@ -196,7 +196,8 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (adminUser.banned || adminUser.revoked) {
+        if (adminUser.banned) {
+          // Block sign in for banned users only. Revoked users can still sign in.
           return null;
         }
 
@@ -236,7 +237,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        if (user.banned || user.revoked) {
+        if (user.banned) {
+          // Block sign in for banned users only. Revoked users can still sign in.
           return null;
         }
 
