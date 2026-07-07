@@ -341,13 +341,18 @@ export default function HomeClient() {
   );
 
   const filterCategoryOptions = Array.from(
-    new Set([
-      ...categories.map((category) => category.name),
-      ...quizzes
-        .map((quiz) => quiz.category)
-        .filter((category): category is string => Boolean(category?.trim())),
-    ]),
-  ).sort((left, right) => left.localeCompare(right));
+    new Set(
+      [
+        ...categories.map((category) => category.name),
+        ...quizzes
+          .map((quiz) => quiz.category)
+          .filter((category): category is string => Boolean(category?.trim())),
+      ].map((cat) => cat.toLowerCase()) // Normalize to lowercase for deduplication
+    )
+  ).map((lowercased) => {
+    // Map back to title case for display
+    return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
+  }).sort((left, right) => left.localeCompare(right));
 
   const categoryProgress = quizzes.reduce<
     Map<
@@ -360,8 +365,9 @@ export default function HomeClient() {
     >
   >((accumulator, quiz) => {
     const category = quiz.category?.trim() || "Uncategorized";
-    const existing = accumulator.get(category) ?? {
-      category,
+    const categoryKey = category.toLowerCase(); // Normalize to lowercase for consistent grouping
+    const existing = accumulator.get(categoryKey) ?? {
+      category, // Store original category name for display
       available: 0,
       completed: 0,
     };
@@ -373,7 +379,7 @@ export default function HomeClient() {
       existing.available += 1;
     }
 
-    accumulator.set(category, existing);
+    accumulator.set(categoryKey, existing);
     return accumulator;
   }, new Map());
 
