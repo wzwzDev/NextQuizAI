@@ -12,7 +12,8 @@ export async function POST(
 ) {
   const params = await context.params;
   const session = await getAuthSession(req);
-  if (!session?.user?.isAdmin) {
+  // Only the owner may perform these actions
+  if (!session?.user?.isOwner) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -37,7 +38,8 @@ export async function GET(
   context: { params: Promise<{ userId: string }> },
 ) {
   const session = await getAuthSession(req);
-  if (!session?.user?.isAdmin) {
+  // Only the owner may perform these actions
+  if (!session?.user?.isOwner) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

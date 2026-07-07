@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 type User = {
   id: string;
@@ -17,6 +18,9 @@ type UserManagementProps = {
 };
 
 const UserManagement = ({ compact = false }: UserManagementProps) => {
+  const { data: session } = useSession();
+  const currentEmail = (session as any)?.user?.email?.toLowerCase?.();
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -205,7 +209,7 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
                   )}
                 </td>
                 <td className="py-4 px-4 space-x-2">
-                  {user.isOwner !== true && (
+                  {user.isOwner !== true && user.email.toLowerCase() !== currentEmail && (
                     <>
                       {!user.isAdmin && (
                         <button

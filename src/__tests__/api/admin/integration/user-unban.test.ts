@@ -64,7 +64,7 @@ describe("/api/users/[userId]/unban Route Handler", () => {
   it("unbans a user as admin (POST)", async () => {
     const req = new Request("http://localhost/api/users/[userId]/unban", {
       method: "POST",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
     const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
@@ -79,7 +79,7 @@ describe("/api/users/[userId]/unban Route Handler", () => {
   it("returns 403 when trying to unban owner", async () => {
     const req = new Request("http://localhost/api/users/[userId]/unban", {
       method: "POST",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
     const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: ownerUser.id }),

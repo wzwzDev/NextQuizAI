@@ -3,5 +3,7 @@ import { TopicRepositoryAdapter } from "@/infrastructure/topic/TopicRepositoryAd
 const topicRepository = new TopicRepositoryAdapter();
 
 export async function getHotTopics() {
-  return topicRepository.listAll();
+  const topics = await topicRepository.listAll();
+  console.log("[getHotTopics] Retrieved topics:", topics);
+  return topics;
 }

@@ -12,6 +12,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
   let owner: User;
 
   beforeAll(async () => {
+    process.env.OWNER_EMAIL = "owner-assign@example.com";
     await prisma.user.deleteMany({
       where: {
         email: {
@@ -55,6 +56,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
       await prisma.user.delete({ where: { id: regularUser.id } });
     }
     await prisma.$disconnect();
+    delete process.env.OWNER_EMAIL;
   });
 
   const callPost = async (userId: string, email?: string) => {
@@ -83,7 +85,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
       "http://localhost/api/(admin)/users/undefined/assign-admin",
       {
         method: "POST",
-        headers: { "x-test-user-email": adminUser.email },
+        headers: { "x-test-user-email": owner.email },
       },
     );
     const response = await assignAdminPost(req as unknown as NextRequest, {
@@ -93,7 +95,7 @@ describe("POST /api/(admin)/users/[userId]/assign-admin", () => {
   });
 
   it("should assign admin role to target user", async () => {
-    const response = await callPost(targetUser.id, adminUser.email);
+    const response = await callPost(targetUser.id, owner.email);
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);

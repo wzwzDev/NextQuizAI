@@ -87,7 +87,7 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   it("bans a user as admin (POST)", async () => {
     const req = new Request("http://localhost/api/users/[userId]/ban", {
       method: "POST",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
     const res = await POST(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
@@ -102,7 +102,7 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   it("returns 403 when trying to ban owner", async () => {
     const req = new Request("http://localhost/api/users/[userId]/ban", {
       method: "POST",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
 
     const res = await POST(req as unknown as NextRequest, {
@@ -129,7 +129,7 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   it("returns banned status for user (GET)", async () => {
     const req = new Request("http://localhost/api/users/[userId]/ban", {
       method: "GET",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
     const res = await GET(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: targetUser.id }),
@@ -142,7 +142,7 @@ describe("/api/users/[userId]/ban Route Handler", () => {
   it("returns 404 if user not found (GET)", async () => {
     const req = new Request("http://localhost/api/users/[userId]/ban", {
       method: "GET",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
     const res = await GET(req as unknown as NextRequest, {
       params: Promise.resolve({ userId: "nonexistentid" }),

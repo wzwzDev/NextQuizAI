@@ -71,7 +71,7 @@ describe("/api/users/[userId] DELETE Route Handler", () => {
 
     const req = new Request("http://localhost/api/users/[userId]", {
       method: "DELETE",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
 
     const res = await DELETE(req as unknown as NextRequest, {
@@ -86,7 +86,7 @@ describe("/api/users/[userId] DELETE Route Handler", () => {
     expect(deleted).toBeNull();
   });
 
-  it("returns 403 when trying to delete owner", async () => {
+  it("returns 401 when admin (non-owner) tries to delete owner", async () => {
     const req = new Request("http://localhost/api/users/[userId]", {
       method: "DELETE",
       headers: { "x-test-user-email": adminUser.email },
@@ -96,19 +96,19 @@ describe("/api/users/[userId] DELETE Route Handler", () => {
       params: Promise.resolve({ userId: ownerUser.id }),
     });
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
     const json = await res.json();
-    expect(json.error).toMatch(/owner account is protected/i);
+    expect(json.error).toMatch(/unauthorized/i);
   });
 
-  it("returns 400 when trying to delete self", async () => {
+  it("returns 400 when owner tries to delete self", async () => {
     const req = new Request("http://localhost/api/users/[userId]", {
       method: "DELETE",
-      headers: { "x-test-user-email": adminUser.email },
+      headers: { "x-test-user-email": ownerUser.email },
     });
 
     const res = await DELETE(req as unknown as NextRequest, {
-      params: Promise.resolve({ userId: adminUser.id }),
+      params: Promise.resolve({ userId: ownerUser.id }),
     });
 
     expect(res.status).toBe(400);
