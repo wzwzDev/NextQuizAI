@@ -128,7 +128,17 @@ describe("UserManagement", () => {
       expect(screen.getByText("user1@example.com")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    // Click Delete button for first user (opens AlertDialog)
+    const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
+    fireEvent.click(deleteButtons[0]);
+
+    // Wait for dialog to appear and click the confirm button
+    await waitFor(() => {
+      expect(screen.getByText("Delete User Account")).toBeInTheDocument();
+    });
+
+    const confirmDeleteButton = screen.getByRole("button", { name: "Delete User" });
+    fireEvent.click(confirmDeleteButton);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith("/api/users/1", { method: "DELETE" });

@@ -78,14 +78,14 @@ model Game {
 
 model Question {
   id                String   @id @default(cuid())
-  question          String
-  answer            String
+  question          String   @db.LongText
+  answer            String   @db.LongText
   gameId            String
   options           Json?
   percentageCorrect Float?
   isCorrect         Boolean?
   questionType      GameType
-  userAnswer        String?
+  userAnswer        String?  @db.LongText
   game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([gameId], map: "gameId")
@@ -115,8 +115,8 @@ model AdminQuiz {
 model AdminQuizQuestion {
   id       String    @id @default(uuid())
   quizId   String
-  question String
-  answer   String
+  question String    @db.LongText
+  answer   String    @db.LongText
   options  Json?
   quiz     AdminQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }

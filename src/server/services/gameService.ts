@@ -18,7 +18,8 @@ type OpenQuestion = {
   answer: string;
 };
 
-const MAX_DB_STRING_LENGTH = 180;
+// Increased from 180 to 5000 to support complete code snippets in questions
+const MAX_DB_STRING_LENGTH = 5000;
 
 function fitDbString(value: string) {
   return value.trim().slice(0, MAX_DB_STRING_LENGTH);

@@ -345,18 +345,20 @@ const UserManagement = ({ compact = false }: UserManagementProps) => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete <strong>{userToDelete?.email}</strong>?
-            <br />
-            <br />
-            This action cannot be undone. The user will:
-            <ul className="list-disc list-inside mt-2 ml-2 text-sm">
+          <div className="space-y-3">
+            <p>
+              Are you sure you want to delete <strong>{userToDelete?.email}</strong>?
+            </p>
+            <p className="text-sm">
+              This action cannot be undone. The user will:
+            </p>
+            <ul className="list-disc list-inside mt-2 ml-2 text-sm space-y-1">
               <li>Be permanently removed from the system</li>
               <li>Have all active sessions terminated</li>
               <li>Need to sign up again if they want to use the app</li>
               <li>Lose access to all their quiz data</li>
             </ul>
-          </AlertDialogDescription>
+          </div>
           <div className="flex gap-3 justify-end mt-4">
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
