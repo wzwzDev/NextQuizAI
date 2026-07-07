@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { SessionProvider } from "next-auth/react";
 import UserManagement from "../../components/admin/UserManagement";
 
 const mockUsers = [
@@ -54,6 +55,9 @@ afterEach(() => {
 });
 
 describe("UserManagement", () => {
+  const defaultTestSession = { user: { email: "viewer@example.com" } };
+  const renderWithSession = (ui: React.ReactElement, session = defaultTestSession) =>
+    render(<SessionProvider session={session}>{ui}</SessionProvider>);
   beforeEach(() => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
   });
@@ -63,7 +67,7 @@ describe("UserManagement", () => {
   });
 
   it("renders loading and then user table", async () => {
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
     expect(screen.getByText(/Loading users/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText("User Management")).toBeInTheDocument();
@@ -76,14 +80,14 @@ describe("UserManagement", () => {
   it("shows error if fetch fails", async () => {
     // @ts-ignore
     global.fetch = jest.fn().mockRejectedValue(new Error("fail"));
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
     await waitFor(() => {
       expect(screen.getByText(/Failed to load users/i)).toBeInTheDocument();
     });
   });
 
   it("shows correct status and actions for users", async () => {
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
     await waitFor(() => {
       expect(screen.getAllByText("Online").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Offline").length).toBeGreaterThan(0);
@@ -101,7 +105,7 @@ describe("UserManagement", () => {
   });
 
   it("refreshes users when Refresh button is clicked", async () => {
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
     await waitFor(() => {
       expect(screen.getByText("User Management")).toBeInTheDocument();
     });
@@ -118,7 +122,7 @@ describe("UserManagement", () => {
       .mockResolvedValueOnce({ json: async () => mockUsers })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
 
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
 
     await waitFor(() => {
       expect(screen.getByText("user1@example.com")).toBeInTheDocument();
@@ -139,7 +143,7 @@ describe("UserManagement", () => {
     // @ts-ignore
     global.fetch = jest.fn().mockResolvedValue({ json: async () => mockUsers });
 
-    render(<UserManagement />);
+    renderWithSession(<UserManagement />);
 
     await waitFor(() => {
       expect(screen.getByText("user1@example.com")).toBeInTheDocument();
